@@ -1,4 +1,4 @@
-package com.jsemalja.trackmecalories
+package com.jsemalja.trackmecalories.data
 
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -7,6 +7,9 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.*
 
+/**
+ * Data class representing food nutritional information per 100g.
+ */
 data class FoodInfo(
     val name: String,
     val kcalPer100: Double,
@@ -18,6 +21,9 @@ data class FoodInfo(
     val barcode: String? = null
 )
 
+/**
+ * Repository for fetching food data from external APIs (Open Food Facts).
+ */
 class FoodRepository {
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -25,6 +31,11 @@ class FoodRepository {
         }
     }
 
+    /**
+     * Fetches product information from the Open Food Facts API v2.
+     * @param barcode The UPC/EAN code of the product.
+     * @return FoodInfo if found, null otherwise.
+     */
     suspend fun getProductInfo(barcode: String): FoodInfo? {
         return try {
             val url = "https://world.openfoodfacts.org/api/v2/product/$barcode.json"

@@ -6,6 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -16,10 +21,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.room.Room
+import com.jsemalja.trackmecalories.data.AppDatabase
+import com.jsemalja.trackmecalories.ui.screens.HomeScreen
+import com.jsemalja.trackmecalories.ui.screens.RecentsScreen
+import com.jsemalja.trackmecalories.ui.screens.ScannerScreen
+import com.jsemalja.trackmecalories.ui.screens.SettingsScreen
 import com.jsemalja.trackmecalories.ui.theme.TrackmecaloriesTheme
+import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,7 +61,7 @@ fun TrackmecaloriesApp(viewModel: MainViewModel) {
         navigationSuiteItems = {
             AppDestinations.entries.forEach {
                 item(
-                    icon = { Icon(painterResource(it.icon), contentDescription = it.label) },
+                    icon = { Icon(it.icon, contentDescription = it.label) },
                     label = { Text(it.label) },
                     selected = it == currentDestination,
                     onClick = { currentDestination = it }
@@ -61,8 +73,8 @@ fun TrackmecaloriesApp(viewModel: MainViewModel) {
             when (currentDestination) {
                 AppDestinations.HOME -> HomeScreen(viewModel, Modifier.padding(innerPadding))
                 AppDestinations.SCAN -> ScannerScreen(viewModel, Modifier.padding(innerPadding))
-                AppDestinations.FAVORITES -> Text("Favorites Screen", Modifier.padding(innerPadding))
-                AppDestinations.PROFILE -> Text("Profile Screen", Modifier.padding(innerPadding))
+                AppDestinations.RECENTS -> RecentsScreen(viewModel, Modifier.padding(innerPadding))
+                AppDestinations.SETTINGS -> SettingsScreen(viewModel, Modifier.padding(innerPadding))
             }
         }
     }
@@ -70,10 +82,10 @@ fun TrackmecaloriesApp(viewModel: MainViewModel) {
 
 enum class AppDestinations(
     val label: String,
-    val icon: Int,
+    val icon: ImageVector,
 ) {
-    HOME("Home", R.drawable.ic_home),
-    SCAN("Scan", R.drawable.ic_camera),
-    FAVORITES("Favorites", R.drawable.ic_favorite),
-    PROFILE("Profile", R.drawable.ic_account_box),
+    HOME("Home", Icons.Default.Home),
+    SCAN("Scan", Icons.Default.CameraAlt),
+    RECENTS("Recents", Icons.Default.History),
+    SETTINGS("Settings", Icons.Default.Settings),
 }
