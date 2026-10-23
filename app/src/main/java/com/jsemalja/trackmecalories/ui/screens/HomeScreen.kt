@@ -2,13 +2,17 @@ package com.jsemalja.trackmecalories.ui.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FlashOn
@@ -21,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.data.UserGoal
@@ -35,6 +38,11 @@ import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.time.temporal.TemporalAdjusters
+import java.time.temporal.WeekFields
+import java.util.Locale
 
 // Section order for the daily log; anything else (custom meal types) is appended alphabetically.
 private val MEAL_ORDER = listOf("Breakfast", "Lunch", "Dinner", "Snack", "Quick Add")
@@ -59,6 +67,9 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     }
 
     Scaffold(
+        // The app-level Scaffold already applies system-bar insets; applying them again here
+        // pushed Home's content down by an extra status-bar height.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 SmallFloatingActionButton(
@@ -79,7 +90,7 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     ) { padding ->
         Column(modifier = modifier.padding(padding).fillMaxSize().padding(16.dp)) {
             DateSelector(selectedDate) { viewModel.changeDate(it) }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
             DailyProgressCard(entries, goals)
             Spacer(Modifier.height(12.dp))
             WaterCard(
@@ -225,7 +236,9 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
                 progress = { (totalKcal.toFloat() / goals.calorieGoal).coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)),
                 color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)
+                trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
+                gapSize = 0.dp,
+                drawStopIndicator = {}
             )
 
             Spacer(Modifier.height(24.dp))
@@ -345,39 +358,81 @@ fun QuickAddDialog(onDismiss: () -> Unit, onSave: (Int) -> Unit) {
     )
 }
 
+/**
+ * Header with the selected date (tap for a full calendar), week navigation, and a strip
+ * of the 7 days in the selected date's week.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
     var showPicker by remember { mutableStateOf(false) }
+    val today = LocalDate.now()
+    val locale = Locale.getDefault()
+    val weekStart = selectedDate.with(TemporalAdjusters.previousOrSame(WeekFields.of(locale).firstDayOfWeek))
 
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        (-3..3).forEach { dayOffset ->
-            val date = LocalDate.now().plusDays(dayOffset.toLong())
-            val isSelected = date == selectedDate
+    val title = when (selectedDate) {
+        today -> "Today"
+        today.minusDays(1) -> "Yesterday"
+        today.plusDays(1) -> "Tomorrow"
+        else -> selectedDate.format(DateTimeFormatter.ofPattern("EEEE", locale)).replaceFirstChar { it.titlecase(locale) }
+    }
+    val subtitle = selectedDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale))
 
-            FilterChip(
-                selected = isSelected,
-                onClick = { onDateSelected(date) },
-                label = {
-                    Text(
-                        text = when(dayOffset) {
-                            0 -> "Today"
-                            -1 -> "Yest."
-                            1 -> "Tomw."
-                            else -> "${date.dayOfMonth}.${date.monthValue}."
-                        },
-                        fontSize = 11.sp
+    Column(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { onDateSelected(selectedDate.minusWeeks(1)) }) {
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous week")
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable { showPicker = true }
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = "Open calendar",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
                     )
-                },
-                modifier = Modifier.weight(1f)
-            )
+                }
+            }
+            IconButton(onClick = { onDateSelected(selectedDate.plusWeeks(1)) }) {
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next week")
+            }
         }
-        IconButton(onClick = { showPicker = true }) {
-            Icon(Icons.Default.CalendarMonth, contentDescription = "Pick a date")
+
+        Spacer(Modifier.height(8.dp))
+
+        Row(Modifier.fillMaxWidth()) {
+            (0L..6L).forEach { offset ->
+                val date = weekStart.plusDays(offset)
+                DayCell(
+                    date = date,
+                    isSelected = date == selectedDate,
+                    isToday = date == today,
+                    isFuture = date.isAfter(today),
+                    locale = locale,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onDateSelected(date) }
+                )
+            }
+        }
+
+        if (selectedDate != today) {
+            TextButton(
+                onClick = { onDateSelected(today) },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Back to today")
+            }
         }
     }
 
@@ -399,5 +454,51 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
         ) {
             DatePicker(state = state)
         }
+    }
+}
+
+@Composable
+private fun DayCell(
+    date: LocalDate,
+    isSelected: Boolean,
+    isToday: Boolean,
+    isFuture: Boolean,
+    locale: Locale,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    val shape = MaterialTheme.shapes.medium
+    val contentColor = when {
+        isSelected -> colors.onPrimary
+        isToday -> colors.primary
+        isFuture -> colors.onSurface.copy(alpha = 0.45f)
+        else -> colors.onSurface
+    }
+
+    Column(
+        modifier = modifier
+            .padding(horizontal = 3.dp)
+            .clip(shape)
+            .background(if (isSelected) colors.primary else Color.Transparent)
+            .then(if (isToday && !isSelected) Modifier.border(1.5.dp, colors.primary, shape) else Modifier)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, locale)
+                .replaceFirstChar { it.titlecase(locale) },
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor.copy(alpha = contentColor.alpha * 0.8f),
+            maxLines = 1
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            "${date.dayOfMonth}",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = contentColor
+        )
     }
 }
