@@ -12,32 +12,53 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = GreenPrimaryDark,
+    onPrimary = OnGreenPrimaryDark,
+    primaryContainer = GreenPrimaryContainerDark,
+    onPrimaryContainer = OnGreenPrimaryContainerDark,
+    secondary = AmberSecondaryDark,
+    onSecondary = OnAmberSecondaryDark,
+    secondaryContainer = AmberSecondaryContainerDark,
+    onSecondaryContainer = OnAmberSecondaryContainerDark,
+    tertiary = BlueTertiaryDark,
+    onTertiary = OnBlueTertiaryDark,
+    tertiaryContainer = BlueTertiaryContainerDark,
+    onTertiaryContainer = OnBlueTertiaryContainerDark,
+    background = BackgroundDark,
+    onBackground = OnBackgroundDark,
+    surface = BackgroundDark,
+    onSurface = OnBackgroundDark,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = OnSurfaceVariantDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = GreenPrimaryLight,
+    onPrimary = OnGreenPrimaryLight,
+    primaryContainer = GreenPrimaryContainerLight,
+    onPrimaryContainer = OnGreenPrimaryContainerLight,
+    secondary = AmberSecondaryLight,
+    onSecondary = OnAmberSecondaryLight,
+    secondaryContainer = AmberSecondaryContainerLight,
+    onSecondaryContainer = OnAmberSecondaryContainerLight,
+    tertiary = BlueTertiaryLight,
+    onTertiary = OnBlueTertiaryLight,
+    tertiaryContainer = BlueTertiaryContainerLight,
+    onTertiaryContainer = OnBlueTertiaryContainerLight,
+    background = BackgroundLight,
+    onBackground = OnBackgroundLight,
+    surface = BackgroundLight,
+    onSurface = OnBackgroundLight,
+    surfaceVariant = SurfaceVariantLight,
+    onSurfaceVariant = OnSurfaceVariantLight
 )
 
 @Composable
 fun TrackmecaloriesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Off by default: the app has its own brand palette (green/amber/blue) rather
+    // than taking it from the Android 12+ wallpaper-based Material You theme.
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -53,6 +74,7 @@ fun TrackmecaloriesTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = AppShapes,
         content = content
     )
 }

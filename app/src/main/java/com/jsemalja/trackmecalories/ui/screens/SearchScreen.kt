@@ -31,6 +31,9 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     var selectedFoodInfo by remember { mutableStateOf<FoodInfo?>(null) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+        ScreenHeader(Icons.Default.Search, "Search Foods")
+        Spacer(Modifier.height(16.dp))
+
         OutlinedTextField(
             value = query,
             onValueChange = { 

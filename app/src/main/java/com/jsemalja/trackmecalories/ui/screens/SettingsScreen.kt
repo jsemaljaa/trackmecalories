@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -43,150 +44,144 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
 
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        Text("Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        
-        Spacer(Modifier.height(24.dp))
-        
-        Text("Nutritional Goals", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(16.dp))
-        
-        OutlinedTextField(
-            value = calorieGoal,
-            onValueChange = { calorieGoal = it },
-            label = { Text("Daily Calorie Goal (kcal)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-        
-        Spacer(Modifier.height(8.dp))
-        
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = proteinGoal,
-                onValueChange = { proteinGoal = it },
-                label = { Text("Protein (g)") },
-                modifier = Modifier.weight(1f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-            OutlinedTextField(
-                value = carbGoal,
-                onValueChange = { carbGoal = it },
-                label = { Text("Carbs (g)") },
-                modifier = Modifier.weight(1f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-            OutlinedTextField(
-                value = fatGoal,
-                onValueChange = { fatGoal = it },
-                label = { Text("Fat (g)") },
-                modifier = Modifier.weight(1f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = fiberGoal,
-                onValueChange = { fiberGoal = it },
-                label = { Text("Fiber (g)") },
-                modifier = Modifier.weight(1f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-            OutlinedTextField(
-                value = saltGoal,
-                onValueChange = { saltGoal = it },
-                label = { Text("Salt (g)") },
-                modifier = Modifier.weight(1f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = waterGoal,
-            onValueChange = { waterGoal = it },
-            label = { Text("Water Goal (ml)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
+        ScreenHeader(Icons.Default.Settings, "Settings")
 
         Spacer(Modifier.height(24.dp))
 
-        Button(
-            onClick = {
-                viewModel.updateGoals(
-                    currentGoals.copy(
-                        calorieGoal = calorieGoal.toIntOrNull() ?: currentGoals.calorieGoal,
-                        proteinGoal = proteinGoal.toDoubleOrNull() ?: currentGoals.proteinGoal,
-                        carbGoal = carbGoal.toDoubleOrNull() ?: currentGoals.carbGoal,
-                        fatGoal = fatGoal.toDoubleOrNull() ?: currentGoals.fatGoal,
-                        fiberGoal = fiberGoal.toDoubleOrNull() ?: currentGoals.fiberGoal,
-                        saltGoal = saltGoal.toDoubleOrNull() ?: currentGoals.saltGoal,
-                        waterGoalMl = waterGoal.toDoubleOrNull() ?: currentGoals.waterGoalMl
-                    )
+        SettingsSectionCard(title = "Nutritional Goals", titleColor = MaterialTheme.colorScheme.primary) {
+            OutlinedTextField(
+                value = calorieGoal,
+                onValueChange = { calorieGoal = it },
+                label = { Text("Daily Calorie Goal (kcal)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = proteinGoal,
+                    onValueChange = { proteinGoal = it },
+                    label = { Text("Protein (g)") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Save Goals")
+                OutlinedTextField(
+                    value = carbGoal,
+                    onValueChange = { carbGoal = it },
+                    label = { Text("Carbs (g)") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                OutlinedTextField(
+                    value = fatGoal,
+                    onValueChange = { fatGoal = it },
+                    label = { Text("Fat (g)") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = fiberGoal,
+                    onValueChange = { fiberGoal = it },
+                    label = { Text("Fiber (g)") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                OutlinedTextField(
+                    value = saltGoal,
+                    onValueChange = { saltGoal = it },
+                    label = { Text("Salt (g)") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = waterGoal,
+                onValueChange = { waterGoal = it },
+                label = { Text("Water Goal (ml)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    viewModel.updateGoals(
+                        currentGoals.copy(
+                            calorieGoal = calorieGoal.toIntOrNull() ?: currentGoals.calorieGoal,
+                            proteinGoal = proteinGoal.toDoubleOrNull() ?: currentGoals.proteinGoal,
+                            carbGoal = carbGoal.toDoubleOrNull() ?: currentGoals.carbGoal,
+                            fatGoal = fatGoal.toDoubleOrNull() ?: currentGoals.fatGoal,
+                            fiberGoal = fiberGoal.toDoubleOrNull() ?: currentGoals.fiberGoal,
+                            saltGoal = saltGoal.toDoubleOrNull() ?: currentGoals.saltGoal,
+                            waterGoalMl = waterGoal.toDoubleOrNull() ?: currentGoals.waterGoalMl
+                        )
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Save Goals")
+            }
         }
 
-        Spacer(Modifier.height(24.dp))
-
-        HorizontalDivider()
         Spacer(Modifier.height(16.dp))
 
-        Text("Data", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedButton(
-            onClick = {
-                scope.launch {
-                    exportError = try {
-                        val csv = viewModel.exportCsv()
-                        val file = File(context.cacheDir, "trackmecalories_export_${LocalDate.now()}.csv")
-                        file.writeText(csv)
-                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/csv"
-                            putExtra(Intent.EXTRA_STREAM, uri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        SettingsSectionCard(title = "Data", titleColor = MaterialTheme.colorScheme.primary) {
+            OutlinedButton(
+                onClick = {
+                    scope.launch {
+                        exportError = try {
+                            val csv = viewModel.exportCsv()
+                            val file = File(context.cacheDir, "trackmecalories_export_${LocalDate.now()}.csv")
+                            file.writeText(csv)
+                            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/csv"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            context.startActivity(Intent.createChooser(intent, "Export Food Log"))
+                            null
+                        } catch (e: Exception) {
+                            "Export failed: ${e.message}"
                         }
-                        context.startActivity(Intent.createChooser(intent, "Export Food Log"))
-                        null
-                    } catch (e: Exception) {
-                        "Export failed: ${e.message}"
                     }
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Download, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Export Data (CSV)")
-        }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Download, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Export Data (CSV)")
+            }
 
-        exportError?.let {
-            Spacer(Modifier.height(4.dp))
-            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            exportError?.let {
+                Spacer(Modifier.height(4.dp))
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
         }
 
         Spacer(Modifier.height(16.dp))
 
-        Text("Danger Zone", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedButton(
-            onClick = { showDeleteDialog = true },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-        ) {
-            Icon(Icons.Default.DeleteForever, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Wipe All Data")
+        SettingsSectionCard(title = "Danger Zone", titleColor = MaterialTheme.colorScheme.error) {
+            OutlinedButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.Default.DeleteForever, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Wipe All Data")
+            }
         }
     }
 
@@ -208,5 +203,20 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
             }
         )
+    }
+}
+
+@Composable
+private fun SettingsSectionCard(
+    title: String,
+    titleColor: androidx.compose.ui.graphics.Color,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = titleColor)
+            Spacer(Modifier.height(12.dp))
+            content()
+        }
     }
 }

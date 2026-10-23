@@ -26,6 +26,11 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.WaterEntry
+import com.jsemalja.trackmecalories.ui.theme.MacroCarbs
+import com.jsemalja.trackmecalories.ui.theme.MacroFat
+import com.jsemalja.trackmecalories.ui.theme.MacroFiber
+import com.jsemalja.trackmecalories.ui.theme.MacroProtein
+import com.jsemalja.trackmecalories.ui.theme.MacroSalt
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import java.time.Instant
 import java.time.LocalDate
@@ -173,14 +178,14 @@ fun WaterCard(waterEntries: List<WaterEntry>, goalMl: Double, onAddWater: (Doubl
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.LocalDrink, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Icon(Icons.Default.LocalDrink, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text("Water", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
@@ -200,7 +205,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
@@ -226,16 +231,16 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
             Spacer(Modifier.height(24.dp))
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MacroPill("Protein", entries.sumOf { it.protein }, goals.proteinGoal, "g", Color(0xFFE57373))
-                MacroPill("Carbs", entries.sumOf { it.carbs }, goals.carbGoal, "g", Color(0xFF81C784))
-                MacroPill("Fat", entries.sumOf { it.fat }, goals.fatGoal, "g", Color(0xFFFFD54F))
+                MacroPill("Protein", entries.sumOf { it.protein }, goals.proteinGoal, "g", MacroProtein)
+                MacroPill("Carbs", entries.sumOf { it.carbs }, goals.carbGoal, "g", MacroCarbs)
+                MacroPill("Fat", entries.sumOf { it.fat }, goals.fatGoal, "g", MacroFat)
             }
 
             Spacer(Modifier.height(12.dp))
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                MacroPill("Fiber", entries.sumOf { it.fiber }, goals.fiberGoal, "g", Color(0xFF64B5F6))
-                MacroPill("Salt", entries.sumOf { it.salt }, goals.saltGoal, "g", Color(0xFFBA68C8))
+                MacroPill("Fiber", entries.sumOf { it.fiber }, goals.fiberGoal, "g", MacroFiber)
+                MacroPill("Salt", entries.sumOf { it.salt }, goals.saltGoal, "g", MacroSalt)
             }
         }
     }
@@ -304,7 +309,7 @@ fun SwipeToDeleteContainer(
                 }, label = ""
             )
             Box(
-                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)).background(color).padding(horizontal = 20.dp),
+                modifier = Modifier.fillMaxSize().clip(MaterialTheme.shapes.medium).background(color).padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)

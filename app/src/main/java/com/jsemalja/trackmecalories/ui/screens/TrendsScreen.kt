@@ -2,7 +2,8 @@ package com.jsemalja.trackmecalories.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -43,12 +44,12 @@ fun TrendsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val avgFat = if (weeklyTotals.isNotEmpty()) weeklyTotals.sumOf { it.totalFat } / 7.0 else 0.0
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Text("Weekly Summary", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        ScreenHeader(Icons.Default.BarChart, "Weekly Summary")
         Spacer(Modifier.height(24.dp))
 
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
+            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
         ) {
             Column(Modifier.padding(16.dp)) {
@@ -68,7 +69,7 @@ fun TrendsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         Text("Daily Average", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
 
-        ElevatedCard(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+        ElevatedCard(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
             Row(
                 Modifier.padding(20.dp).fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween

@@ -3,7 +3,6 @@ package com.jsemalja.trackmecalories.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,6 +15,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodEntry
+import com.jsemalja.trackmecalories.ui.theme.MacroCarbs
+import com.jsemalja.trackmecalories.ui.theme.MacroFat
+import com.jsemalja.trackmecalories.ui.theme.MacroProtein
 import java.time.LocalDate
 
 @Composable
@@ -156,7 +158,7 @@ fun MacroSummary(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -170,9 +172,9 @@ fun MacroSummary(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            MacroItem("Protein", currentProtein, Color(0xFFE57373))
-            MacroItem("Carbs", currentCarbs, Color(0xFF81C784))
-            MacroItem("Fat", currentFat, Color(0xFFFFD54F))
+            MacroItem("Protein", currentProtein, MacroProtein)
+            MacroItem("Carbs", currentCarbs, MacroCarbs)
+            MacroItem("Fat", currentFat, MacroFat)
         }
     }
 }

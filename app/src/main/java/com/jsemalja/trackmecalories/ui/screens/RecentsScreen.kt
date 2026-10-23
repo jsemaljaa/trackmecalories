@@ -37,11 +37,7 @@ fun RecentsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     var editingFood by remember { mutableStateOf<CustomFood?>(null) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.History, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(8.dp))
-            Text("Saved Foods", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        }
+        ScreenHeader(Icons.Default.History, "Saved Foods")
 
         Spacer(Modifier.height(16.dp))
 
