@@ -176,6 +176,12 @@ interface FoodDao {
     @Query("SELECT * FROM custom_foods WHERE isFavorite = 1 ORDER BY name ASC")
     fun getFavoriteFoods(): Flow<List<CustomFood>>
 
+    @Query(
+        "SELECT * FROM custom_foods WHERE name LIKE '%' || :query || '%' " +
+            "ORDER BY isFavorite DESC, lastUsedAt DESC LIMIT 8"
+    )
+    fun searchCustomFoods(query: String): Flow<List<CustomFood>>
+
     @Query("SELECT * FROM user_goals WHERE id = 0")
     fun getUserGoal(): Flow<UserGoal?>
 
@@ -206,7 +212,7 @@ interface FoodDao {
 
 @Database(
     entities = [FoodEntry::class, CustomFood::class, UserGoal::class, WaterEntry::class, FoodCache::class],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

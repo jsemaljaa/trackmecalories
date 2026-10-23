@@ -69,14 +69,13 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // Barcode scanning (Google ML Kit)
-    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    // Barcode scanning (Google ML Kit, bundled model so scanning works offline)
+    implementation(libs.mlkit.barcode.scanning)
 
     // Camera (CameraX)
-    val cameraxVersion = "1.3.0"
-    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
-    implementation("androidx.camera:camera-view:$cameraxVersion")
-    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.camera2)
 
     // Network requests
     implementation("io.ktor:ktor-client-android:2.3.0")

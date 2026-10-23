@@ -49,3 +49,14 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_food_cache_barcode ON food_cache(barcode)")
     }
 }
+
+/**
+ * v6 -> v7: no schema change. Products cached before this version were parsed with the
+ * wrong protein key ("protein_100g" instead of OFF's "proteins_100g") and so all have
+ * protein = 0; drop them so they're re-fetched correctly.
+ */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DELETE FROM food_cache")
+    }
+}

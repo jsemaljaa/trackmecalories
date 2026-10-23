@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
 
 package com.jsemalja.trackmecalories.ui.viewmodel
 
@@ -14,7 +14,7 @@ import com.jsemalja.trackmecalories.data.FoodRepository
 import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.WaterEntry
 import com.jsemalja.trackmecalories.data.toEntry
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -64,41 +64,73 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
         dao.getDailyTotalsBetween(start.toString(), end.toString())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Search results state
+    // Search state. The query lives here (not in the screen) so results and the text field
+    // stay in sync when switching tabs.
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
     private val _searchResults = MutableStateFlow<List<FoodInfo>>(emptyList())
     val searchResults: StateFlow<List<FoodInfo>> = _searchResults
 
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching
 
-    private val _searchQuery = MutableStateFlow("")
+    private val _searchError = MutableStateFlow<String?>(null)
+    val searchError: StateFlow<String?> = _searchError
 
-    @OptIn(FlowPreview::class)
-    val searchFlow = _searchQuery
-        .debounce(500)
+    private val _retryTick = MutableStateFlow(0)
+
+    // The user's own saved foods matching the query — instant and offline.
+    val savedFoodMatches: StateFlow<List<CustomFood>> = _searchQuery
+        .map { it.trim() }
         .distinctUntilChanged()
-        .onEach { query ->
-            if (query.isBlank()) {
-                _searchResults.value = emptyList()
-            } else {
-                _isSearching.value = true
+        .flatMapLatest { q -> if (q.length < 2) flowOf(emptyList()) else dao.searchCustomFoods(q) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    init {
+        combine(_searchQuery.debounce(400), _retryTick) { q, tick -> q.trim() to tick }
+            .distinctUntilChanged()
+            .onEach { (q, _) ->
+                _searchError.value = null
+                if (q.length < 2) {
+                    _searchResults.value = emptyList()
+                    _isSearching.value = false
+                } else {
+                    _isSearching.value = true
+                }
             }
-        }
-        .flatMapLatest { query ->
-            if (query.isBlank()) flowOf(emptyList<FoodInfo>())
-            else flow { emit(repository.searchProducts(query)) }
-        }
-        .onEach { results ->
-            _searchResults.value = results
-            _isSearching.value = false
-        }
-        .launchIn(viewModelScope)
+            .mapLatest { (q, _) ->
+                if (q.length < 2) return@mapLatest null
+                try {
+                    Result.success(repository.searchProducts(q))
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+            .onEach { result ->
+                result ?: return@onEach
+                result
+                    .onSuccess { _searchResults.value = it }
+                    .onFailure {
+                        _searchResults.value = emptyList()
+                        _searchError.value = "Couldn't reach Open Food Facts. Check your connection and try again."
+                    }
+                _isSearching.value = false
+            }
+            .launchIn(viewModelScope)
+    }
 
     /**
-     * Updates the search query. The actual search is debounced via searchFlow.
+     * Updates the search query. The network search is debounced.
      */
     fun searchFoods(query: String) {
         _searchQuery.value = query
+    }
+
+    fun retrySearch() {
+        _retryTick.value++
     }
 
     /**

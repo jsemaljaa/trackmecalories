@@ -23,9 +23,13 @@ fun CustomFood.toEntry(amount: Double, mealType: String, date: String): FoodEntr
     )
 }
 
+/** "Tvaroh · Tatra" — the brand disambiguates otherwise-identical generic names in logs/Recents. */
+val FoodInfo.displayName: String
+    get() = if (brand.isNullOrBlank() || name.contains(brand, ignoreCase = true)) name else "$name · $brand"
+
 fun FoodInfo.toCustomFood(): CustomFood = CustomFood(
     barcode = barcode,
-    name = name,
+    name = displayName,
     kcalPer100 = kcalPer100,
     proteinPer100 = proteinPer100,
     carbsPer100 = carbsPer100,
@@ -54,7 +58,8 @@ fun FoodInfo.toCache(): FoodCache? {
     val code = barcode ?: return null
     return FoodCache(
         barcode = code,
-        name = name,
+        // The cache has no brand column, so store the brand-qualified name.
+        name = displayName,
         kcalPer100 = kcalPer100,
         proteinPer100 = proteinPer100,
         carbsPer100 = carbsPer100,

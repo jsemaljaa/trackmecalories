@@ -3,10 +3,12 @@ package com.jsemalja.trackmecalories.data
 import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.*
+import java.util.Locale
 
 /**
  * Data class representing food nutritional information per 100g.
@@ -22,13 +24,15 @@ data class FoodInfo(
     val barcode: String? = null,
     val unit: String = "g",
     // The amount kcalPer100 etc. are relative to: 100 for g/ml, 1 for "pcs".
-    val referenceAmount: Double = 100.0
+    val referenceAmount: Double = 100.0,
+    val brand: String? = null,
+    val quantity: String? = null
 )
 
 /**
- * Repository for fetching food data from external APIs (Open Food Facts).
- * Optionally backed by a [FoodDao] to cache barcode lookups and search results offline,
- * so repeat scans/searches don't always hit the network.
+ * Repository for fetching food data from Open Food Facts.
+ * Optionally backed by a [FoodDao] to cache barcode lookups offline, so repeat scans
+ * don't always hit the network.
  */
 class FoodRepository(private val dao: FoodDao? = null) {
     private val TAG = "FoodRepository"
@@ -43,6 +47,10 @@ class FoodRepository(private val dao: FoodDao? = null) {
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true })
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15_000
+            connectTimeoutMillis = 10_000
         }
     }
 
@@ -59,21 +67,16 @@ class FoodRepository(private val dao: FoodDao? = null) {
         }
         Log.d(TAG, "Fetching product info for barcode: $barcode")
         return try {
-            val url = "https://world.openfoodfacts.org/api/v2/product/$barcode.json"
-            val response: String = client.get(url).body()
-
+            val response: String = client.get("https://world.openfoodfacts.org/api/v2/product/$barcode.json").body()
             val json = Json.parseToJsonElement(response).jsonObject
-            val status = json["status"]?.jsonPrimitive?.intOrNull
-            
-            if (status != 1) {
-                Log.w(TAG, "Product not found for barcode: $barcode, status: $status")
+
+            if (json["status"]?.jsonPrimitive?.intOrNull != 1) {
+                Log.w(TAG, "Product not found for barcode: $barcode")
                 return null
             }
 
             val product = json["product"]?.jsonObject ?: return null
-            Log.d(TAG, "Successfully found product: ${product["product_name"]?.jsonPrimitive?.content}")
-
-            val info = mapProductToFoodInfo(product, barcode)
+            val info = parseProduct(product, barcode, requireNutrition = false) ?: return null
             info.toCache()?.let { dao?.upsertCachedProduct(it) }
             info
         } catch (e: Exception) {
@@ -83,91 +86,95 @@ class FoodRepository(private val dao: FoodDao? = null) {
     }
 
     /**
-     * Searches for products using the Open Food Facts Search API Version 2.
-     * Optimized for English results and popularity to find generic/common items.
-     * Ref: https://wiki.openfoodfacts.org/Open_Food_Facts_Search_API_Version_2
+     * Full-text product search via Open Food Facts' search service (search-a-licious).
+     *
+     * The older `/api/v2/search` endpoint silently ignores `search_terms` and returns the
+     * globally most-scanned products for any query, so it can't be used for text search.
+     *
+     * Throws on network failure so callers can tell "offline" apart from "no matches".
      */
     suspend fun searchProducts(query: String): List<FoodInfo> {
-        val key = query.trim().lowercase()
+        val trimmed = query.trim()
+        val key = trimmed.lowercase()
         if (key.length < 2) return emptyList()
-        searchCache[key]?.let {
-            Log.d(TAG, "Serving search for '$query' from in-memory cache")
-            return it
-        }
-        Log.d(TAG, "Searching for products with query: $query")
-        return try {
-            // Optimization: Refined query to prioritize common foods in English-speaking regions
-            // Added cc=us,gb (country codes) and categories to help find standard items
-            val url = "https://world.openfoodfacts.org/api/v2/search?" +
-                    "search_terms=${query.trim()}" +
-                    "&fields=code,product_name,product_name_en,generic_name_en,nutriments,nutrition_grades" +
-                    "&page_size=50" +
-                    "&sort_by=unique_scans_n" +
-                    "&lc=en" +
-                    "&cc=us" // Prioritize US results for more common generic English names
+        searchCache[key]?.let { return it }
 
-            Log.d(TAG, "Search URL V2 Optimized: $url")
-            val response: String = client.get(url).body()
-            val json = Json.parseToJsonElement(response).jsonObject
-            val products = json["products"]?.jsonArray ?: return emptyList()
+        val deviceLang = Locale.getDefault().language.ifBlank { "en" }
+        val langs = listOf(deviceLang, "en").distinct()
 
-            Log.d(TAG, "Found ${products.size} products from API V2")
+        val response: String = client.get("https://search.openfoodfacts.org/search") {
+            parameter("q", trimmed)
+            parameter("page_size", 40)
+            parameter("langs", langs.joinToString(","))
+            parameter(
+                "fields",
+                (listOf("code", "product_name", "generic_name", "brands", "quantity", "nutriments") +
+                    langs.flatMap { listOf("product_name_$it", "generic_name_$it") }).joinToString(",")
+            )
+        }.body()
 
-            val mappedResults = products.mapNotNull { 
-                val productObj = it.jsonObject
-                
-                // Get name safely, prioritizing English
-                val name = productObj["product_name_en"]?.jsonPrimitive?.content 
-                    ?: productObj["product_name"]?.jsonPrimitive?.content 
-                    ?: productObj["generic_name_en"]?.jsonPrimitive?.content
-                    ?: "Unknown"
+        val hits = Json.parseToJsonElement(response).jsonObject["hits"]?.jsonArray ?: return emptyList()
+        val results = hits.mapNotNull { hit ->
+            val obj = hit.jsonObject
+            parseProduct(obj, obj.string("code"), requireNutrition = true, langs = langs)
+        }.distinctBy { it.barcode ?: "${it.name}|${it.brand}" }
 
-                // Skip items with essentially no nutritional info
-                val nutrients = productObj["nutriments"]?.jsonObject
-                val kcal = nutrients?.get("energy-kcal_100g")?.jsonPrimitive?.doubleOrNull ?: 0.0
-                
-                // If it has a nutrition grade or kcal > 0, it's likely a valid entry
-                val hasGrade = productObj["nutrition_grades"]?.jsonPrimitive?.contentOrNull != null
-                
-                if (kcal == 0.0 && !hasGrade && !query.lowercase().contains("water") && !query.lowercase().contains("spice")) {
-                    Log.v(TAG, "Filtering out $name due to lack of nutrition data")
-                    null
-                } else {
-                    mapProductToFoodInfo(productObj, productObj["code"]?.jsonPrimitive?.content)
-                }
-            }
-            
-            // Final quality check: ensure results that start with the query appear first
-            val sorted = mappedResults.sortedByDescending {
-                it.name.lowercase().startsWith(query.lowercase())
-            }
-            searchCache[key] = sorted
-            sorted.forEach { info -> info.toCache()?.let { dao?.upsertCachedProduct(it) } }
-            sorted
-        } catch (e: Exception) {
-            Log.e(TAG, "Error searching products: ${e.message}", e)
-            emptyList()
-        }
+        Log.d(TAG, "Search '$trimmed': ${hits.size} hits, ${results.size} usable")
+        searchCache[key] = results
+        results.forEach { info -> info.toCache()?.let { dao?.upsertCachedProduct(it) } }
+        return results
     }
 
-    private fun mapProductToFoodInfo(product: JsonObject, barcode: String?): FoodInfo {
-        // Prefer English names for a more consistent English search experience
-        val name = product["product_name_en"]?.jsonPrimitive?.content 
-            ?: product["product_name"]?.jsonPrimitive?.content 
-            ?: product["generic_name_en"]?.jsonPrimitive?.content
-            ?: "Unknown Food"
+    /**
+     * Maps an Open Food Facts product object to [FoodInfo]. Returns null when there's no
+     * usable name, or (if [requireNutrition]) no energy value — logging those would just
+     * record a misleading 0 kcal entry.
+     */
+    private fun parseProduct(
+        product: JsonObject,
+        barcode: String?,
+        requireNutrition: Boolean,
+        langs: List<String> = listOf(Locale.getDefault().language, "en")
+    ): FoodInfo? {
+        val name = (langs.map { "product_name_$it" } + "product_name" +
+            langs.map { "generic_name_$it" } + "generic_name")
+            .firstNotNullOfOrNull { product.string(it) }
+            ?: return null
 
-        val nutrients = product["nutriments"]?.jsonObject
-        
+        val nutrients = product["nutriments"] as? JsonObject
+        val kcal = nutrients?.number("energy-kcal_100g")
+            ?: nutrients?.number("energy-kj_100g")?.div(4.184)
+            ?: nutrients?.number("energy_100g")?.div(4.184) // OFF stores generic energy in kJ
+        if (requireNutrition && kcal == null) return null
+
         return FoodInfo(
             name = name,
-            kcalPer100 = nutrients?.get("energy-kcal_100g")?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            proteinPer100 = nutrients?.get("protein_100g")?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            carbsPer100 = nutrients?.get("carbohydrates_100g")?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            fatPer100 = nutrients?.get("fat_100g")?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            fiberPer100 = nutrients?.get("fiber_100g")?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            saltPer100 = nutrients?.get("salt_100g")?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            barcode = barcode
+            kcalPer100 = kcal ?: 0.0,
+            // OFF's key is the plural "proteins_100g".
+            proteinPer100 = nutrients?.number("proteins_100g") ?: 0.0,
+            carbsPer100 = nutrients?.number("carbohydrates_100g") ?: 0.0,
+            fatPer100 = nutrients?.number("fat_100g") ?: 0.0,
+            fiberPer100 = nutrients?.number("fiber_100g") ?: 0.0,
+            saltPer100 = nutrients?.number("salt_100g") ?: 0.0,
+            barcode = barcode,
+            brand = product.brands(),
+            quantity = product.string("quantity")
         )
+    }
+
+    private fun JsonObject.string(key: String): String? =
+        (this[key] as? JsonPrimitive)?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
+
+    private fun JsonObject.number(key: String): Double? =
+        (this[key] as? JsonPrimitive)?.doubleOrNull
+
+    // `brands` is a comma-separated string on the product API but an array on the search API.
+    private fun JsonObject.brands(): String? {
+        val first = when (val raw = this["brands"]) {
+            is JsonArray -> raw.firstNotNullOfOrNull { (it as? JsonPrimitive)?.contentOrNull }
+            is JsonPrimitive -> raw.contentOrNull?.split(',')?.firstOrNull()
+            else -> null
+        }
+        return first?.trim()?.takeIf { it.isNotEmpty() }
     }
 }

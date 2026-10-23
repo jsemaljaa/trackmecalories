@@ -208,10 +208,11 @@ private fun UnitDropdown(unit: String, onUnitChange: (String) -> Unit) {
 @Composable
 fun CustomFoodEntryDialog(
     barcode: String? = null,
+    initialName: String = "",
     onDismiss: () -> Unit,
     onSave: (CustomFood) -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialName) }
     var kcal by remember { mutableStateOf("") }
     var protein by remember { mutableStateOf("") }
     var carbs by remember { mutableStateOf("") }
