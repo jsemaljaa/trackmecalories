@@ -24,7 +24,7 @@ fun PortionEntryDialog(
     onDismiss: () -> Unit,
     onConfirm: (Double, String) -> Unit
 ) {
-    var amount by remember { mutableStateOf("100") }
+    var amount by remember { mutableStateOf(food.referenceAmount.toString()) }
     var mealType by remember { mutableStateOf("Lunch") }
 
     AlertDialog(
@@ -37,7 +37,8 @@ fun PortionEntryDialog(
                     protein = food.proteinPer100,
                     carbs = food.carbsPer100,
                     fat = food.fatPer100,
-                    amount = amount.toDoubleOrNull() ?: 100.0,
+                    amount = amount.toDoubleOrNull() ?: food.referenceAmount,
+                    referenceAmount = food.referenceAmount,
                     unit = food.unit
                 )
 
@@ -47,7 +48,7 @@ fun PortionEntryDialog(
                         FilterChip(selected = mealType == type, onClick = { mealType = type }, label = { Text(type) })
                     }
                 }
-                
+
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
@@ -59,7 +60,7 @@ fun PortionEntryDialog(
         },
         confirmButton = {
             Button(onClick = {
-                onConfirm(amount.toDoubleOrNull() ?: 100.0, mealType)
+                onConfirm(amount.toDoubleOrNull() ?: food.referenceAmount, mealType)
             }) { Text("Log Food") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
@@ -68,15 +69,15 @@ fun PortionEntryDialog(
 
 @Composable
 fun EditEntryDialog(
-    entry: FoodEntry, 
-    onDismiss: () -> Unit, 
-    onUpdate: (FoodEntry) -> Unit, 
+    entry: FoodEntry,
+    onDismiss: () -> Unit,
+    onUpdate: (FoodEntry) -> Unit,
     onCopyToDate: (LocalDate) -> Unit
 ) {
     var amount by remember { mutableStateOf(entry.amount.toString()) }
-    
-    // Calculate per 100g values for the summary
-    val ratio = 100.0 / entry.amount
+
+    // Back out the per-reference-amount values for the live summary preview.
+    val ratio = entry.referenceAmount / entry.amount
     val kcalPer100 = entry.kcal * ratio
     val proteinPer100 = entry.protein * ratio
     val carbsPer100 = entry.carbs * ratio
@@ -93,6 +94,7 @@ fun EditEntryDialog(
                     carbs = carbsPer100,
                     fat = fatPer100,
                     amount = amount.toDoubleOrNull() ?: entry.amount,
+                    referenceAmount = entry.referenceAmount,
                     unit = entry.unit
                 )
 
@@ -103,7 +105,7 @@ fun EditEntryDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 Text("Quick Copy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { onCopyToDate(LocalDate.now().minusDays(1)); onDismiss() }, modifier = Modifier.weight(1f)) {
@@ -142,9 +144,10 @@ fun MacroSummary(
     carbs: Double,
     fat: Double,
     amount: Double,
-    unit: String
+    unit: String,
+    referenceAmount: Double = 100.0
 ) {
-    val ratio = amount / 100.0
+    val ratio = amount / referenceAmount
     val currentKcal = (kcal * ratio).toInt()
     val currentProtein = protein * ratio
     val currentCarbs = carbs * ratio
@@ -160,9 +163,9 @@ fun MacroSummary(
     ) {
         Text("$currentKcal kcal", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Text("for ${amount.toInt()}$unit", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        
+
         Spacer(Modifier.height(8.dp))
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -182,6 +185,24 @@ fun MacroItem(label: String, value: Double, color: Color) {
     }
 }
 
+/** "100g"/"100ml" for weight/volume units, or "1 pc" for piece-counted foods. */
+private fun referenceLabel(unit: String): String = if (unit == "pcs") "1 pc" else "100$unit"
+
+private fun referenceAmountFor(unit: String): Double = if (unit == "pcs") 1.0 else 100.0
+
+@Composable
+private fun UnitDropdown(unit: String, onUnitChange: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) { Text("Unit: $unit") }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            listOf("g", "ml", "pcs").forEach { u ->
+                DropdownMenuItem(text = { Text(u) }, onClick = { onUnitChange(u); expanded = false })
+            }
+        }
+    }
+}
+
 @Composable
 fun CustomFoodEntryDialog(
     barcode: String? = null,
@@ -196,6 +217,7 @@ fun CustomFoodEntryDialog(
     var fiber by remember { mutableStateOf("") }
     var salt by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf("g") }
+    val refLabel = referenceLabel(unit)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -208,33 +230,23 @@ fun CustomFoodEntryDialog(
                 item { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Food Name") }, modifier = Modifier.fillMaxWidth()) }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = kcal, onValueChange = { kcal = it }, label = { Text("kcal/100") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                        OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text("P/100") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = kcal, onValueChange = { kcal = it }, label = { Text("kcal/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text("P/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
                     }
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text("C/100") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                        OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text("F/100") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text("C/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text("F/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
                     }
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = fiber, onValueChange = { fiber = it }, label = { Text("Fib/100") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                        OutlinedTextField(value = salt, onValueChange = { salt = it }, label = { Text("Salt/100") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = fiber, onValueChange = { fiber = it }, label = { Text("Fib/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = salt, onValueChange = { salt = it }, label = { Text("Salt/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
                     }
                 }
-                item {
-                    var expanded by remember { mutableStateOf(false) }
-                    Box {
-                        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) { Text("Unit: $unit") }
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            listOf("g", "ml", "pcs").forEach { u ->
-                                DropdownMenuItem(text = { Text(u) }, onClick = { unit = u; expanded = false })
-                            }
-                        }
-                    }
-                }
+                item { UnitDropdown(unit = unit) { unit = it } }
             }
         },
         confirmButton = {
@@ -248,10 +260,79 @@ fun CustomFoodEntryDialog(
                     fatPer100 = fat.toDoubleOrNull() ?: 0.0,
                     fiberPer100 = fiber.toDoubleOrNull() ?: 0.0,
                     saltPer100 = salt.toDoubleOrNull() ?: 0.0,
-                    unit = unit
+                    unit = unit,
+                    referenceAmount = referenceAmountFor(unit)
                 )
                 onSave(food)
             }) { Text("Save to Database") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+/**
+ * Edits an already-saved [CustomFood] (e.g. fixing a typo'd macro) without having to
+ * re-scan or re-search for it.
+ */
+@Composable
+fun EditCustomFoodDialog(
+    food: CustomFood,
+    onDismiss: () -> Unit,
+    onSave: (CustomFood) -> Unit
+) {
+    var name by remember { mutableStateOf(food.name) }
+    var kcal by remember { mutableStateOf(food.kcalPer100.toString()) }
+    var protein by remember { mutableStateOf(food.proteinPer100.toString()) }
+    var carbs by remember { mutableStateOf(food.carbsPer100.toString()) }
+    var fat by remember { mutableStateOf(food.fatPer100.toString()) }
+    var fiber by remember { mutableStateOf(food.fiberPer100.toString()) }
+    var salt by remember { mutableStateOf(food.saltPer100.toString()) }
+    var unit by remember { mutableStateOf(food.unit) }
+    val refLabel = referenceLabel(unit)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit ${food.name}") },
+        text = {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                item { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Food Name") }, modifier = Modifier.fillMaxWidth()) }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(value = kcal, onValueChange = { kcal = it }, label = { Text("kcal/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text("P/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    }
+                }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text("C/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text("F/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    }
+                }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(value = fiber, onValueChange = { fiber = it }, label = { Text("Fib/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        OutlinedTextField(value = salt, onValueChange = { salt = it }, label = { Text("Salt/$refLabel") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    }
+                }
+                item { UnitDropdown(unit = unit) { unit = it } }
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                onSave(
+                    food.copy(
+                        name = name,
+                        kcalPer100 = kcal.toDoubleOrNull() ?: food.kcalPer100,
+                        proteinPer100 = protein.toDoubleOrNull() ?: food.proteinPer100,
+                        carbsPer100 = carbs.toDoubleOrNull() ?: food.carbsPer100,
+                        fatPer100 = fat.toDoubleOrNull() ?: food.fatPer100,
+                        fiberPer100 = fiber.toDoubleOrNull() ?: food.fiberPer100,
+                        saltPer100 = salt.toDoubleOrNull() ?: food.saltPer100,
+                        unit = unit,
+                        referenceAmount = referenceAmountFor(unit)
+                    )
+                )
+            }) { Text("Save Changes") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )

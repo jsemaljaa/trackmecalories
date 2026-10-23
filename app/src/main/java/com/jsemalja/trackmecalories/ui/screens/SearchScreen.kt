@@ -14,9 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.data.CustomFood
-import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.data.FoodInfo
+import com.jsemalja.trackmecalories.data.toCustomFood
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 
 /**
@@ -64,37 +63,12 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     }
 
     selectedFoodInfo?.let { info ->
-        val food = CustomFood(
-            barcode = info.barcode,
-            name = info.name,
-            kcalPer100 = info.kcalPer100,
-            proteinPer100 = info.proteinPer100,
-            carbsPer100 = info.carbsPer100,
-            fatPer100 = info.fatPer100,
-            fiberPer100 = info.fiberPer100,
-            saltPer100 = info.saltPer100,
-            unit = info.unit
-        )
+        val food = info.toCustomFood()
         PortionEntryDialog(
             food = food,
             onDismiss = { selectedFoodInfo = null },
             onConfirm = { amount, mealType ->
-                val ratio = amount / 100.0
-                viewModel.addEntry(FoodEntry(
-                    name = food.name,
-                    kcal = (food.kcalPer100 * ratio).toInt(),
-                    protein = food.proteinPer100 * ratio,
-                    carbs = food.carbsPer100 * ratio,
-                    fat = food.fatPer100 * ratio,
-                    fiber = food.fiberPer100 * ratio,
-                    salt = food.saltPer100 * ratio,
-                    amount = amount,
-                    unit = food.unit,
-                    mealType = mealType,
-                    date = selectedDate.toString()
-                ))
-                // Save to custom foods so it appears in Recents
-                viewModel.saveCustomFood(food)
+                viewModel.logCustomFood(food, amount, mealType, selectedDate.toString())
                 selectedFoodInfo = null
             }
         )

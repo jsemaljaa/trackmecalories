@@ -27,9 +27,8 @@ import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jsemalja.trackmecalories.data.CustomFood
-import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.data.FoodInfo
-import com.jsemalja.trackmecalories.data.FoodRepository
+import com.jsemalja.trackmecalories.data.toCustomFood
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 
 /**
@@ -63,7 +62,7 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     var foundFood by remember { mutableStateOf<CustomFood?>(null) }
     var showCustomEntryDialog by remember { mutableStateOf(false) }
     var lastScannedBarcode by remember { mutableStateOf("") }
-    
+
     var showPortionDialog by remember { mutableStateOf(false) }
 
     if (hasCameraPermission) {
@@ -71,18 +70,10 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             CameraPreviewScanner(
                 isScanning = isScanning,
                 onScanningChanged = { isScanning = it },
+                lookupBarcode = viewModel::lookupBarcode,
                 onFoodFound = { foodInfo ->
-                    foundFood = CustomFood(
-                        barcode = foodInfo.barcode,
-                        name = foodInfo.name,
-                        kcalPer100 = foodInfo.kcalPer100,
-                        proteinPer100 = foodInfo.proteinPer100,
-                        carbsPer100 = foodInfo.carbsPer100,
-                        fatPer100 = foodInfo.fatPer100,
-                        fiberPer100 = foodInfo.fiberPer100,
-                        saltPer100 = foodInfo.saltPer100
-                    )
-                    isScanning = true 
+                    foundFood = foodInfo.toCustomFood()
+                    isScanning = true
                     showPortionDialog = true
                 },
                 onNotFound = { barcode ->
@@ -96,7 +87,7 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                             showCustomEntryDialog = true
                         }
                     }
-                    isScanning = true 
+                    isScanning = true
                 }
             )
         }
@@ -115,14 +106,13 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 isScanning = false
             },
             onSave = { customFood ->
-                viewModel.saveCustomFood(customFood)
                 foundFood = customFood
                 showCustomEntryDialog = false
                 showPortionDialog = true
             }
         )
     }
-    
+
     if (showPortionDialog && foundFood != null) {
         PortionEntryDialog(
             food = foundFood!!,
@@ -132,22 +122,7 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 isScanning = false
             },
             onConfirm = { amount, mealType ->
-                val ratio = amount / 100.0
-                viewModel.addEntry(FoodEntry(
-                    name = foundFood!!.name,
-                    kcal = (foundFood!!.kcalPer100 * ratio).toInt(),
-                    protein = foundFood!!.proteinPer100 * ratio,
-                    carbs = foundFood!!.carbsPer100 * ratio,
-                    fat = foundFood!!.fatPer100 * ratio,
-                    fiber = foundFood!!.fiberPer100 * ratio,
-                    salt = foundFood!!.saltPer100 * ratio,
-                    amount = amount,
-                    unit = foundFood!!.unit,
-                    mealType = mealType,
-                    date = viewModel.selectedDate.value.toString()
-                ))
-                // Save to custom foods so it appears in Recents
-                viewModel.saveCustomFood(foundFood!!)
+                viewModel.logCustomFood(foundFood!!, amount, mealType, viewModel.selectedDate.value.toString())
 
                 showPortionDialog = false
                 foundFood = null
@@ -161,13 +136,13 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
 fun CameraPreviewScanner(
     isScanning: Boolean,
     onScanningChanged: (Boolean) -> Unit,
+    lookupBarcode: suspend (String) -> FoodInfo?,
     onFoodFound: (FoodInfo) -> Unit,
     onNotFound: (String) -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
-    val repository = remember { FoodRepository() }
     val barcodeScanner = remember { BarcodeScanning.getClient() }
 
     // The analyzer callback below is captured once by `remember`, so it must read
@@ -187,7 +162,7 @@ fun CameraPreviewScanner(
                     val barcode = result.getValue(barcodeScanner)?.firstOrNull()
                     barcode?.rawValue?.let { code ->
                         if (!isScanningState.value) {
-                            processBarcode(code, repository, scope, onScanningChanged, onFoodFound, onNotFound)
+                            processBarcode(code, lookupBarcode, scope, onScanningChanged, onFoodFound, onNotFound)
                         }
                     }
                 }
@@ -208,7 +183,7 @@ fun CameraPreviewScanner(
 
 private fun processBarcode(
     code: String,
-    repository: FoodRepository,
+    lookupBarcode: suspend (String) -> FoodInfo?,
     scope: kotlinx.coroutines.CoroutineScope,
     onScanningChanged: (Boolean) -> Unit,
     onFoodFound: (FoodInfo) -> Unit,
@@ -216,7 +191,7 @@ private fun processBarcode(
 ) {
     onScanningChanged(true)
     scope.launch(Dispatchers.IO) {
-        val result = repository.getProductInfo(code)
+        val result = lookupBarcode(code)
         withContext(Dispatchers.Main) {
             if (result != null) {
                 onFoodFound(result)

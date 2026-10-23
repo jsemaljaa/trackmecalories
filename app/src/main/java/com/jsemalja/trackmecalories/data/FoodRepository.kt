@@ -20,14 +20,25 @@ data class FoodInfo(
     val fiberPer100: Double,
     val saltPer100: Double,
     val barcode: String? = null,
-    val unit: String = "g"
+    val unit: String = "g",
+    // The amount kcalPer100 etc. are relative to: 100 for g/ml, 1 for "pcs".
+    val referenceAmount: Double = 100.0
 )
 
 /**
  * Repository for fetching food data from external APIs (Open Food Facts).
+ * Optionally backed by a [FoodDao] to cache barcode lookups and search results offline,
+ * so repeat scans/searches don't always hit the network.
  */
-class FoodRepository {
+class FoodRepository(private val dao: FoodDao? = null) {
     private val TAG = "FoodRepository"
+
+    // Lightweight in-memory cache for repeated identical searches within this process's
+    // lifetime. Persistent caching only applies to individual (barcode-keyed) products.
+    private val searchCache = object : LinkedHashMap<String, List<FoodInfo>>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<FoodInfo>>) =
+            size > 20
+    }
 
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -36,11 +47,16 @@ class FoodRepository {
     }
 
     /**
-     * Fetches product information from the Open Food Facts API v2.
+     * Fetches product information from the Open Food Facts API v2, preferring a local
+     * cache hit over the network.
      * @param barcode The UPC/EAN code of the product.
      * @return FoodInfo if found, null otherwise.
      */
     suspend fun getProductInfo(barcode: String): FoodInfo? {
+        dao?.getCachedProduct(barcode)?.let {
+            Log.d(TAG, "Cache hit for barcode: $barcode")
+            return it.toFoodInfo()
+        }
         Log.d(TAG, "Fetching product info for barcode: $barcode")
         return try {
             val url = "https://world.openfoodfacts.org/api/v2/product/$barcode.json"
@@ -57,7 +73,9 @@ class FoodRepository {
             val product = json["product"]?.jsonObject ?: return null
             Log.d(TAG, "Successfully found product: ${product["product_name"]?.jsonPrimitive?.content}")
 
-            mapProductToFoodInfo(product, barcode)
+            val info = mapProductToFoodInfo(product, barcode)
+            info.toCache()?.let { dao?.upsertCachedProduct(it) }
+            info
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching product info: ${e.message}", e)
             null
@@ -70,7 +88,12 @@ class FoodRepository {
      * Ref: https://wiki.openfoodfacts.org/Open_Food_Facts_Search_API_Version_2
      */
     suspend fun searchProducts(query: String): List<FoodInfo> {
-        if (query.trim().length < 2) return emptyList()
+        val key = query.trim().lowercase()
+        if (key.length < 2) return emptyList()
+        searchCache[key]?.let {
+            Log.d(TAG, "Serving search for '$query' from in-memory cache")
+            return it
+        }
         Log.d(TAG, "Searching for products with query: $query")
         return try {
             // Optimization: Refined query to prioritize common foods in English-speaking regions
@@ -115,9 +138,12 @@ class FoodRepository {
             }
             
             // Final quality check: ensure results that start with the query appear first
-            return mappedResults.sortedByDescending { 
+            val sorted = mappedResults.sortedByDescending {
                 it.name.lowercase().startsWith(query.lowercase())
             }
+            searchCache[key] = sorted
+            sorted.forEach { info -> info.toCache()?.let { dao?.upsertCachedProduct(it) } }
+            sorted
         } catch (e: Exception) {
             Log.e(TAG, "Error searching products: ${e.message}", e)
             emptyList()

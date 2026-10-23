@@ -9,8 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.LocalDrink
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,20 +25,33 @@ import androidx.compose.ui.unit.sp
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.data.UserGoal
+import com.jsemalja.trackmecalories.data.WaterEntry
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+
+// Section order for the daily log; anything else (custom meal types) is appended alphabetically.
+private val MEAL_ORDER = listOf("Breakfast", "Lunch", "Dinner", "Snack", "Quick Add")
 
 @Composable
 fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val entries by viewModel.foodEntries.collectAsState()
     val goals by viewModel.userGoal.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
+    val waterEntries by viewModel.waterEntries.collectAsState()
 
     var showManualDialog by remember { mutableStateOf(false) }
     var showQuickAddDialog by remember { mutableStateOf(false) }
     var editingEntry by remember { mutableStateOf<FoodEntry?>(null) }
-    
+
     var showPortionDialogFor by remember { mutableStateOf<CustomFood?>(null) }
+
+    val grouped = remember(entries) { entries.groupBy { it.mealType } }
+    val orderedMeals = remember(grouped) {
+        MEAL_ORDER.filter { grouped.containsKey(it) } +
+            grouped.keys.filterNot { it in MEAL_ORDER }.sorted()
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -61,6 +76,12 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             DateSelector(selectedDate) { viewModel.changeDate(it) }
             Spacer(Modifier.height(24.dp))
             DailyProgressCard(entries, goals)
+            Spacer(Modifier.height(12.dp))
+            WaterCard(
+                waterEntries = waterEntries,
+                goalMl = goals.waterGoalMl,
+                onAddWater = { viewModel.addWater(it) }
+            )
             Spacer(Modifier.height(24.dp))
             Text("Daily Log", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
@@ -71,18 +92,25 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    items(entries, key = { it.id }) { entry ->
-                        SwipeToDeleteContainer(
-                            onDelete = { viewModel.deleteEntry(entry) }
-                        ) {
-                            FoodItemRow(
-                                entry = entry,
-                                onClick = { editingEntry = entry }
-                            )
+                    orderedMeals.forEach { meal ->
+                        val mealEntries = grouped[meal].orEmpty()
+                        item(key = "header_$meal") {
+                            MealSectionHeader(meal, mealEntries.sumOf { it.kcal })
                         }
+                        items(mealEntries, key = { it.id }) { entry ->
+                            SwipeToDeleteContainer(
+                                onDelete = { viewModel.deleteEntry(entry) }
+                            ) {
+                                FoodItemRow(
+                                    entry = entry,
+                                    onClick = { editingEntry = entry }
+                                )
+                            }
+                        }
+                        item(key = "spacer_$meal") { Spacer(Modifier.height(8.dp)) }
                     }
                 }
             }
@@ -93,7 +121,6 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         CustomFoodEntryDialog(
             onDismiss = { showManualDialog = false },
             onSave = { customFood ->
-                viewModel.saveCustomFood(customFood)
                 showPortionDialogFor = customFood
                 showManualDialog = false
             }
@@ -105,21 +132,7 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             food = showPortionDialogFor!!,
             onDismiss = { showPortionDialogFor = null },
             onConfirm = { amount, mealType ->
-                val food = showPortionDialogFor!!
-                val ratio = amount / 100.0
-                viewModel.addEntry(FoodEntry(
-                    name = food.name,
-                    kcal = (food.kcalPer100 * ratio).toInt(),
-                    protein = food.proteinPer100 * ratio,
-                    carbs = food.carbsPer100 * ratio,
-                    fat = food.fatPer100 * ratio,
-                    fiber = food.fiberPer100 * ratio,
-                    salt = food.saltPer100 * ratio,
-                    amount = amount,
-                    unit = food.unit,
-                    mealType = mealType,
-                    date = selectedDate.toString()
-                ))
+                viewModel.logCustomFood(showPortionDialogFor!!, amount, mealType, selectedDate.toString())
                 showPortionDialogFor = null
             }
         )
@@ -139,6 +152,44 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             onUpdate = { updated -> viewModel.updateEntry(updated) },
             onCopyToDate = { date -> viewModel.copyEntryToDate(entry, date) }
         )
+    }
+}
+
+@Composable
+fun MealSectionHeader(meal: String, totalKcal: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(meal, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text("$totalKcal kcal", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+    }
+}
+
+@Composable
+fun WaterCard(waterEntries: List<WaterEntry>, goalMl: Double, onAddWater: (Double) -> Unit) {
+    val totalMl = waterEntries.sumOf { it.amountMl }
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.LocalDrink, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Water", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text("${totalMl.toInt()} / ${goalMl.toInt()} ml", style = MaterialTheme.typography.bodyMedium)
+            }
+            OutlinedButton(onClick = { onAddWater(250.0) }) { Text("+250") }
+            Spacer(Modifier.width(8.dp))
+            OutlinedButton(onClick = { onAddWater(500.0) }) { Text("+500") }
+        }
     }
 }
 
@@ -164,7 +215,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
             }
 
             Spacer(Modifier.height(16.dp))
-            
+
             LinearProgressIndicator(
                 progress = { (totalKcal.toFloat() / goals.calorieGoal).coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)),
@@ -218,7 +269,7 @@ fun FoodItemRow(entry: FoodEntry, onClick: () -> Unit) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(entry.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                Text("${entry.mealType} · ${entry.amount.toInt()}${entry.unit}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text("${entry.amount.toInt()}${entry.unit}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text("${entry.kcal} kcal", fontWeight = FontWeight.Bold)
@@ -235,7 +286,7 @@ fun SwipeToDeleteContainer(
     content: @Composable () -> Unit
 ) {
     val state = rememberSwipeToDismissBoxState()
-    
+
     LaunchedEffect(state.currentValue) {
         if (state.currentValue == SwipeToDismissBoxValue.EndToStart) {
             onDelete()
@@ -289,11 +340,15 @@ fun QuickAddDialog(onDismiss: () -> Unit, onSave: (Int) -> Unit) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
+    var showPicker by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         (-3..3).forEach { dayOffset ->
             val date = LocalDate.now().plusDays(dayOffset.toLong())
@@ -315,6 +370,29 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
                 },
                 modifier = Modifier.weight(1f)
             )
+        }
+        IconButton(onClick = { showPicker = true }) {
+            Icon(Icons.Default.CalendarMonth, contentDescription = "Pick a date")
+        }
+    }
+
+    if (showPicker) {
+        val initialMillis = selectedDate.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+        val state = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let { millis ->
+                        val date = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+                        onDateSelected(date)
+                    }
+                    showPicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancel") } }
+        ) {
+            DatePicker(state = state)
         }
     }
 }

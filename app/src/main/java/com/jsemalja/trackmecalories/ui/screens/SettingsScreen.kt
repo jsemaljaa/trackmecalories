@@ -1,16 +1,25 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import kotlinx.coroutines.launch
+import java.io.File
+import java.time.LocalDate
 
 /**
  * Settings screen for user configuration.
@@ -25,10 +34,15 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     var fatGoal by remember(currentGoals) { mutableStateOf(currentGoals.fatGoal.toString()) }
     var fiberGoal by remember(currentGoals) { mutableStateOf(currentGoals.fiberGoal.toString()) }
     var saltGoal by remember(currentGoals) { mutableStateOf(currentGoals.saltGoal.toString()) }
+    var waterGoal by remember(currentGoals) { mutableStateOf(currentGoals.waterGoalMl.toString()) }
 
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var exportError by remember { mutableStateOf<String?>(null) }
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Text("Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         
         Spacer(Modifier.height(24.dp))
@@ -89,6 +103,16 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             )
         }
 
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = waterGoal,
+            onValueChange = { waterGoal = it },
+            label = { Text("Water Goal (ml)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(Modifier.height(24.dp))
 
         Button(
@@ -100,7 +124,8 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                         carbGoal = carbGoal.toDoubleOrNull() ?: currentGoals.carbGoal,
                         fatGoal = fatGoal.toDoubleOrNull() ?: currentGoals.fatGoal,
                         fiberGoal = fiberGoal.toDoubleOrNull() ?: currentGoals.fiberGoal,
-                        saltGoal = saltGoal.toDoubleOrNull() ?: currentGoals.saltGoal
+                        saltGoal = saltGoal.toDoubleOrNull() ?: currentGoals.saltGoal,
+                        waterGoalMl = waterGoal.toDoubleOrNull() ?: currentGoals.waterGoalMl
                     )
                 )
             },
@@ -108,15 +133,52 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         ) {
             Text("Save Goals")
         }
-        
-        Spacer(Modifier.weight(1f))
-        
+
+        Spacer(Modifier.height(24.dp))
+
         HorizontalDivider()
         Spacer(Modifier.height(16.dp))
-        
-        Text("Data Management", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+
+        Text("Data", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(8.dp))
-        
+
+        OutlinedButton(
+            onClick = {
+                scope.launch {
+                    exportError = try {
+                        val csv = viewModel.exportCsv()
+                        val file = File(context.cacheDir, "trackmecalories_export_${LocalDate.now()}.csv")
+                        file.writeText(csv)
+                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/csv"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Export Food Log"))
+                        null
+                    } catch (e: Exception) {
+                        "Export failed: ${e.message}"
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Download, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Export Data (CSV)")
+        }
+
+        exportError?.let {
+            Spacer(Modifier.height(4.dp))
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Text("Danger Zone", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+        Spacer(Modifier.height(8.dp))
+
         OutlinedButton(
             onClick = { showDeleteDialog = true },
             modifier = Modifier.fillMaxWidth(),
