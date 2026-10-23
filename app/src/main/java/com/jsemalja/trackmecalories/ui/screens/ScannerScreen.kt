@@ -32,9 +32,6 @@ import com.jsemalja.trackmecalories.data.FoodInfo
 import com.jsemalja.trackmecalories.data.FoodRepository
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 
-// Control variable for scanner state
-var isScanning by mutableStateOf(false)
-
 /**
  * Screen providing barcode scanning functionality.
  * Uses ML Kit for barcode recognition and Open Food Facts API for data retrieval.
@@ -43,6 +40,10 @@ var isScanning by mutableStateOf(false)
 fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // Scoped to this screen's composition, so it can't leak state across recompositions/screens.
+    var isScanning by remember { mutableStateOf(false) }
+
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -68,6 +69,8 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     if (hasCameraPermission) {
         Box(modifier = modifier.fillMaxSize()) {
             CameraPreviewScanner(
+                isScanning = isScanning,
+                onScanningChanged = { isScanning = it },
                 onFoodFound = { foodInfo ->
                     foundFood = CustomFood(
                         barcode = foodInfo.barcode,
@@ -143,6 +146,9 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                     mealType = mealType,
                     date = viewModel.selectedDate.value.toString()
                 ))
+                // Save to custom foods so it appears in Recents
+                viewModel.saveCustomFood(foundFood!!)
+
                 showPortionDialog = false
                 foundFood = null
                 isScanning = false
@@ -153,6 +159,8 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
 
 @Composable
 fun CameraPreviewScanner(
+    isScanning: Boolean,
+    onScanningChanged: (Boolean) -> Unit,
     onFoodFound: (FoodInfo) -> Unit,
     onNotFound: (String) -> Unit
 ) {
@@ -161,6 +169,10 @@ fun CameraPreviewScanner(
     val scope = rememberCoroutineScope()
     val repository = remember { FoodRepository() }
     val barcodeScanner = remember { BarcodeScanning.getClient() }
+
+    // The analyzer callback below is captured once by `remember`, so it must read
+    // scanning state through a State that always holds the latest value.
+    val isScanningState = rememberUpdatedState(isScanning)
 
     val cameraController = remember {
         LifecycleCameraController(context).apply {
@@ -174,8 +186,8 @@ fun CameraPreviewScanner(
                 ) { result ->
                     val barcode = result.getValue(barcodeScanner)?.firstOrNull()
                     barcode?.rawValue?.let { code ->
-                        if (!isScanning) {
-                            processBarcode(code, repository, scope, onFoodFound, onNotFound)
+                        if (!isScanningState.value) {
+                            processBarcode(code, repository, scope, onScanningChanged, onFoodFound, onNotFound)
                         }
                     }
                 }
@@ -198,10 +210,11 @@ private fun processBarcode(
     code: String,
     repository: FoodRepository,
     scope: kotlinx.coroutines.CoroutineScope,
+    onScanningChanged: (Boolean) -> Unit,
     onFoodFound: (FoodInfo) -> Unit,
     onNotFound: (String) -> Unit
 ) {
-    isScanning = true
+    onScanningChanged(true)
     scope.launch(Dispatchers.IO) {
         val result = repository.getProductInfo(code)
         withContext(Dispatchers.Main) {

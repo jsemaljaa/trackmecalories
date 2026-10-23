@@ -10,6 +10,7 @@ import androidx.room.RoomDatabase
 import androidx.room.OnConflictStrategy
 import androidx.room.Delete
 import androidx.room.Update
+import androidx.room.Index
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -34,8 +35,12 @@ data class FoodEntry(
 
 /**
  * Entity representing a food template (e.g., from a barcode or manual save).
+ * Includes a unique index on barcode to prevent duplicates while populating recent foods.
  */
-@Entity(tableName = "custom_foods")
+@Entity(
+    tableName = "custom_foods",
+    indices = [Index(value = ["barcode"], unique = true)]
+)
 data class CustomFood(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val barcode: String? = null,
@@ -83,7 +88,7 @@ interface FoodDao {
     @Query("SELECT * FROM custom_foods WHERE barcode = :barcode LIMIT 1")
     suspend fun getCustomFoodByBarcode(barcode: String): CustomFood?
 
-    @Query("SELECT * FROM custom_foods ORDER BY name ASC")
+    @Query("SELECT * FROM custom_foods ORDER BY id DESC")
     fun getAllCustomFoods(): Flow<List<CustomFood>>
 
     @Query("SELECT * FROM user_goals WHERE id = 0")
@@ -96,7 +101,7 @@ interface FoodDao {
     suspend fun clearAllEntries()
 }
 
-@Database(entities = [FoodEntry::class, CustomFood::class, UserGoal::class], version = 4, exportSchema = false)
+@Database(entities = [FoodEntry::class, CustomFood::class, UserGoal::class], version = 5, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun foodDao(): FoodDao
 }

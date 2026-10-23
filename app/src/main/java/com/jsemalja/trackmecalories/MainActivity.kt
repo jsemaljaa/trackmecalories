@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -28,6 +29,7 @@ import com.jsemalja.trackmecalories.data.AppDatabase
 import com.jsemalja.trackmecalories.ui.screens.HomeScreen
 import com.jsemalja.trackmecalories.ui.screens.RecentsScreen
 import com.jsemalja.trackmecalories.ui.screens.ScannerScreen
+import com.jsemalja.trackmecalories.ui.screens.SearchScreen
 import com.jsemalja.trackmecalories.ui.screens.SettingsScreen
 import com.jsemalja.trackmecalories.ui.theme.TrackmecaloriesTheme
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
@@ -40,7 +42,11 @@ class MainActivity : ComponentActivity() {
         val db = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java, "track-me-calories-db"
-        ).fallbackToDestructiveMigration().build()
+        )
+            // Only destructive on downgrade (e.g. reinstalling an older debug build).
+            // Upgrades must ship a real Migration so user data is never silently wiped.
+            .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
+            .build()
         val dao = db.foodDao()
 
         enableEdgeToEdge()
@@ -72,6 +78,7 @@ fun TrackmecaloriesApp(viewModel: MainViewModel) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             when (currentDestination) {
                 AppDestinations.HOME -> HomeScreen(viewModel, Modifier.padding(innerPadding))
+                AppDestinations.SEARCH -> SearchScreen(viewModel, Modifier.padding(innerPadding))
                 AppDestinations.SCAN -> ScannerScreen(viewModel, Modifier.padding(innerPadding))
                 AppDestinations.RECENTS -> RecentsScreen(viewModel, Modifier.padding(innerPadding))
                 AppDestinations.SETTINGS -> SettingsScreen(viewModel, Modifier.padding(innerPadding))
@@ -85,6 +92,7 @@ enum class AppDestinations(
     val icon: ImageVector,
 ) {
     HOME("Home", Icons.Default.Home),
+    SEARCH("Search", Icons.Default.Search),
     SCAN("Scan", Icons.Default.CameraAlt),
     RECENTS("Recents", Icons.Default.History),
     SETTINGS("Settings", Icons.Default.Settings),

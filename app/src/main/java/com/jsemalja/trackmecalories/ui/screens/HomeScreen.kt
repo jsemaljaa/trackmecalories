@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -19,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jsemalja.trackmecalories.data.CustomFood
@@ -181,6 +179,13 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
                 MacroPill("Carbs", entries.sumOf { it.carbs }, goals.carbGoal, "g", Color(0xFF81C784))
                 MacroPill("Fat", entries.sumOf { it.fat }, goals.fatGoal, "g", Color(0xFFFFD54F))
             }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                MacroPill("Fiber", entries.sumOf { it.fiber }, goals.fiberGoal, "g", Color(0xFF64B5F6))
+                MacroPill("Salt", entries.sumOf { it.salt }, goals.saltGoal, "g", Color(0xFFBA68C8))
+            }
         }
     }
 }
@@ -259,54 +264,6 @@ fun SwipeToDeleteContainer(
 }
 
 @Composable
-fun EditEntryDialog(entry: FoodEntry, onDismiss: () -> Unit, onUpdate: (FoodEntry) -> Unit, onCopyToDate: (LocalDate) -> Unit) {
-    var amount by remember { mutableStateOf(entry.amount.toString()) }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Edit Entry: ${entry.name}") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("How many grams did you have?") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Text("Quick Copy", style = MaterialTheme.typography.labelLarge)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { onCopyToDate(LocalDate.now().minusDays(1)); onDismiss() }, modifier = Modifier.weight(1f)) {
-                        Text("To Yesterday")
-                    }
-                    Button(onClick = { onCopyToDate(LocalDate.now().plusDays(1)); onDismiss() }, modifier = Modifier.weight(1f)) {
-                        Text("To Tomorrow")
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = {
-                val newAmount = amount.toDoubleOrNull() ?: entry.amount
-                val ratio = newAmount / entry.amount
-                onUpdate(entry.copy(
-                    amount = newAmount,
-                    kcal = (entry.kcal * ratio).toInt(),
-                    protein = entry.protein * ratio,
-                    carbs = entry.carbs * ratio,
-                    fat = entry.fat * ratio,
-                    fiber = entry.fiber * ratio,
-                    salt = entry.salt * ratio
-                ))
-                onDismiss()
-            }) { Text("Update") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
-}
-
-@Composable
 fun QuickAddDialog(onDismiss: () -> Unit, onSave: (Int) -> Unit) {
     var kcal by remember { mutableStateOf("") }
     AlertDialog(
@@ -317,7 +274,7 @@ fun QuickAddDialog(onDismiss: () -> Unit, onSave: (Int) -> Unit) {
                 value = kcal,
                 onValueChange = { kcal = it },
                 label = { Text("Total Calories") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("e.g. 500") }
             )

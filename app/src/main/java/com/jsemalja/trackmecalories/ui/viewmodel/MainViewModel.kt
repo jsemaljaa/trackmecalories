@@ -6,23 +6,21 @@ import androidx.lifecycle.viewModelScope
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodDao
 import com.jsemalja.trackmecalories.data.FoodEntry
+import com.jsemalja.trackmecalories.data.FoodInfo
+import com.jsemalja.trackmecalories.data.FoodRepository
 import com.jsemalja.trackmecalories.data.UserGoal
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 /**
  * Main ViewModel for the application, handling food logging, goals, and history.
- *
- * @property dao The Data Access Object for database operations.
  */
 class MainViewModel(private val dao: FoodDao) : ViewModel() {
     
+    private val repository = FoodRepository()
+
     // The currently selected date for viewing/logging
     val selectedDate = MutableStateFlow(LocalDate.now())
 
@@ -36,9 +34,46 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
         .map { it ?: UserGoal() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserGoal())
 
-    // Frequently used foods (all custom foods for now)
+    // Frequently used foods
     val recentFoods: StateFlow<List<CustomFood>> = dao.getAllCustomFoods()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Search results state
+    private val _searchResults = MutableStateFlow<List<FoodInfo>>(emptyList())
+    val searchResults: StateFlow<List<FoodInfo>> = _searchResults
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching
+
+    private val _searchQuery = MutableStateFlow("")
+
+    @OptIn(FlowPreview::class)
+    val searchFlow = _searchQuery
+        .debounce(500)
+        .distinctUntilChanged()
+        .onEach { query ->
+            if (query.isBlank()) {
+                _searchResults.value = emptyList()
+            } else {
+                _isSearching.value = true
+            }
+        }
+        .flatMapLatest { query ->
+            if (query.isBlank()) flowOf(emptyList<FoodInfo>())
+            else flow { emit(repository.searchProducts(query)) }
+        }
+        .onEach { results ->
+            _searchResults.value = results
+            _isSearching.value = false
+        }
+        .launchIn(viewModelScope)
+
+    /**
+     * Updates the search query. The actual search is debounced via searchFlow.
+     */
+    fun searchFoods(query: String) {
+        _searchQuery.value = query
+    }
 
     /**
      * Adds a new food entry to the database.
@@ -136,18 +171,6 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
         viewModelScope.launch {
             dao.clearAllEntries()
         }
-    }
-
-    /**
-     * Calculation logic: Converts "per 100g" values to actual consumed amount.
-     * Total = (ValuePer100 / 100) * ConsumedAmount
-     */
-    fun calculateValue(per100: Double, amount: Double): Double {
-        return (per100 / 100.0) * amount
-    }
-
-    fun calculateKcal(per100: Double, amount: Double): Int {
-        return ((per100 / 100.0) * amount).toInt()
     }
 }
 

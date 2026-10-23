@@ -23,7 +23,9 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     var proteinGoal by remember(currentGoals) { mutableStateOf(currentGoals.proteinGoal.toString()) }
     var carbGoal by remember(currentGoals) { mutableStateOf(currentGoals.carbGoal.toString()) }
     var fatGoal by remember(currentGoals) { mutableStateOf(currentGoals.fatGoal.toString()) }
-    
+    var fiberGoal by remember(currentGoals) { mutableStateOf(currentGoals.fiberGoal.toString()) }
+    var saltGoal by remember(currentGoals) { mutableStateOf(currentGoals.saltGoal.toString()) }
+
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
@@ -67,9 +69,28 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
         }
-        
+
+        Spacer(Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = fiberGoal,
+                onValueChange = { fiberGoal = it },
+                label = { Text("Fiber (g)") },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            OutlinedTextField(
+                value = saltGoal,
+                onValueChange = { saltGoal = it },
+                label = { Text("Salt (g)") },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+        }
+
         Spacer(Modifier.height(24.dp))
-        
+
         Button(
             onClick = {
                 viewModel.updateGoals(
@@ -77,7 +98,9 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                         calorieGoal = calorieGoal.toIntOrNull() ?: currentGoals.calorieGoal,
                         proteinGoal = proteinGoal.toDoubleOrNull() ?: currentGoals.proteinGoal,
                         carbGoal = carbGoal.toDoubleOrNull() ?: currentGoals.carbGoal,
-                        fatGoal = fatGoal.toDoubleOrNull() ?: currentGoals.fatGoal
+                        fatGoal = fatGoal.toDoubleOrNull() ?: currentGoals.fatGoal,
+                        fiberGoal = fiberGoal.toDoubleOrNull() ?: currentGoals.fiberGoal,
+                        saltGoal = saltGoal.toDoubleOrNull() ?: currentGoals.saltGoal
                     )
                 )
             },
