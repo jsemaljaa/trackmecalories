@@ -149,7 +149,8 @@ fun HomeScreen(
                         WaterCard(
                             waterEntries = waterEntries,
                             goalMl = goals.waterGoalMl,
-                            onAddWater = { viewModel.addWater(it) }
+                            onAddWater = { viewModel.addWater(it) },
+                            onRemove = { viewModel.deleteWaterEntry(it) }
                         )
                         Spacer(Modifier.height(20.dp))
                         Text(stringResource(R.string.daily_log), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -268,13 +269,21 @@ fun MealSectionHeader(meal: String, totalKcal: Int) {
 }
 
 @Composable
-fun WaterCard(waterEntries: List<WaterEntry>, goalMl: Double, onAddWater: (Double) -> Unit) {
+fun WaterCard(
+    waterEntries: List<WaterEntry>,
+    goalMl: Double,
+    onAddWater: (Double) -> Unit,
+    onRemove: (WaterEntry) -> Unit
+) {
     val totalMl = waterEntries.sumOf { it.amountMl }
+    var showEntries by remember { mutableStateOf(false) }
 
+    // Tap the card to see (and undo) the day's water entries.
     AppCard(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        tint = MaterialTheme.colorScheme.tertiaryContainer
+        tint = MaterialTheme.colorScheme.tertiaryContainer,
+        onClick = { showEntries = true }
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -284,12 +293,42 @@ fun WaterCard(waterEntries: List<WaterEntry>, goalMl: Double, onAddWater: (Doubl
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.water), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                Text("${totalMl.toInt()} / ${goalMl.toInt()} ml", style = MaterialTheme.typography.bodyMedium)
+                Text("${totalMl.toInt()} / ${goalMl.toInt()} ${stringResource(R.string.unit_ml)}", style = MaterialTheme.typography.bodyMedium)
             }
             OutlinedButton(onClick = { onAddWater(250.0) }) { Text("+250") }
             Spacer(Modifier.width(8.dp))
             OutlinedButton(onClick = { onAddWater(500.0) }) { Text("+500") }
         }
+    }
+
+    if (showEntries) {
+        AlertDialog(
+            onDismissRequest = { showEntries = false },
+            title = { Text(stringResource(R.string.water_entries_title)) },
+            text = {
+                if (waterEntries.isEmpty()) {
+                    Text(stringResource(R.string.water_entries_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    Column {
+                        val timeFormat = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(Locale.getDefault())
+                        waterEntries.sortedByDescending { it.time }.forEach { entry ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    Instant.ofEpochMilli(entry.time).atZone(ZoneId.systemDefault()).toLocalTime().format(timeFormat),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.width(72.dp)
+                                )
+                                Text("${entry.amountMl.toInt()} ${stringResource(R.string.unit_ml)}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                IconButton(onClick = { onRemove(entry) }) {
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showEntries = false }) { Text(stringResource(R.string.close)) } }
+        )
     }
 }
 

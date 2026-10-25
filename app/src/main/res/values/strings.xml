@@ -366,4 +366,8 @@
     <string name="wipe_all_confirm">Delete everything</string>
     <string name="camera_needed">Camera access is needed to scan barcodes.</string>
     <string name="grant_permission">Allow camera</string>
+
+    <!-- Water -->
+    <string name="water_entries_title">Water today</string>
+    <string name="water_entries_empty">No water logged yet.</string>
 </resources>
