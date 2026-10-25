@@ -14,6 +14,12 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.jsemalja.trackmecalories.R
+import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,6 +70,7 @@ fun TrendsScreen(
     val previousLogged = (1L..7L).mapNotNull { byDate[weekStart.minusDays(it).toString()] }
     val daysSoFar = days.count { !it.isAfter(today) }
     val isCurrentWeek = weekStart == weekStartOf(today)
+    var section by rememberSaveable { mutableStateOf(0) }
 
     Column(
         modifier = modifier
@@ -73,6 +80,36 @@ fun TrendsScreen(
     ) {
         ScreenHeader(Icons.Default.BarChart, "Trends")
         Spacer(Modifier.height(12.dp))
+
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            listOf(R.string.tab_calories, R.string.tab_weight).forEachIndexed { i, label ->
+                SegmentedButton(
+                    selected = section == i,
+                    onClick = { section = i },
+                    shape = SegmentedButtonDefaults.itemShape(i, 2),
+                    colors = appSegmentedColors(),
+                    icon = {}
+                ) { Text(stringResource(label)) }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+
+        if (section == 1) {
+            val points by viewModel.weightPoints.collectAsState()
+            val entries by viewModel.weightEntries.collectAsState()
+            val adaptive by viewModel.adaptiveMaintenance.collectAsState()
+            WeightSection(
+                points = points,
+                entries = entries,
+                goalKg = goals.targetWeightKg,
+                heightCm = goals.heightCm,
+                adaptive = adaptive,
+                onLog = viewModel::logWeight,
+                onDelete = viewModel::deleteWeight,
+                onSetGoal = viewModel::setTargetWeight
+            )
+            return@Column
+        }
 
         WeekSelector(
             weekStart = weekStart,

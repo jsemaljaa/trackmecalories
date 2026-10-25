@@ -96,4 +96,41 @@
     <!-- Onboarding -->
     <string name="onboarding_title">Welcome!</string>
     <string name="onboarding_body">Set your daily goal: pick a diet and your calories, and the macros follow. Not sure how many calories? Tap Calculate. You can change everything later in Settings.</string>
+
+    <!-- Weight -->
+    <string name="tab_calories">Calories</string>
+    <string name="tab_weight">Weight</string>
+    <string name="range_1m">1M</string>
+    <string name="range_3m">3M</string>
+    <string name="range_1y">1Y</string>
+    <string name="range_all">All</string>
+    <string name="ok">OK</string>
+    <string name="today">Today</string>
+    <string name="unit_kg_per_week">kg/week</string>
+    <string name="unit_kcal_day">kcal/day</string>
+    <string name="bmi">BMI</string>
+    <string name="weight_log">Log weight</string>
+    <string name="weight_log_desc">Morning, after the bathroom, before eating</string>
+    <string name="weight_log_tip">Weigh yourself at the same time each day — the trend line evens out the rest.</string>
+    <string name="weight_empty">Log your weight to see your trend, progress to your goal and your real maintenance calories.</string>
+    <string name="weight_trend">Trend weight</string>
+    <string name="weight_trend_short">trend %1$s</string>
+    <string name="weight_trend_explainer">A smoothed average of your weigh-ins, so a water-weight spike doesn\'t look like a gain.</string>
+    <string name="weight_last_reading">Last weigh-in %1$s kg · %2$s</string>
+    <string name="weight_since_start">%1$s kg since %2$s</string>
+    <string name="weight_readings">Weigh-ins</string>
+    <string name="weight_weekly">Weekly trend</string>
+    <string name="weight_weekly_detail">over the last 4 weeks</string>
+    <string name="weight_weekly_need_data">needs a week of weigh-ins</string>
+    <string name="weight_goal">Goal weight</string>
+    <string name="weight_goal_kg">Goal weight</string>
+    <string name="weight_goal_set">tap to set</string>
+    <string name="weight_goal_to_go">%1$s kg to go</string>
+    <string name="weight_goal_eta">%1$s kg to go · around %2$s</string>
+    <string name="weight_goal_clear">Remove goal</string>
+    <string name="weight_maintenance">Measured maintenance</string>
+    <string name="weight_maintenance_detail">What you actually burn: your average intake on %1$d logged days, corrected for how your weight trend moved over %2$d days.</string>
+    <string name="weight_maintenance_need_data">Appears after about 2 weeks with regular weigh-ins and at least 10 logged days. More accurate than any formula.</string>
+    <string name="weight_history">History</string>
+    <string name="weight_chart_need_two">The chart appears after two weigh-ins.</string>
 </resources>

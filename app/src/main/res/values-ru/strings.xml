@@ -94,4 +94,41 @@
     <!-- Onboarding -->
     <string name="onboarding_title">Добро пожаловать!</string>
     <string name="onboarding_body">Задайте дневную цель: выберите рацион и калории, а БЖУ рассчитаются сами. Не знаете, сколько калорий нужно? Нажмите «Рассчитать». Всё можно изменить позже в настройках.</string>
+
+    <!-- Weight -->
+    <string name="tab_calories">Калории</string>
+    <string name="tab_weight">Вес</string>
+    <string name="range_1m">1М</string>
+    <string name="range_3m">3М</string>
+    <string name="range_1y">1Г</string>
+    <string name="range_all">Всё</string>
+    <string name="ok">ОК</string>
+    <string name="today">Сегодня</string>
+    <string name="unit_kg_per_week">кг/нед</string>
+    <string name="unit_kcal_day">ккал/день</string>
+    <string name="bmi">ИМТ</string>
+    <string name="weight_log">Записать вес</string>
+    <string name="weight_log_desc">Утром, после туалета, до еды</string>
+    <string name="weight_log_tip">Взвешивайтесь в одно и то же время — линия тренда сгладит остальное.</string>
+    <string name="weight_empty">Записывайте вес, чтобы видеть тренд, прогресс к цели и реальную норму калорий.</string>
+    <string name="weight_trend">Вес по тренду</string>
+    <string name="weight_trend_short">тренд %1$s</string>
+    <string name="weight_trend_explainer">Сглаженное среднее взвешиваний: скачок из‑за воды не выглядит как набор веса.</string>
+    <string name="weight_last_reading">Последнее взвешивание %1$s кг · %2$s</string>
+    <string name="weight_since_start">%1$s кг с %2$s</string>
+    <string name="weight_readings">Взвешивания</string>
+    <string name="weight_weekly">Тренд за неделю</string>
+    <string name="weight_weekly_detail">за последние 4 недели</string>
+    <string name="weight_weekly_need_data">нужна неделя взвешиваний</string>
+    <string name="weight_goal">Целевой вес</string>
+    <string name="weight_goal_kg">Целевой вес</string>
+    <string name="weight_goal_set">нажмите, чтобы задать</string>
+    <string name="weight_goal_to_go">осталось %1$s кг</string>
+    <string name="weight_goal_eta">осталось %1$s кг · примерно %2$s</string>
+    <string name="weight_goal_clear">Убрать цель</string>
+    <string name="weight_maintenance">Измеренная норма</string>
+    <string name="weight_maintenance_detail">Сколько вы реально тратите: средняя калорийность за %1$d записанных дней с поправкой на изменение веса за %2$d дней.</string>
+    <string name="weight_maintenance_need_data">Появится примерно через 2 недели регулярных взвешиваний и не менее 10 записанных дней. Точнее любой формулы.</string>
+    <string name="weight_history">История</string>
+    <string name="weight_chart_need_two">График появится после двух взвешиваний.</string>
 </resources>

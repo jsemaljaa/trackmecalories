@@ -39,7 +39,7 @@ import kotlin.math.roundToInt
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, onSave: (UserGoal) -> Unit) {
+fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: Int? = null, onSave: (UserGoal) -> Unit) {
     var kcal by remember(goals) { mutableStateOf(goals.calorieGoal.toString()) }
     var diet by remember(goals) { mutableStateOf(Diet.from(goals.dietType)) }
     var protein by remember(goals) { mutableStateOf(goals.proteinGoal.clean()) }
@@ -171,6 +171,7 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, onSave: (UserGoal) -> 
         CalorieCalculatorDialog(
             goals = profile,
             latestWeightKg = latestWeightKg,
+            measuredMaintenance = measuredMaintenance,
             onDismiss = { showCalculator = false },
             onUse = { target, updatedProfile ->
                 kcal = target.toString()
@@ -227,6 +228,7 @@ private fun MacroSplitBar(proteinPct: Int, carbsPct: Int, fatPct: Int) {
 fun CalorieCalculatorDialog(
     goals: UserGoal,
     latestWeightKg: Double?,
+    measuredMaintenance: Int? = null,
     onDismiss: () -> Unit,
     onUse: (Int, UserGoal) -> Unit
 ) {
@@ -300,6 +302,20 @@ fun CalorieCalculatorDialog(
                         } else {
                             Text(stringResource(R.string.calc_fill_in), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
+                    }
+                }
+                // Measured from real intake + weight trend: more accurate than any formula.
+                if (measuredMaintenance != null) {
+                    item {
+                        OutlinedButton(
+                            onClick = {
+                                onUse(
+                                    CalorieCalculator.target(measuredMaintenance, pace),
+                                    goals.copy(sex = sex.name, birthYear = year, heightCm = h, activityLevel = activity.name)
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(stringResource(R.string.calc_use_measured, measuredMaintenance)) }
                     }
                 }
             }

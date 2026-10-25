@@ -71,7 +71,14 @@ fun SettingsScreen(
         Spacer(Modifier.height(16.dp))
 
         SettingsSectionCard(title = stringResource(R.string.goals_title), titleColor = MaterialTheme.colorScheme.primary) {
-            GoalsEditor(goals = currentGoals, latestWeightKg = null, onSave = viewModel::updateGoals)
+            val weights by viewModel.weightEntries.collectAsState()
+            val measured by viewModel.adaptiveMaintenance.collectAsState()
+            GoalsEditor(
+                goals = currentGoals,
+                latestWeightKg = weights.maxByOrNull { it.date }?.weightKg,
+                measuredMaintenance = measured?.kcal,
+                onSave = viewModel::updateGoals
+            )
         }
 
         Spacer(Modifier.height(16.dp))

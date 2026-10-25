@@ -14,6 +14,12 @@ import com.jsemalja.trackmecalories.data.FoodRepository
 import com.jsemalja.trackmecalories.data.KalorickeTabulkyRepository
 import com.jsemalja.trackmecalories.data.KtHit
 import com.jsemalja.trackmecalories.data.RestaurantMenu
+import com.jsemalja.trackmecalories.data.AdaptiveMaintenance
+import com.jsemalja.trackmecalories.data.WeightEntry
+import com.jsemalja.trackmecalories.data.WeightPoint
+import com.jsemalja.trackmecalories.data.adaptiveMaintenance
+import com.jsemalja.trackmecalories.data.weightTrend
+import com.jsemalja.trackmecalories.data.toCustomFood
 import com.jsemalja.trackmecalories.data.SearchHit
 import com.jsemalja.trackmecalories.data.SearchMatcher
 import com.jsemalja.trackmecalories.data.SearchSource
@@ -98,6 +104,54 @@ class MainViewModel(
 
     fun changeTrendsWeek(weeks: Long) {
         trendsWeekStart.value = trendsWeekStart.value.plusWeeks(weeks)
+    }
+
+    // --- Weight ---
+
+    val weightEntries: StateFlow<List<WeightEntry>> = dao.getWeightEntries()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Logs a weigh-in; a second one on the same day replaces the first. */
+    fun logWeight(weightKg: Double, date: LocalDate = LocalDate.now()) {
+        viewModelScope.launch {
+            dao.upsertWeightEntry(WeightEntry(date = date.toString(), weightKg = weightKg))
+        }
+    }
+
+    fun deleteWeight(entry: WeightEntry) {
+        viewModelScope.launch { dao.deleteWeightEntry(entry) }
+    }
+
+    fun restoreWeight(entry: WeightEntry) {
+        viewModelScope.launch { dao.upsertWeightEntry(entry) }
+    }
+
+    /** Weigh-ins with their smoothed trend. */
+    val weightPoints: StateFlow<List<WeightPoint>> = weightEntries
+        .map { weightTrend(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Maintenance measured from the last 4 weeks of intake and weight trend. Days marked
+     * incomplete are left out, so forgotten meals don't make it look lower.
+     */
+    val adaptiveMaintenance: StateFlow<AdaptiveMaintenance?> = run {
+        val end = LocalDate.now()
+        val start = end.minusDays(28)
+        combine(
+            weightPoints,
+            dao.getDailyTotalsBetween(start.toString(), end.toString()),
+            dao.getDayLogsBetween(start.toString(), end.toString())
+        ) { points, totals, dayLogs ->
+            val incomplete = dayLogs.filter { !it.complete }.map { it.date }.toSet()
+            val intake = totals.filter { it.date !in incomplete }
+                .associate { LocalDate.parse(it.date) to it.totalKcal }
+            adaptiveMaintenance(points, intake, end)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun setTargetWeight(kg: Double?) {
+        viewModelScope.launch { dao.setUserGoal(userGoal.value.copy(targetWeightKg = kg)) }
     }
 
     // Search state. The query lives here (not in the screen) so results and the text field

@@ -20,6 +20,9 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.MonitorWeight
+import androidx.compose.ui.res.stringResource
+import com.jsemalja.trackmecalories.R
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Search
@@ -75,6 +78,8 @@ fun HomeScreen(
     var showManualDialog by remember { mutableStateOf(false) }
     var showQuickAddDialog by remember { mutableStateOf(false) }
     var showAddMenu by remember { mutableStateOf(false) }
+    var showLogWeight by remember { mutableStateOf(false) }
+    val weightEntries by viewModel.weightEntries.collectAsState()
     var editingEntry by remember { mutableStateOf<FoodEntry?>(null) }
 
     var showPortionDialogFor by remember { mutableStateOf<CustomFood?>(null) }
@@ -213,7 +218,16 @@ fun HomeScreen(
             onSearch = { showAddMenu = false; onOpenSearch() },
             onScan = { showAddMenu = false; onOpenScanner() },
             onQuickAdd = { showAddMenu = false; showQuickAddDialog = true },
-            onCustom = { showAddMenu = false; showManualDialog = true }
+            onCustom = { showAddMenu = false; showManualDialog = true },
+            onLogWeight = { showAddMenu = false; showLogWeight = true }
+        )
+    }
+
+    if (showLogWeight) {
+        LogWeightDialog(
+            initialKg = weightEntries.maxByOrNull { it.date }?.weightKg,
+            onDismiss = { showLogWeight = false },
+            onSave = { kg, date -> viewModel.logWeight(kg, date); showLogWeight = false }
         )
     }
 
@@ -718,7 +732,8 @@ private fun AddFoodSheet(
     onSearch: () -> Unit,
     onScan: () -> Unit,
     onQuickAdd: () -> Unit,
-    onCustom: () -> Unit
+    onCustom: () -> Unit,
+    onLogWeight: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 24.dp)) {
@@ -731,6 +746,8 @@ private fun AddFoodSheet(
             AddFoodAction(Icons.Outlined.QrCodeScanner, "Scan a barcode", "Packaged products", onScan)
             AddFoodAction(Icons.Outlined.Bolt, "Quick add calories", "Just a number, no food", onQuickAdd)
             AddFoodAction(Icons.Outlined.EditNote, "Create a custom food", "Enter the nutrition label yourself", onCustom)
+            HorizontalDivider(Modifier.padding(vertical = 4.dp, horizontal = 12.dp))
+            AddFoodAction(Icons.Outlined.MonitorWeight, stringResource(R.string.weight_log), stringResource(R.string.weight_log_desc), onLogWeight)
         }
     }
 }
