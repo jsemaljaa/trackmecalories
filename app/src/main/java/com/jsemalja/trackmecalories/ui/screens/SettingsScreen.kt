@@ -3,6 +3,8 @@ package com.jsemalja.trackmecalories.ui.screens
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import android.content.Intent
+import androidx.compose.ui.res.stringResource
+import com.jsemalja.trackmecalories.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -51,14 +53,6 @@ fun SettingsScreen(
 ) {
     val currentGoals by viewModel.userGoal.collectAsState()
     
-    var calorieGoal by remember(currentGoals) { mutableStateOf(currentGoals.calorieGoal.toString()) }
-    var proteinGoal by remember(currentGoals) { mutableStateOf(currentGoals.proteinGoal.clean()) }
-    var carbGoal by remember(currentGoals) { mutableStateOf(currentGoals.carbGoal.clean()) }
-    var fatGoal by remember(currentGoals) { mutableStateOf(currentGoals.fatGoal.clean()) }
-    var fiberGoal by remember(currentGoals) { mutableStateOf(currentGoals.fiberGoal.clean()) }
-    var saltGoal by remember(currentGoals) { mutableStateOf(currentGoals.saltGoal.clean()) }
-    var waterGoal by remember(currentGoals) { mutableStateOf(currentGoals.waterGoalMl.clean()) }
-
     var showDeleteDialog by remember { mutableStateOf(false) }
     var exportError by remember { mutableStateOf<String?>(null) }
 
@@ -76,90 +70,8 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        SettingsSectionCard(title = "Nutritional Goals", titleColor = MaterialTheme.colorScheme.primary) {
-            OutlinedTextField(
-                value = calorieGoal,
-                onValueChange = { calorieGoal = it },
-                label = { Text("Daily Calorie Goal (kcal)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = proteinGoal,
-                    onValueChange = { proteinGoal = it },
-                    label = { Text("Protein (g)") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = carbGoal,
-                    onValueChange = { carbGoal = it },
-                    label = { Text("Carbs (g)") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = fatGoal,
-                    onValueChange = { fatGoal = it },
-                    label = { Text("Fat (g)") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = fiberGoal,
-                    onValueChange = { fiberGoal = it },
-                    label = { Text("Fiber (g)") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = saltGoal,
-                    onValueChange = { saltGoal = it },
-                    label = { Text("Salt (g)") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = waterGoal,
-                onValueChange = { waterGoal = it },
-                label = { Text("Water Goal (ml)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    viewModel.updateGoals(
-                        currentGoals.copy(
-                            calorieGoal = calorieGoal.toIntOrNull() ?: currentGoals.calorieGoal,
-                            proteinGoal = proteinGoal.toDecimal() ?: currentGoals.proteinGoal,
-                            carbGoal = carbGoal.toDecimal() ?: currentGoals.carbGoal,
-                            fatGoal = fatGoal.toDecimal() ?: currentGoals.fatGoal,
-                            fiberGoal = fiberGoal.toDecimal() ?: currentGoals.fiberGoal,
-                            saltGoal = saltGoal.toDecimal() ?: currentGoals.saltGoal,
-                            waterGoalMl = waterGoal.toDecimal() ?: currentGoals.waterGoalMl
-                        )
-                    )
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Save Goals")
-            }
+        SettingsSectionCard(title = stringResource(R.string.goals_title), titleColor = MaterialTheme.colorScheme.primary) {
+            GoalsEditor(goals = currentGoals, latestWeightKg = null, onSave = viewModel::updateGoals)
         }
 
         Spacer(Modifier.height(16.dp))

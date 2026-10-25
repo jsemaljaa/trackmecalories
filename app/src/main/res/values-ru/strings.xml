@@ -40,9 +40,58 @@
     <string name="bmi_over">Избыточный вес</string>
     <string name="bmi_obese">Ожирение</string>
 
+    <!-- Common -->
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
+    <string name="undo">Отменить</string>
+    <string name="close">Закрыть</string>
+    <string name="unit_kcal">ккал</string>
+    <string name="unit_g">г</string>
+    <string name="unit_ml">мл</string>
+    <string name="unit_kg">кг</string>
+    <string name="protein">Белки</string>
+    <string name="carbs">Углеводы</string>
+    <string name="fat">Жиры</string>
+    <string name="fiber">Клетчатка</string>
+    <string name="salt">Соль</string>
+
     <!-- Confidence -->
     <string name="confidence_weighed">Взвешено</string>
     <string name="confidence_estimated">На глаз</string>
     <string name="confidence_guessed">Примерно</string>
 
+    <!-- Goals editor -->
+    <string name="goal_calories">Калории в день</string>
+    <string name="goal_calculate">Рассчитать</string>
+    <string name="goal_diet">Рацион</string>
+    <string name="protein_g">Белки (г)</string>
+    <string name="carbs_g">Углеводы (г)</string>
+    <string name="fat_g">Жиры (г)</string>
+    <string name="fiber_g">Клетчатка (г)</string>
+    <string name="salt_limit_g">Соль, не более (г)</string>
+    <string name="water_goal_ml">Вода (мл)</string>
+    <string name="goal_macros_add_up">Эти БЖУ дают %1$d ккал</string>
+    <string name="goal_save">Сохранить цели</string>
+    <string name="goal_saved">Сохранено ✓</string>
+
+    <!-- Calorie calculator -->
+    <string name="calc_title">Расчёт калорий</string>
+    <string name="calc_birth_year">Год рожд.</string>
+    <string name="calc_height_cm">Рост, см</string>
+    <string name="calc_weight_kg">Вес, кг</string>
+    <string name="calc_activity">Активность</string>
+    <string name="calc_goal">Цель</string>
+    <string name="calc_maintenance">Поддержание: %1$d ккал/день</string>
+    <string name="calc_min_note">Не ниже 1 200 ккал — меньше только под наблюдением врача.</string>
+    <string name="calc_fill_in">Введите год рождения, рост и вес, чтобы увидеть расчёт.</string>
+    <string name="calc_use">Применить</string>
+    <string name="calc_use_measured">Взять измеренное поддержание (%1$d ккал)</string>
+
+    <!-- Goals section -->
+    <string name="goals_title">Цели</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Добро пожаловать!</string>
+    <string name="onboarding_body">Задайте дневную цель: выберите рацион и калории, а БЖУ рассчитаются сами. Не знаете, сколько калорий нужно? Нажмите «Рассчитать». Всё можно изменить позже в настройках.</string>
 </resources>
