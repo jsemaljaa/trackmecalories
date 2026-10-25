@@ -17,6 +17,7 @@ import com.jsemalja.trackmecalories.data.RestaurantMenu
 import com.jsemalja.trackmecalories.data.SearchHit
 import com.jsemalja.trackmecalories.data.SearchMatcher
 import com.jsemalja.trackmecalories.data.SearchSource
+import com.jsemalja.trackmecalories.data.normalizedForSearch
 import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.WaterEntry
 import com.jsemalja.trackmecalories.data.toCustomFood
@@ -34,6 +35,7 @@ import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
 import java.util.Locale
+import kotlin.math.roundToInt
 
 /**
  * Main ViewModel for the application, handling food logging, goals, and history.
@@ -159,6 +161,9 @@ class MainViewModel(
         (menu + kt + off)
             .distinctBy { it.key }
             .sortedByDescending { it.score }
+            // Open Food Facts often has one product under several barcodes, and KT/OFF
+            // overlap; keep only the best-ranked copy of "same words, same calories".
+            .distinctBy { it.duplicateKey() }
             .take(MAX_RESULTS)
     }
         .flowOn(Dispatchers.Default)
@@ -240,6 +245,11 @@ class MainViewModel(
                     }
                 }
         }
+    }
+
+    private fun SearchHit.duplicateKey(): String {
+        val words = "$name ${brand.orEmpty()}".normalizedForSearch().split(' ').toSortedSet()
+        return "${words.joinToString(" ")}|$unit|${(kcal / 10).roundToInt()}"
     }
 
     private fun FoodInfo.toSearchHit(score: Double) = SearchHit(
