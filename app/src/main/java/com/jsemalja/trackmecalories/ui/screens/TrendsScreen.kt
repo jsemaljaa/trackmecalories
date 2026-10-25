@@ -87,17 +87,24 @@ fun TrendsScreen(
         Spacer(Modifier.height(12.dp))
 
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            listOf(R.string.tab_calories, R.string.tab_weight).forEachIndexed { i, label ->
+            val tabs = listOf(R.string.tab_calories, R.string.tab_weight, R.string.tab_insights)
+            tabs.forEachIndexed { i, label ->
                 SegmentedButton(
                     selected = section == i,
                     onClick = { section = i },
-                    shape = SegmentedButtonDefaults.itemShape(i, 2),
+                    shape = SegmentedButtonDefaults.itemShape(i, tabs.size),
                     colors = appSegmentedColors(),
                     icon = {}
                 ) { Text(stringResource(label)) }
             }
         }
         Spacer(Modifier.height(12.dp))
+
+        if (section == 2) {
+            val insights by viewModel.satietyInsights.collectAsState()
+            InsightsSection(insights)
+            return@Column
+        }
 
         if (section == 1) {
             val points by viewModel.weightPoints.collectAsState()

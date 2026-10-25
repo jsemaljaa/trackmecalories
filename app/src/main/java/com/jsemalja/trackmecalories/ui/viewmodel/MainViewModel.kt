@@ -4,6 +4,8 @@ package com.jsemalja.trackmecalories.ui.viewmodel
 
 import com.jsemalja.trackmecalories.data.weeklyBudget
 import com.jsemalja.trackmecalories.data.DayActivity
+import com.jsemalja.trackmecalories.data.SatietyInsights
+import com.jsemalja.trackmecalories.data.satietyInsights
 import com.jsemalja.trackmecalories.data.EatBack
 import com.jsemalja.trackmecalories.data.HealthData
 import com.jsemalja.trackmecalories.data.HealthStatus
@@ -153,6 +155,13 @@ class MainViewModel(
     fun rateMeal(date: LocalDate, mealType: String, satiety: Int?, energy: Int?) {
         viewModelScope.launch { dao.rateMeal(date.toString(), mealType, satiety, energy) }
     }
+
+    /** Foods ranked by how full their meals left you (Trends > Insights), from all history. */
+    val satietyInsights: StateFlow<SatietyInsights> = combine(dao.observeEntriesSince(""), dao.getAllCustomFoods()) { entries, foods ->
+        satietyInsights(entries, foods.associate { it.name to it.id })
+    }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SatietyInsights(0, emptyList()))
 
     /** The last 90 days of entries: the history suggestions and "What fits?" learn from. */
     val historyEntries: StateFlow<List<FoodEntry>> = dao.observeEntriesSince(suggestionHistoryStart().toString())

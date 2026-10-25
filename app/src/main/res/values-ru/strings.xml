@@ -498,4 +498,26 @@
     <string name="energy_3">Обычно</string>
     <string name="energy_4">Бодро</string>
     <string name="energy_5">Полно энергии</string>
+    <!-- Satiety insights (Trends) -->
+    <string name="tab_insights">Наблюдения</string>
+    <string name="insights_title">Самые сытные продукты</string>
+    <string name="insights_desc">Средняя сытость приёмов пищи, в которых был продукт. Продукт делит оценку со всем, что съедено вместе с ним, поэтому он появляется здесь после %1$d оценённых приёмов пищи.</string>
+    <string name="insights_empty">Оценивайте приёмы пищи кнопкой «Оценить» в заголовке каждого приёма на экране «Сегодня». Продукт появится здесь, когда побывает в %1$d оценённых приёмах пищи.</string>
+    <string name="insights_so_far">Пока: %1$s</string>
+    <plurals name="rated_meals">
+        <item quantity="one">%1$d оценённый приём пищи</item>
+        <item quantity="few">%1$d оценённых приёма пищи</item>
+        <item quantity="many">%1$d оценённых приёмов пищи</item>
+        <item quantity="other">%1$d оценённых приёма пищи</item>
+    </plurals>
+    <plurals name="meals_count">
+        <item quantity="one">%1$d приём пищи</item>
+        <item quantity="few">%1$d приёма пищи</item>
+        <item quantity="many">%1$d приёмов пищи</item>
+        <item quantity="other">%1$d приёма пищи</item>
+    </plurals>
+    <string name="insights_per_100_kcal">На 100 ккал</string>
+    <string name="insights_out_of_5">из 5</string>
+    <string name="insights_meal_kcal">~%1$s ккал за приём</string>
+    <string name="insights_energy">энергия %1$s</string>
 </resources>

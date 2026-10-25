@@ -488,4 +488,22 @@
     <string name="energy_3">Normal</string>
     <string name="energy_4">Good</string>
     <string name="energy_5">Energized</string>
+    <!-- Satiety insights (Trends) -->
+    <string name="tab_insights">Insights</string>
+    <string name="insights_title">Most filling foods</string>
+    <string name="insights_desc">Average fullness of the meals each food was in. A food shares the rating with whatever it was eaten with, so it needs %1$d rated meals to show up.</string>
+    <string name="insights_empty">Rate meals with the Rate chip in each meal header on Today. Foods appear here once they\'ve been in %1$d rated meals.</string>
+    <string name="insights_so_far">So far: %1$s</string>
+    <plurals name="rated_meals">
+        <item quantity="one">%1$d rated meal</item>
+        <item quantity="other">%1$d rated meals</item>
+    </plurals>
+    <plurals name="meals_count">
+        <item quantity="one">%1$d meal</item>
+        <item quantity="other">%1$d meals</item>
+    </plurals>
+    <string name="insights_per_100_kcal">Per 100 kcal</string>
+    <string name="insights_out_of_5">of 5</string>
+    <string name="insights_meal_kcal">~%1$s kcal per meal</string>
+    <string name="insights_energy">energy %1$s</string>
 </resources>
