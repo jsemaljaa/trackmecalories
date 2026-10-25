@@ -40,6 +40,7 @@ import com.jsemalja.trackmecalories.ui.theme.MacroFiber
 import com.jsemalja.trackmecalories.ui.theme.MacroProtein
 import com.jsemalja.trackmecalories.ui.theme.MacroSalt
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -65,6 +66,24 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
 
     var showPortionDialogFor by remember { mutableStateOf<CustomFood?>(null) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    // Every delete (swipe or the dialog's button) is undoable for a few seconds, so an
+    // accidental swipe never loses anything.
+    fun deleteWithUndo(entry: FoodEntry) {
+        viewModel.deleteEntry(entry)
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result = snackbarHostState.showSnackbar(
+                message = "Deleted ${entry.name}",
+                actionLabel = "Undo",
+                duration = SnackbarDuration.Long
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.restoreEntry(entry)
+        }
+    }
+
     val grouped = remember(entries) { entries.groupBy { it.mealType } }
     val orderedMeals = remember(grouped) {
         MEAL_ORDER.filter { grouped.containsKey(it) } +
@@ -75,6 +94,7 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         // The app-level Scaffold already applies system-bar insets; applying them again here
         // pushed Home's content down by an extra status-bar height.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 SmallFloatingActionButton(
@@ -138,7 +158,7 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                         }
                         items(mealEntries, key = { it.id }) { entry ->
                             SwipeToDeleteContainer(
-                                onDelete = { viewModel.deleteEntry(entry) }
+                                onDelete = { deleteWithUndo(entry) }
                             ) {
                                 FoodItemRow(
                                     entry = entry,
@@ -186,7 +206,11 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             entry = entry,
             onDismiss = { editingEntry = null },
             onUpdate = { updated -> viewModel.updateEntry(updated) },
-            onCopyToDate = { date -> viewModel.copyEntryToDate(entry, date) }
+            onCopyToDate = { date -> viewModel.copyEntryToDate(entry, date) },
+            onDelete = {
+                editingEntry = null
+                deleteWithUndo(entry)
+            }
         )
     }
 }

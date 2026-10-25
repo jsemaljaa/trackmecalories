@@ -14,12 +14,20 @@ import com.jsemalja.trackmecalories.data.FoodRepository
 import com.jsemalja.trackmecalories.data.KalorickeTabulkyRepository
 import com.jsemalja.trackmecalories.data.KtHit
 import com.jsemalja.trackmecalories.data.RestaurantMenu
+import com.jsemalja.trackmecalories.data.SearchHit
+import com.jsemalja.trackmecalories.data.SearchMatcher
+import com.jsemalja.trackmecalories.data.SearchSource
 import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.WaterEntry
 import com.jsemalja.trackmecalories.data.toCustomFood
 import com.jsemalja.trackmecalories.data.toEntry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -95,12 +103,9 @@ class MainViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
-    private val _searchResults = MutableStateFlow<List<FoodInfo>>(emptyList())
-    val searchResults: StateFlow<List<FoodInfo>> = _searchResults
-
-    // Live results from kaloricketabulky.cz (Czech restaurants and products).
-    private val _ktResults = MutableStateFlow<List<KtHit>>(emptyList())
-    val ktResults: StateFlow<List<KtHit>> = _ktResults
+    // Live results per online source, already relevance-filtered and scored.
+    private val _offHits = MutableStateFlow<List<SearchHit>>(emptyList())
+    private val _ktHits = MutableStateFlow<List<SearchHit>>(emptyList())
 
     private val _isSearchingOff = MutableStateFlow(false)
     private val _isSearchingKt = MutableStateFlow(false)
@@ -120,65 +125,154 @@ class MainViewModel(
 
     private val _retryTick = MutableStateFlow(0)
 
-    // The user's own saved foods matching the query — instant and offline.
-    val savedFoodMatches: StateFlow<List<CustomFood>> = _searchQuery
-        .map { it.trim() }
-        .distinctUntilChanged()
-        .flatMapLatest { q -> if (q.length < 2) flowOf(emptyList()) else dao.searchCustomFoods(q) }
+    // The user's own saved foods matching the query — instant, offline, accent-insensitive
+    // and prefix-based ("pacin" finds "Pačínko"), best match first.
+    val savedFoodMatches: StateFlow<List<CustomFood>> = combine(
+        _searchQuery.map { it.trim() }.distinctUntilChanged(),
+        dao.getAllCustomFoods()
+    ) { q, foods ->
+        val tokens = SearchMatcher.tokens(q)
+        if (q.length < 2 || tokens.isEmpty()) return@combine emptyList()
+        foods.mapNotNull { food -> SearchMatcher.score(tokens, food.name)?.let { food to it } }
+            .sortedWith(
+                compareByDescending<Pair<CustomFood, Double>> { it.second + if (it.first.isFavorite) 0.3 else 0.0 }
+                    .thenByDescending { it.first.lastUsedAt }
+            )
+            .take(8)
+            .map { it.first }
+    }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Bundled restaurant menus (official McDonald's values) — instant and offline.
-    val restaurantMatches: StateFlow<List<FoodInfo>> = _searchQuery
+    // Bundled restaurant menus — instant and offline.
+    private val menuHits: Flow<List<SearchHit>> = _searchQuery
         .map { it.trim() }
         .distinctUntilChanged()
         .map { q -> if (q.length < 2) emptyList() else restaurantMenu.search(q) }
         .flowOn(Dispatchers.Default)
+
+    /**
+     * Every source merged into one list, best match first. Bundled menu items win over the
+     * same item from live Kalorické tabulky (they already have macros and serving sizes).
+     */
+    val searchResults: StateFlow<List<SearchHit>> = combine(menuHits, _ktHits, _offHits) { menu, kt, off ->
+        (menu + kt + off)
+            .distinctBy { it.key }
+            .sortedByDescending { it.score }
+            .take(MAX_RESULTS)
+    }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        launchOnlineSearch(_searchResults, _isSearchingOff, _offError) { repository.searchProducts(it) }
-        launchOnlineSearch(_ktResults, _isSearchingKt, _ktError) { kaloricke.search(it) }
+        launchOnlineSearch(_offHits, _isSearchingOff, _offError) { q, publish ->
+            val tokens = SearchMatcher.tokens(q)
+            publish(
+                repository.searchProducts(q).withIndex().mapNotNull { (i, info) ->
+                    val score = SearchMatcher.score(tokens, info.name, info.brand) ?: return@mapNotNull null
+                    info.toSearchHit(score + (if (info.isCzech) 0.3 else 0.0) - 0.005 * i)
+                }
+            )
+        }
+        launchOnlineSearch(_ktHits, _isSearchingKt, _ktError) { q, publish ->
+            val tokens = SearchMatcher.tokens(q)
+            val hits = kaloricke.search(q).withIndex().mapNotNull { (i, hit) ->
+                val score = SearchMatcher.score(tokens, hit.title, hit.brand) ?: return@mapNotNull null
+                // KT orders by popularity; keep that as a tie-breaker. Czech database bonus.
+                hit.toSearchHit(score + 0.3 - 0.01 * i)
+            }.sortedByDescending { it.score }.take(30)
+            publish(hits)
+
+            // Fill in P/C/F for the top results so they can be compared without tapping.
+            val withMacros = coroutineScope {
+                hits.mapIndexed { i, h ->
+                    async {
+                        if (i >= KT_MACRO_PREFETCH) return@async h
+                        try {
+                            val m = kaloricke.macros(h.ktHit!!)
+                            h.copy(protein = m.protein, carbs = m.carbs, fat = m.fat)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            h
+                        }
+                    }
+                }.awaitAll()
+            }
+            publish(withMacros)
+        }
     }
 
     /**
      * Runs one online source against the debounced query, publishing its results, loading
-     * and error state independently so a slow or failing source doesn't hold up the other.
+     * and error state independently so a slow or failing source doesn't hold up the others.
+     * A new keystroke cancels the previous search; [publish] refuses to post stale results.
      */
-    private fun <T> launchOnlineSearch(
-        results: MutableStateFlow<List<T>>,
+    private fun launchOnlineSearch(
+        results: MutableStateFlow<List<SearchHit>>,
         loading: MutableStateFlow<Boolean>,
         failed: MutableStateFlow<Boolean>,
-        search: suspend (String) -> List<T>
+        search: suspend (query: String, publish: suspend (List<SearchHit>) -> Unit) -> Unit
     ) {
-        combine(_searchQuery.debounce(400), _retryTick) { q, tick -> q.trim() to tick }
-            .distinctUntilChanged()
-            .onEach { (q, _) ->
-                failed.value = false
-                if (q.length < 2) results.value = emptyList()
-                loading.value = q.length >= 2
-            }
-            .mapLatest { (q, _) ->
-                if (q.length < 2) return@mapLatest null
-                try {
-                    Result.success(search(q))
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Result.failure(e)
-                }
-            }
-            .onEach { result ->
-                result ?: return@onEach
-                result
-                    .onSuccess { results.value = it }
-                    .onFailure {
+        viewModelScope.launch {
+            combine(_searchQuery.debounce(SEARCH_DEBOUNCE_MS), _retryTick) { q, tick -> q.trim() to tick }
+                .distinctUntilChanged()
+                .collectLatest { (q, _) ->
+                    failed.value = false
+                    if (q.length < 2) {
+                        results.value = emptyList()
+                        loading.value = false
+                        return@collectLatest
+                    }
+                    loading.value = true
+                    try {
+                        search(q) { hits ->
+                            currentCoroutineContext().ensureActive()
+                            results.value = hits
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
                         results.value = emptyList()
                         failed.value = true
+                    } finally {
+                        loading.value = false
                     }
-                loading.value = false
-            }
-            .launchIn(viewModelScope)
+                }
+        }
     }
+
+    private fun FoodInfo.toSearchHit(score: Double) = SearchHit(
+        key = "off:${barcode ?: "$name|$brand"}",
+        name = name,
+        brand = brand,
+        detail = quantity,
+        kcal = kcalPer100,
+        protein = proteinPer100,
+        carbs = carbsPer100,
+        fat = fatPer100,
+        unit = unit,
+        source = SearchSource.OPEN_FOOD_FACTS,
+        score = score,
+        food = toCustomFood(),
+        isCzech = isCzech
+    )
+
+    private fun KtHit.toSearchHit(score: Double) = SearchHit(
+        key = "kt:$id",
+        name = title,
+        brand = brand?.takeUnless { title.contains(it, ignoreCase = true) },
+        detail = null,
+        kcal = kcalPer100,
+        protein = null,
+        carbs = null,
+        fat = null,
+        unit = unit,
+        source = SearchSource.KALORICKE,
+        score = score,
+        ktHit = this,
+        isCzech = true
+    )
 
     /**
      * Loads full macros and the serving size for a kaloricketabulky hit. Returns null when
@@ -252,6 +346,16 @@ class MainViewModel(
     fun deleteEntry(entry: FoodEntry) {
         viewModelScope.launch {
             dao.deleteEntry(entry)
+        }
+    }
+
+    /**
+     * Puts back an entry removed by [deleteEntry] (the "Undo" on Home), keeping its id,
+     * date and time so it lands exactly where it was.
+     */
+    fun restoreEntry(entry: FoodEntry) {
+        viewModelScope.launch {
+            dao.insertEntry(entry)
         }
     }
 
@@ -413,6 +517,10 @@ class MainViewModel(
         }
     }
 }
+
+private const val SEARCH_DEBOUNCE_MS = 350L
+private const val MAX_RESULTS = 150 // a chain shortcut lists its whole menu
+private const val KT_MACRO_PREFETCH = 8
 
 /** First day of [date]'s week, by the device locale (Monday in Czechia). */
 fun weekStartOf(date: LocalDate): LocalDate =

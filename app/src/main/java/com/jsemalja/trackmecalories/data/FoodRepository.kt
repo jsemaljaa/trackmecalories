@@ -7,6 +7,8 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.json.*
 import java.util.Locale
 
@@ -26,7 +28,9 @@ data class FoodInfo(
     // The amount kcalPer100 etc. are relative to: 100 for g/ml, 1 for "pcs".
     val referenceAmount: Double = 100.0,
     val brand: String? = null,
-    val quantity: String? = null
+    val quantity: String? = null,
+    // Sold in Czechia per Open Food Facts; ranked higher, but nothing else is hidden.
+    val isCzech: Boolean = false
 )
 
 /**
@@ -41,7 +45,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
     // lifetime. Persistent caching only applies to individual (barcode-keyed) products.
     private val searchCache = object : LinkedHashMap<String, List<FoodInfo>>() {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<FoodInfo>>) =
-            size > 20
+            size > 40
     }
 
     private val client = HttpClient {
@@ -93,22 +97,40 @@ class FoodRepository(private val dao: FoodDao? = null) {
      *
      * Throws on network failure so callers can tell "offline" apart from "no matches".
      */
-    suspend fun searchProducts(query: String): List<FoodInfo> {
+    suspend fun searchProducts(query: String): List<FoodInfo> = supervisorScope {
         val trimmed = query.trim()
-        val key = trimmed.lowercase()
-        if (key.length < 2) return emptyList()
-        searchCache[key]?.let { return it }
+        if (trimmed.length < 2) return@supervisorScope emptyList()
 
-        val deviceLang = Locale.getDefault().language.ifBlank { "en" }
-        val langs = listOf(deviceLang, "en").distinct()
+        // Czech products first (a filtered query), then the global one so anything else can
+        // still be found. The CZ query also runs without the last, maybe half-typed, word —
+        // search-a-licious has no prefix matching — and the caller re-filters by prefix.
+        val requests = SearchMatcher.onlineVariants(trimmed).map { variant ->
+            async { searchVariant(variant, czechOnly = true) }
+        } + async { searchVariant(trimmed, czechOnly = false) }
 
+        val outcomes = requests.map { runCatching { it.await() } }
+        // Only report a failure if every request failed (offline), not if one was slow.
+        if (outcomes.all { it.isFailure }) throw outcomes.first().exceptionOrNull()!!
+        val results = outcomes.mapNotNull { it.getOrNull() }.flatten()
+            .distinctBy { it.barcode ?: "${it.name}|${it.brand}" }
+
+        results.forEach { info -> info.toCache()?.let { dao?.upsertCachedProduct(it) } }
+        results
+    }
+
+    private suspend fun searchVariant(query: String, czechOnly: Boolean): List<FoodInfo> {
+        val key = "${if (czechOnly) "cz" else "all"}|${query.lowercase()}"
+        synchronized(searchCache) { searchCache[key] }?.let { return it }
+
+        // Czech names first so "Jogurt bílý" isn't shown as its English/German label.
+        val langs = listOf("cs", Locale.getDefault().language.ifBlank { "en" }, "en").distinct()
         val response: String = client.get("https://search.openfoodfacts.org/search") {
-            parameter("q", trimmed)
-            parameter("page_size", 40)
+            parameter("q", if (czechOnly) "$query countries_tags:\"en:czech-republic\"" else query)
+            parameter("page_size", if (czechOnly) 30 else 40)
             parameter("langs", langs.joinToString(","))
             parameter(
                 "fields",
-                (listOf("code", "product_name", "generic_name", "brands", "quantity", "nutriments") +
+                (listOf("code", "product_name", "generic_name", "brands", "quantity", "nutriments", "countries_tags") +
                     langs.flatMap { listOf("product_name_$it", "generic_name_$it") }).joinToString(",")
             )
         }.body()
@@ -117,11 +139,9 @@ class FoodRepository(private val dao: FoodDao? = null) {
         val results = hits.mapNotNull { hit ->
             val obj = hit.jsonObject
             parseProduct(obj, obj.string("code"), requireNutrition = true, langs = langs)
-        }.distinctBy { it.barcode ?: "${it.name}|${it.brand}" }
-
-        Log.d(TAG, "Search '$trimmed': ${hits.size} hits, ${results.size} usable")
-        searchCache[key] = results
-        results.forEach { info -> info.toCache()?.let { dao?.upsertCachedProduct(it) } }
+        }
+        Log.d(TAG, "Search '$query' (cz=$czechOnly): ${hits.size} hits, ${results.size} usable")
+        synchronized(searchCache) { searchCache[key] = results }
         return results
     }
 
@@ -158,7 +178,9 @@ class FoodRepository(private val dao: FoodDao? = null) {
             saltPer100 = nutrients?.number("salt_100g") ?: 0.0,
             barcode = barcode,
             brand = product.brands(),
-            quantity = product.string("quantity")
+            quantity = product.string("quantity"),
+            isCzech = (product["countries_tags"] as? JsonArray)
+                ?.any { (it as? JsonPrimitive)?.contentOrNull == "en:czech-republic" } == true
         )
     }
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -29,30 +30,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.data.CustomFood
-import com.jsemalja.trackmecalories.data.FoodInfo
-import com.jsemalja.trackmecalories.data.KtHit
-import com.jsemalja.trackmecalories.data.toCustomFood
+import com.jsemalja.trackmecalories.data.SearchHit
+import com.jsemalja.trackmecalories.data.SearchSource
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-// Shortcuts on the empty search screen for the chains people eat at most.
+// Shortcuts on the empty search screen; each lists that chain's bundled menu.
 private val POPULAR_SPOTS = listOf(
-    "McDonald's", "Bageterie Boulevard", "Don Pačínko", "Subway", "KFC", "Burger King"
+    "Don Pačínko", "Bageterie Boulevard", "McDonald's", "KFC", "Burger King", "Subway",
+    "Starbucks", "Costa Coffee", "Paul", "Ugo", "Pizza Hut", "Albert Fresh Bistro"
 )
 
 /**
- * Search across the user's saved foods (instant, offline), bundled restaurant menus
- * (offline), Kalorické tabulky (Czech restaurants & products) and Open Food Facts.
+ * One search box over everything: your saved foods first, then a single list ranked by
+ * relevance from bundled restaurant menus, Kalorické tabulky and Open Food Facts.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val query by viewModel.searchQuery.collectAsState()
-    val searchResults by viewModel.searchResults.collectAsState()
+    val results by viewModel.searchResults.collectAsState()
     val savedMatches by viewModel.savedFoodMatches.collectAsState()
-    val restaurantMatches by viewModel.restaurantMatches.collectAsState()
-    val ktResults by viewModel.ktResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
     val searchError by viewModel.searchError.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
@@ -60,25 +59,30 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val keyboard = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
     var foodToLog by remember { mutableStateOf<CustomFood?>(null) }
     var editingFood by remember { mutableStateOf<CustomFood?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
-    var resolvingKtId by remember { mutableStateOf<String?>(null) }
+    var resolvingKey by remember { mutableStateOf<String?>(null) }
 
     val hasQuery = query.trim().length >= 2
-    val nothingFound = searchResults.isEmpty() && savedMatches.isEmpty() &&
-        restaurantMatches.isEmpty() && ktResults.isEmpty()
+    val nothingFound = results.isEmpty() && savedMatches.isEmpty()
 
-    fun openKtHit(hit: KtHit) {
-        if (resolvingKtId != null) return
-        resolvingKtId = hit.id
+    // New query -> start at the top instead of wherever the previous list was scrolled.
+    LaunchedEffect(query.trim()) { listState.scrollToItem(0) }
+
+    fun open(hit: SearchHit) {
+        hit.food?.let { foodToLog = it; return }
+        val ktHit = hit.ktHit ?: return
+        if (resolvingKey != null) return
+        resolvingKey = hit.key
         scope.launch {
-            val food = viewModel.resolveKtFood(hit)
-            resolvingKtId = null
+            val food = viewModel.resolveKtFood(ktHit)
+            resolvingKey = null
             if (food != null) {
                 foodToLog = food
             } else {
-                Toast.makeText(context, "Couldn't load ${hit.title}. Check your connection.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Couldn't load ${hit.name}. Check your connection.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -112,18 +116,15 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         }
         Spacer(Modifier.height(8.dp))
 
-        when {
-            !hasQuery -> Column {
+        if (!hasQuery) {
+            Column {
                 SearchMessage(
                     icon = Icons.Default.Search,
                     title = "Find a food",
-                    body = "Search your saved foods, Czech restaurant menus (Kalorické tabulky, official McDonald's values) and millions of products from Open Food Facts."
+                    body = "Your saved foods, Czech restaurant menus, Kalorické tabulky and Open Food Facts — all in one search. Half-typed words and missing accents are fine."
                 )
                 SectionLabel("Popular spots")
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     POPULAR_SPOTS.forEach { spot ->
                         AssistChip(
                             onClick = { viewModel.searchFoods(spot) },
@@ -133,8 +134,9 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                     }
                 }
             }
-
-            else -> LazyColumn(
+        } else {
+            LazyColumn(
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
@@ -149,25 +151,10 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                     }
                 }
 
-                if (restaurantMatches.isNotEmpty()) {
-                    item(key = "menu_header") { SectionLabel("Restaurant menus · official values") }
-                    items(restaurantMatches, key = { "menu_${it.barcode}" }) { info ->
-                        FoodInfoRow(info) { foodToLog = info.toCustomFood() }
-                    }
-                }
-
-                if (ktResults.isNotEmpty()) {
-                    item(key = "kt_header") { SectionLabel("Kalorické tabulky") }
-                    items(ktResults, key = { "kt_${it.id}" }) { hit ->
-                        KtHitRow(hit, isLoading = resolvingKtId == hit.id) { openKtHit(hit) }
-                    }
-                }
-
-                if (searchResults.isNotEmpty()) {
-                    item(key = "off_header") { SectionLabel("Open Food Facts") }
-                    // Must match the repository's distinctBy key — duplicate keys crash LazyColumn.
-                    items(searchResults, key = { "off_${it.barcode ?: "${it.name}|${it.brand}"}" }) { info ->
-                        FoodInfoRow(info) { foodToLog = info.toCustomFood() }
+                if (results.isNotEmpty()) {
+                    item(key = "results_header") { SectionLabel("Results") }
+                    items(results, key = { it.key }) { hit ->
+                        SearchHitRow(hit, isLoading = resolvingKey == hit.key) { open(hit) }
                     }
                 }
 
@@ -175,7 +162,7 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                     item(key = "error") {
                         SearchMessage(
                             icon = Icons.Default.CloudOff,
-                            title = "Search unavailable",
+                            title = if (results.isEmpty()) "Search unavailable" else "Some results are missing",
                             body = error,
                             actionLabel = "Retry",
                             onAction = viewModel::retrySearch
@@ -188,7 +175,7 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                         SearchMessage(
                             icon = Icons.Default.SearchOff,
                             title = "No matches for “${query.trim()}”",
-                            body = "Try a simpler or more generic term, or add it yourself.",
+                            body = "Try fewer or more general words, or add it yourself.",
                             actionLabel = "Create custom food",
                             onAction = { showCreateDialog = true }
                         )
@@ -262,7 +249,7 @@ private fun SearchMessage(
     onAction: () -> Unit = {}
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 40.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(56.dp), tint = MaterialTheme.colorScheme.outline)
@@ -290,6 +277,7 @@ private fun SavedFoodResultRow(food: CustomFood, onClick: () -> Unit, onEdit: ()
         kcal = food.kcalPer100,
         macros = macroLine(food.proteinPer100, food.carbsPer100, food.fatPer100),
         per = perLabel(food.unit),
+        source = null,
         leading = Icons.Default.Bookmark,
         onClick = onClick,
         trailing = {
@@ -299,28 +287,23 @@ private fun SavedFoodResultRow(food: CustomFood, onClick: () -> Unit, onEdit: ()
 }
 
 @Composable
-fun FoodInfoRow(info: FoodInfo, onClick: () -> Unit) {
+private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit) {
+    val macros = when {
+        isLoading -> "Loading serving size…"
+        hit.protein != null && hit.carbs != null && hit.fat != null -> macroLine(hit.protein, hit.carbs, hit.fat)
+        else -> "Tap for macros & serving size"
+    }
     ResultCard(
-        title = info.name,
-        subtitle = listOfNotNull(info.brand, info.quantity).joinToString(" · ").ifBlank { null },
-        kcal = info.kcalPer100,
-        macros = macroLine(info.proteinPer100, info.carbsPer100, info.fatPer100),
-        per = perLabel(info.unit),
-        leading = null,
-        onClick = onClick
-    )
-}
-
-@Composable
-private fun KtHitRow(hit: KtHit, isLoading: Boolean, onClick: () -> Unit) {
-    ResultCard(
-        title = hit.title,
-        subtitle = hit.brand?.takeUnless { hit.title.contains(it, ignoreCase = true) },
-        kcal = hit.kcalPer100,
-        // Macros and serving size are fetched when the item is opened.
-        macros = if (isLoading) "Loading macros…" else "Tap for macros & serving size",
+        title = hit.name,
+        subtitle = listOfNotNull(hit.brand, hit.detail).joinToString(" · ").ifBlank { null },
+        kcal = hit.kcal,
+        macros = macros,
         per = perLabel(hit.unit),
-        leading = null,
+        source = when (hit.source) {
+            SearchSource.OPEN_FOOD_FACTS -> if (hit.isCzech) "Open Food Facts · sold in CZ" else "Open Food Facts"
+            else -> hit.source.label
+        },
+        leading = if (hit.source == SearchSource.MENU) Icons.Default.Restaurant else null,
         onClick = onClick,
         trailing = if (isLoading) {
             { CircularProgressIndicator(Modifier.padding(start = 8.dp).size(20.dp), strokeWidth = 2.dp) }
@@ -340,6 +323,7 @@ private fun ResultCard(
     kcal: Double,
     macros: String,
     per: String,
+    source: String?,
     leading: ImageVector?,
     onClick: () -> Unit,
     trailing: (@Composable () -> Unit)? = null
@@ -370,6 +354,13 @@ private fun ResultCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (source != null) {
+                    Text(
+                        source,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
             Spacer(Modifier.width(12.dp))
             Column(horizontalAlignment = Alignment.End) {

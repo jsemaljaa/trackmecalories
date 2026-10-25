@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -111,7 +112,8 @@ fun EditEntryDialog(
     entry: FoodEntry,
     onDismiss: () -> Unit,
     onUpdate: (FoodEntry) -> Unit,
-    onCopyToDate: (LocalDate) -> Unit
+    onCopyToDate: (LocalDate) -> Unit,
+    onDelete: () -> Unit
 ) {
     var amount by remember { mutableStateOf(entry.amount.clean()) }
 
@@ -154,6 +156,18 @@ fun EditEntryDialog(
                     Button(onClick = { onCopyToDate(LocalDate.now().plusDays(1)); onDismiss() }, modifier = Modifier.weight(1f)) {
                         Text("Tomorrow")
                     }
+                }
+
+                // Undo is offered on Home right after, so no extra confirmation step here.
+                OutlinedButton(
+                    onClick = onDelete,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Delete from log")
                 }
             }
         },
