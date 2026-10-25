@@ -30,6 +30,7 @@ import androidx.room.Room
 import com.jsemalja.trackmecalories.data.AppDatabase
 import com.jsemalja.trackmecalories.data.MIGRATION_5_6
 import com.jsemalja.trackmecalories.data.MIGRATION_6_7
+import com.jsemalja.trackmecalories.data.RestaurantMenu
 import com.jsemalja.trackmecalories.ui.screens.HomeScreen
 import com.jsemalja.trackmecalories.ui.screens.OnboardingDialog
 import com.jsemalja.trackmecalories.ui.screens.RecentsScreen
@@ -55,11 +56,12 @@ class MainActivity : ComponentActivity() {
             .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
             .build()
         val dao = db.foodDao()
+        val restaurantMenu = RestaurantMenu(applicationContext.assets)
 
         enableEdgeToEdge()
         setContent {
             TrackmecaloriesTheme {
-                val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(dao))
+                val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(dao, restaurantMenu))
                 TrackmecaloriesApp(mainViewModel)
             }
         }
@@ -89,7 +91,15 @@ fun TrackmecaloriesApp(viewModel: MainViewModel) {
                 AppDestinations.SEARCH -> SearchScreen(viewModel, Modifier.padding(innerPadding))
                 AppDestinations.SCAN -> ScannerScreen(viewModel, Modifier.padding(innerPadding))
                 AppDestinations.RECENTS -> RecentsScreen(viewModel, Modifier.padding(innerPadding))
-                AppDestinations.TRENDS -> TrendsScreen(viewModel, Modifier.padding(innerPadding))
+                AppDestinations.TRENDS -> TrendsScreen(
+                    viewModel,
+                    Modifier.padding(innerPadding),
+                    // Tapping a day in the chart opens that day's log.
+                    onOpenDay = { date ->
+                        viewModel.changeDate(date)
+                        currentDestination = AppDestinations.HOME
+                    }
+                )
                 AppDestinations.SETTINGS -> SettingsScreen(viewModel, Modifier.padding(innerPadding))
             }
         }

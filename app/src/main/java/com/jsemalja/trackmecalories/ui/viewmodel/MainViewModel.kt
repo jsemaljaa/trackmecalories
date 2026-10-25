@@ -11,20 +11,32 @@ import com.jsemalja.trackmecalories.data.FoodDao
 import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.data.FoodInfo
 import com.jsemalja.trackmecalories.data.FoodRepository
+import com.jsemalja.trackmecalories.data.KalorickeTabulkyRepository
+import com.jsemalja.trackmecalories.data.KtHit
+import com.jsemalja.trackmecalories.data.RestaurantMenu
 import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.WaterEntry
+import com.jsemalja.trackmecalories.data.toCustomFood
 import com.jsemalja.trackmecalories.data.toEntry
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
+import java.time.temporal.WeekFields
+import java.util.Locale
 
 /**
  * Main ViewModel for the application, handling food logging, goals, and history.
  */
-class MainViewModel(private val dao: FoodDao) : ViewModel() {
+class MainViewModel(
+    private val dao: FoodDao,
+    private val restaurantMenu: RestaurantMenu
+) : ViewModel() {
 
     private val repository = FoodRepository(dao)
+    private val kaloricke = KalorickeTabulkyRepository()
 
     // The currently selected date for viewing/logging
     val selectedDate = MutableStateFlow(LocalDate.now())
@@ -57,12 +69,26 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
     val favoriteFoods: StateFlow<List<CustomFood>> = dao.getFavoriteFoods()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Per-day totals for the trailing 7 days (including today), used by the trends screen.
-    val weeklyTotals: StateFlow<List<DailyTotal>> = run {
-        val end = LocalDate.now()
-        val start = end.minusDays(6)
-        dao.getDailyTotalsBetween(start.toString(), end.toString())
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // Every saved food, alphabetically — the "All" tab, so any food can be found and edited,
+    // not just the 30 most recent.
+    val allCustomFoods: StateFlow<List<CustomFood>> = dao.getAllCustomFoods()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // First day of the calendar week shown on the trends screen (same week definition as
+    // Home's week strip).
+    val trendsWeekStart = MutableStateFlow(weekStartOf(LocalDate.now()))
+
+    // Per-day totals for the trends week *and* the week before it, so the screen can
+    // compare against last week.
+    val trendsTotals: StateFlow<List<DailyTotal>> = trendsWeekStart
+        .flatMapLatest { start ->
+            dao.getDailyTotalsBetween(start.minusWeeks(1).toString(), start.plusDays(6).toString())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun changeTrendsWeek(weeks: Long) {
+        trendsWeekStart.value = trendsWeekStart.value.plusWeeks(weeks)
+    }
 
     // Search state. The query lives here (not in the screen) so results and the text field
     // stay in sync when switching tabs.
@@ -72,11 +98,25 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
     private val _searchResults = MutableStateFlow<List<FoodInfo>>(emptyList())
     val searchResults: StateFlow<List<FoodInfo>> = _searchResults
 
-    private val _isSearching = MutableStateFlow(false)
-    val isSearching: StateFlow<Boolean> = _isSearching
+    // Live results from kaloricketabulky.cz (Czech restaurants and products).
+    private val _ktResults = MutableStateFlow<List<KtHit>>(emptyList())
+    val ktResults: StateFlow<List<KtHit>> = _ktResults
 
-    private val _searchError = MutableStateFlow<String?>(null)
-    val searchError: StateFlow<String?> = _searchError
+    private val _isSearchingOff = MutableStateFlow(false)
+    private val _isSearchingKt = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = combine(_isSearchingOff, _isSearchingKt) { a, b -> a || b }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    private val _offError = MutableStateFlow(false)
+    private val _ktError = MutableStateFlow(false)
+    val searchError: StateFlow<String?> = combine(_offError, _ktError) { off, kt ->
+        when {
+            off && kt -> "Couldn't reach the online food databases. Check your connection and try again."
+            off -> "Couldn't reach Open Food Facts. Check your connection and try again."
+            kt -> "Couldn't reach Kalorické tabulky. Check your connection and try again."
+            else -> null
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _retryTick = MutableStateFlow(0)
 
@@ -87,22 +127,40 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
         .flatMapLatest { q -> if (q.length < 2) flowOf(emptyList()) else dao.searchCustomFoods(q) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Bundled restaurant menus (official McDonald's values) — instant and offline.
+    val restaurantMatches: StateFlow<List<FoodInfo>> = _searchQuery
+        .map { it.trim() }
+        .distinctUntilChanged()
+        .map { q -> if (q.length < 2) emptyList() else restaurantMenu.search(q) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
+        launchOnlineSearch(_searchResults, _isSearchingOff, _offError) { repository.searchProducts(it) }
+        launchOnlineSearch(_ktResults, _isSearchingKt, _ktError) { kaloricke.search(it) }
+    }
+
+    /**
+     * Runs one online source against the debounced query, publishing its results, loading
+     * and error state independently so a slow or failing source doesn't hold up the other.
+     */
+    private fun <T> launchOnlineSearch(
+        results: MutableStateFlow<List<T>>,
+        loading: MutableStateFlow<Boolean>,
+        failed: MutableStateFlow<Boolean>,
+        search: suspend (String) -> List<T>
+    ) {
         combine(_searchQuery.debounce(400), _retryTick) { q, tick -> q.trim() to tick }
             .distinctUntilChanged()
             .onEach { (q, _) ->
-                _searchError.value = null
-                if (q.length < 2) {
-                    _searchResults.value = emptyList()
-                    _isSearching.value = false
-                } else {
-                    _isSearching.value = true
-                }
+                failed.value = false
+                if (q.length < 2) results.value = emptyList()
+                loading.value = q.length >= 2
             }
             .mapLatest { (q, _) ->
                 if (q.length < 2) return@mapLatest null
                 try {
-                    Result.success(repository.searchProducts(q))
+                    Result.success(search(q))
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -112,14 +170,26 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
             .onEach { result ->
                 result ?: return@onEach
                 result
-                    .onSuccess { _searchResults.value = it }
+                    .onSuccess { results.value = it }
                     .onFailure {
-                        _searchResults.value = emptyList()
-                        _searchError.value = "Couldn't reach Open Food Facts. Check your connection and try again."
+                        results.value = emptyList()
+                        failed.value = true
                     }
-                _isSearching.value = false
+                loading.value = false
             }
             .launchIn(viewModelScope)
+    }
+
+    /**
+     * Loads full macros and the serving size for a kaloricketabulky hit. Returns null when
+     * the lookup fails (offline, or the site changed).
+     */
+    suspend fun resolveKtFood(hit: KtHit): CustomFood? = try {
+        kaloricke.resolve(hit).toCustomFood()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        null
     }
 
     /**
@@ -156,8 +226,11 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
     fun logCustomFood(food: CustomFood, amount: Double, mealType: String, date: String = selectedDate.value.toString()) {
         viewModelScope.launch {
             dao.insertEntry(food.toEntry(amount, mealType, date))
-            if (food.id != 0) {
-                dao.touchLastUsed(food.id)
+            // A search result may already be saved (same barcode / restaurant item id). Bump
+            // that one instead of REPLACE-inserting, which would drop its favorite flag and edits.
+            val saved = if (food.id != 0) food else food.barcode?.let { dao.getCustomFoodByBarcode(it) }
+            if (saved != null) {
+                dao.touchLastUsed(saved.id)
             } else {
                 dao.insertCustomFood(food.copy(lastUsedAt = System.currentTimeMillis()))
             }
@@ -214,10 +287,43 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
 
     /**
      * Applies edits to an already-saved food template (e.g. fixing a typo'd macro value).
+     * With [updateLoggedEntries], entries already logged from [original] are recalculated
+     * with the new values too (only possible while the unit stays the same, since the
+     * logged amounts are in that unit).
      */
-    fun updateCustomFood(food: CustomFood) {
+    fun updateCustomFood(original: CustomFood, updated: CustomFood, updateLoggedEntries: Boolean = false) {
         viewModelScope.launch {
-            dao.updateCustomFood(food)
+            dao.updateCustomFood(updated)
+            if (updateLoggedEntries && canRescaleEntries(original, updated)) {
+                dao.rescaleEntriesForFood(
+                    oldName = original.name,
+                    unit = original.unit,
+                    referenceAmount = original.referenceAmount,
+                    newName = updated.name,
+                    kcal = updated.kcalPer100,
+                    protein = updated.proteinPer100,
+                    carbs = updated.carbsPer100,
+                    fat = updated.fatPer100,
+                    fiber = updated.fiberPer100,
+                    salt = updated.saltPer100
+                )
+            }
+        }
+    }
+
+    fun canRescaleEntries(original: CustomFood, updated: CustomFood): Boolean =
+        original.unit == updated.unit && original.referenceAmount == updated.referenceAmount
+
+    /** How many log entries were made from [food] (matched by name and unit). */
+    suspend fun countLoggedEntries(food: CustomFood): Int =
+        dao.countEntriesForFood(food.name, food.unit, food.referenceAmount)
+
+    /**
+     * Removes a saved food. Entries already logged from it stay in the log.
+     */
+    fun deleteCustomFood(food: CustomFood) {
+        viewModelScope.launch {
+            dao.deleteCustomFood(food)
         }
     }
 
@@ -308,11 +414,18 @@ class MainViewModel(private val dao: FoodDao) : ViewModel() {
     }
 }
 
-class MainViewModelFactory(private val dao: FoodDao) : ViewModelProvider.Factory {
+/** First day of [date]'s week, by the device locale (Monday in Czechia). */
+fun weekStartOf(date: LocalDate): LocalDate =
+    date.with(TemporalAdjusters.previousOrSame(WeekFields.of(Locale.getDefault()).firstDayOfWeek))
+
+class MainViewModelFactory(
+    private val dao: FoodDao,
+    private val restaurantMenu: RestaurantMenu
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(dao) as T
+            return MainViewModel(dao, restaurantMenu) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

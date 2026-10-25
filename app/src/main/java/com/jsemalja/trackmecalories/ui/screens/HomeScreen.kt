@@ -1,6 +1,8 @@
 package com.jsemalja.trackmecalories.ui.screens
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,7 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodEntry
@@ -88,29 +93,44 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             }
         }
     ) { padding ->
-        Column(modifier = modifier.padding(padding).fillMaxSize().padding(16.dp)) {
-            DateSelector(selectedDate) { viewModel.changeDate(it) }
+        Column(modifier = modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(16.dp))
-            DailyProgressCard(entries, goals)
-            Spacer(Modifier.height(12.dp))
-            WaterCard(
-                waterEntries = waterEntries,
-                goalMl = goals.waterGoalMl,
-                onAddWater = { viewModel.addWater(it) }
-            )
-            Spacer(Modifier.height(24.dp))
-            Text("Daily Log", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            DateSelector(selectedDate) { viewModel.changeDate(it) }
             Spacer(Modifier.height(8.dp))
 
-            if (entries.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No entries for this day", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            // Summary cards scroll with the log, so a long day doesn't get squeezed into
+            // the bottom third of the screen.
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 136.dp), // clear the FABs
+                modifier = Modifier.weight(1f)
+            ) {
+                item(key = "progress") { DailyProgressCard(entries, goals) }
+                item(key = "water") {
+                    Column {
+                        Spacer(Modifier.height(8.dp))
+                        WaterCard(
+                            waterEntries = waterEntries,
+                            goalMl = goals.waterGoalMl,
+                            onAddWater = { viewModel.addWater(it) }
+                        )
+                        Spacer(Modifier.height(20.dp))
+                        Text("Daily Log", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(4.dp))
+                    }
                 }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
+
+                if (entries.isEmpty()) {
+                    item(key = "empty") {
+                        Text(
+                            "No entries for this day",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp)
+                        )
+                    }
+                } else {
                     orderedMeals.forEach { meal ->
                         val mealEntries = grouped[meal].orEmpty()
                         item(key = "header_$meal") {
@@ -209,69 +229,171 @@ fun WaterCard(waterEntries: List<WaterEntry>, goalMl: Double, onAddWater: (Doubl
     }
 }
 
+/**
+ * Today's calories at a glance: a ring filling up toward the goal with what's left (or how
+ * far over) in the middle, eaten/goal beside it, and each nutrient as "eaten / goal".
+ */
 @Composable
 fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
-    val totalKcal = entries.sumOf { it.kcal }
-    val remainingKcal = goals.calorieGoal - totalKcal
+    val colors = MaterialTheme.colorScheme
+    val eaten = entries.sumOf { it.kcal }
+    val goal = goals.calorieGoal.coerceAtLeast(1)
+    val remaining = goal - eaten
+    val isOver = remaining < 0
+    val statusColor = if (isOver) colors.error else colors.primary
+    val onCard = colors.onPrimaryContainer
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        colors = CardDefaults.elevatedCardColors(containerColor = colors.primaryContainer)
     ) {
-        Column(Modifier.padding(24.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                Column {
-                    Text("Calories Remaining", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
-                    Text("$remainingKcal", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+        Column(Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CalorieRing(
+                    progress = eaten.toFloat() / goal,
+                    color = colors.primary,
+                    overColor = colors.error,
+                    trackColor = onCard.copy(alpha = 0.12f),
+                    modifier = Modifier.size(132.dp)
+                ) {
+                    Text(
+                        "%,d".format(kotlin.math.abs(remaining)),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isOver) colors.error else onCard
+                    )
+                    Text(
+                        if (isOver) "kcal over" else "kcal left",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isOver) colors.error else onCard.copy(alpha = 0.75f)
+                    )
                 }
-                Text("of ${goals.calorieGoal} kcal", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 8.dp))
+
+                Spacer(Modifier.width(20.dp))
+
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CalorieStat("Eaten", eaten, onCard)
+                    CalorieStat("Goal", goal, onCard)
+                    HorizontalDivider(color = onCard.copy(alpha = 0.15f))
+                    Text(
+                        when {
+                            eaten == 0 -> "Nothing logged yet"
+                            isOver -> "${eaten * 100 / goal}% of your goal"
+                            else -> "${eaten * 100 / goal}% of your goal eaten"
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isOver) statusColor else onCard.copy(alpha = 0.75f)
+                    )
+                }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
 
-            LinearProgressIndicator(
-                progress = { (totalKcal.toFloat() / goals.calorieGoal).coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
-                gapSize = 0.dp,
-                drawStopIndicator = {}
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MacroPill("Protein", entries.sumOf { it.protein }, goals.proteinGoal, "g", MacroProtein)
-                MacroPill("Carbs", entries.sumOf { it.carbs }, goals.carbGoal, "g", MacroCarbs)
-                MacroPill("Fat", entries.sumOf { it.fat }, goals.fatGoal, "g", MacroFat)
+            // Fixed 3-column grid so the second row lines up with the first.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                NutrientProgress("Protein", entries.sumOf { it.protein }, goals.proteinGoal, MacroProtein, Modifier.weight(1f))
+                NutrientProgress("Carbs", entries.sumOf { it.carbs }, goals.carbGoal, MacroCarbs, Modifier.weight(1f))
+                NutrientProgress("Fat", entries.sumOf { it.fat }, goals.fatGoal, MacroFat, Modifier.weight(1f))
             }
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                MacroPill("Fiber", entries.sumOf { it.fiber }, goals.fiberGoal, "g", MacroFiber)
-                MacroPill("Salt", entries.sumOf { it.salt }, goals.saltGoal, "g", MacroSalt)
+            Spacer(Modifier.height(14.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                NutrientProgress("Fiber", entries.sumOf { it.fiber }, goals.fiberGoal, MacroFiber, Modifier.weight(1f))
+                // Salt is a limit, not a target — going over it is flagged.
+                NutrientProgress("Salt", entries.sumOf { it.salt }, goals.saltGoal, MacroSalt, Modifier.weight(1f), isLimit = true, decimals = true)
+                Spacer(Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-fun MacroPill(label: String, value: Double, goal: Double, unit: String, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(80.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(4.dp))
-        Box(
-            modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(color.copy(alpha = 0.2f))
-        ) {
-            Box(
-                modifier = Modifier.fillMaxWidth((value / goal).toFloat().coerceIn(0f, 1f)).fillMaxHeight().background(color)
+private fun CalorieStat(label: String, kcal: Int, color: Color) {
+    Column {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("%,d".format(kcal), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
+            Text(" kcal", style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 3.dp))
+        }
+    }
+}
+
+/**
+ * Circular progress toward the goal. Past 100% the ring is full and the excess is drawn
+ * on top in [overColor], so "over" is visible at a glance instead of just a full bar.
+ */
+@Composable
+private fun CalorieRing(
+    progress: Float,
+    color: Color,
+    overColor: Color,
+    trackColor: Color,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val animated by animateFloatAsState(progress.coerceIn(0f, 2f), label = "calorieRing")
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val stroke = 12.dp.toPx()
+            val style = Stroke(width = stroke, cap = StrokeCap.Round)
+            val inset = stroke / 2
+            val arcSize = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke)
+            val topLeft = androidx.compose.ui.geometry.Offset(inset, inset)
+            drawArc(trackColor, 0f, 360f, false, topLeft, arcSize, style = Stroke(width = stroke))
+            if (animated > 0f) {
+                drawArc(color, -90f, 360f * animated.coerceAtMost(1f), false, topLeft, arcSize, style = style)
+            }
+            if (animated > 1f) {
+                drawArc(overColor, -90f, 360f * (animated - 1f).coerceAtMost(1f), false, topLeft, arcSize, style = style)
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally, content = content)
+    }
+}
+
+@Composable
+private fun NutrientProgress(
+    label: String,
+    value: Double,
+    goal: Double,
+    color: Color,
+    modifier: Modifier = Modifier,
+    isLimit: Boolean = false,
+    decimals: Boolean = false
+) {
+    val onCard = MaterialTheme.colorScheme.onPrimaryContainer
+    val overLimit = isLimit && value > goal
+    val fmt: (Double) -> String = { if (decimals) "%.1f".format(it).removeSuffix(".0").removeSuffix(",0") else "${it.toInt()}" }
+
+    Column(modifier) {
+        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = onCard)
+        Spacer(Modifier.height(2.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                fmt(value),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (overLimit) MaterialTheme.colorScheme.error else onCard
+            )
+            Text(
+                " / ${fmt(goal)} g",
+                style = MaterialTheme.typography.labelSmall,
+                color = onCard.copy(alpha = 0.65f),
+                modifier = Modifier.padding(bottom = 1.dp)
             )
         }
-        Text("${value.toInt()}$unit", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+        Spacer(Modifier.height(4.dp))
+        Box(
+            modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(color.copy(alpha = 0.22f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(if (goal > 0) (value / goal).toFloat().coerceIn(0f, 1f) else 0f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(if (overLimit) MaterialTheme.colorScheme.error else color)
+            )
+        }
     }
 }
 

@@ -6,7 +6,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -18,21 +20,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.data.CustomFood
+import com.jsemalja.trackmecalories.data.normalizedForSearch
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 
 /**
- * Screen for one-tap logging of saved foods, split into recently-used and pinned favorites
- * so favorites don't get buried once Recents fills up.
+ * Screen for one-tap logging of saved foods: recently used, pinned favorites, and every
+ * saved food (so anything you've created can be found and edited, not just the latest 30).
  */
 @Composable
 fun RecentsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val recentFoods by viewModel.recentFoods.collectAsState()
     val favoriteFoods by viewModel.favoriteFoods.collectAsState()
+    val allFoods by viewModel.allCustomFoods.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
 
     var selectedTab by rememberSaveable { mutableStateOf(0) }
+    var filter by rememberSaveable { mutableStateOf("") }
     var selectedFood by remember { mutableStateOf<CustomFood?>(null) }
     var editingFood by remember { mutableStateOf<CustomFood?>(null) }
 
@@ -44,29 +50,60 @@ fun RecentsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         TabRow(selectedTabIndex = selectedTab) {
             Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Recent") })
             Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Favorites") })
+            Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("All (${allFoods.size})") })
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
 
-        val list = if (selectedTab == 0) recentFoods else favoriteFoods
+        if (selectedTab == 2) {
+            OutlinedTextField(
+                value = filter,
+                onValueChange = { filter = it },
+                placeholder = { Text("Filter your foods") },
+                leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = null) },
+                trailingIcon = {
+                    if (filter.isNotEmpty()) {
+                        IconButton(onClick = { filter = "" }) { Icon(Icons.Default.Close, contentDescription = "Clear filter") }
+                    }
+                },
+                singleLine = true,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+
+        val list = when (selectedTab) {
+            0 -> recentFoods
+            1 -> favoriteFoods
+            else -> {
+                val needle = filter.normalizedForSearch()
+                if (needle.isBlank()) allFoods
+                else allFoods.filter { needle in it.name.normalizedForSearch() }
+            }
+        }
 
         if (list.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
                     Text(
-                        if (selectedTab == 0) "No saved foods yet" else "No favorites yet",
+                        when (selectedTab) {
+                            0 -> "No saved foods yet"
+                            1 -> "No favorites yet"
+                            else -> if (filter.isBlank()) "No saved foods yet" else "Nothing matches “${filter.trim()}”"
+                        },
                         color = Color.Gray
                     )
                     Text(
-                        if (selectedTab == 0) "Scan or add foods to see them here" else "Tap the star on a saved food to pin it here",
+                        if (selectedTab == 1) "Tap the star on a saved food to pin it here" else "Scan or add foods to see them here",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
                 }
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
                 items(list, key = { it.id }) { food ->
                     SavedFoodRow(
                         food = food,
@@ -86,19 +123,16 @@ fun RecentsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             onConfirm = { amount, mealType ->
                 viewModel.logCustomFood(food, amount, mealType, selectedDate.toString())
                 selectedFood = null
+            },
+            onEdit = {
+                selectedFood = null
+                editingFood = food
             }
         )
     }
 
     editingFood?.let { food ->
-        EditCustomFoodDialog(
-            food = food,
-            onDismiss = { editingFood = null },
-            onSave = { updated ->
-                viewModel.updateCustomFood(updated)
-                editingFood = null
-            }
-        )
+        EditSavedFoodDialog(viewModel, food, onDismiss = { editingFood = null })
     }
 }
 
@@ -113,11 +147,15 @@ fun SavedFoodRow(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(food.name, fontWeight = FontWeight.Bold)
-                val refLabel = if (food.unit == "pcs") "pc" else "100${food.unit}"
-                Text("${food.kcalPer100.toInt()} kcal per $refLabel", style = MaterialTheme.typography.bodySmall)
+                Text(food.name, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                val refLabel = if (food.unit == "pcs") "piece" else "100 ${food.unit}"
+                Text(
+                    "${food.kcalPer100.toInt()} kcal per $refLabel · P ${food.proteinPer100.toInt()} · C ${food.carbsPer100.toInt()} · F ${food.fatPer100.toInt()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             IconButton(onClick = onToggleFavorite) {
                 Icon(
@@ -129,7 +167,9 @@ fun SavedFoodRow(
             IconButton(onClick = onEdit) {
                 Icon(Icons.Default.Edit, contentDescription = "Edit")
             }
-            Icon(Icons.Default.Add, contentDescription = "Add")
+            IconButton(onClick = onClick) {
+                Icon(Icons.Default.Add, contentDescription = "Log")
+            }
         }
     }
 }

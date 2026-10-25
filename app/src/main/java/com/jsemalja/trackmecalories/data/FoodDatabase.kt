@@ -159,6 +159,43 @@ interface FoodDao {
     @Update
     suspend fun updateCustomFood(food: CustomFood)
 
+    @Delete
+    suspend fun deleteCustomFood(food: CustomFood)
+
+    @Query("SELECT * FROM custom_foods ORDER BY name COLLATE NOCASE ASC")
+    fun getAllCustomFoods(): Flow<List<CustomFood>>
+
+    // Log entries don't reference the food they came from, so they're matched by the
+    // template's name and unit (the same pair that produced them via toEntry()).
+    @Query("SELECT COUNT(*) FROM food_entries WHERE name = :name AND unit = :unit AND referenceAmount = :referenceAmount")
+    suspend fun countEntriesForFood(name: String, unit: String, referenceAmount: Double): Int
+
+    @Query(
+        """
+        UPDATE food_entries SET
+            name = :newName,
+            kcal = CAST(ROUND(:kcal * amount / referenceAmount) AS INTEGER),
+            protein = :protein * amount / referenceAmount,
+            carbs = :carbs * amount / referenceAmount,
+            fat = :fat * amount / referenceAmount,
+            fiber = :fiber * amount / referenceAmount,
+            salt = :salt * amount / referenceAmount
+        WHERE name = :oldName AND unit = :unit AND referenceAmount = :referenceAmount
+        """
+    )
+    suspend fun rescaleEntriesForFood(
+        oldName: String,
+        unit: String,
+        referenceAmount: Double,
+        newName: String,
+        kcal: Double,
+        protein: Double,
+        carbs: Double,
+        fat: Double,
+        fiber: Double,
+        salt: Double
+    )
+
     @Query("UPDATE custom_foods SET lastUsedAt = :timestamp WHERE id = :id")
     suspend fun touchLastUsed(id: Int, timestamp: Long = System.currentTimeMillis())
 
