@@ -378,4 +378,15 @@
     <string name="confidence_question">How sure is the amount?</string>
     <string name="confidence_hint">Totals carry about ±%1$d%% for this entry.</string>
     <string name="plus_minus_kcal">± %1$s kcal from portion estimates</string>
+
+    <!-- Day completeness -->
+    <string name="day_status">Is this day fully logged?</string>
+    <string name="day_complete">Complete</string>
+    <string name="day_incomplete">Incomplete — forgot something</string>
+    <string name="day_incomplete_hint">This day won\'t count toward averages, the week balance or measured maintenance.</string>
+    <string name="incomplete_short">Incomplete</string>
+    <plurals name="incomplete_excluded">
+        <item quantity="one">%1$d incomplete day isn\'t counted.</item>
+        <item quantity="other">%1$d incomplete days aren\'t counted.</item>
+    </plurals>
 </resources>

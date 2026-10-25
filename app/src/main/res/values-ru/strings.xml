@@ -384,4 +384,17 @@
     <string name="confidence_question">Насколько точно количество?</string>
     <string name="confidence_hint">Погрешность этой записи около ±%1$d%%.</string>
     <string name="plus_minus_kcal">± %1$s ккал из‑за оценки порций</string>
+
+    <!-- Day completeness -->
+    <string name="day_status">День записан полностью?</string>
+    <string name="day_complete">Полностью</string>
+    <string name="day_incomplete">Не полностью — что-то забыл(а)</string>
+    <string name="day_incomplete_hint">Этот день не учитывается в средних значениях, балансе недели и измеренной норме.</string>
+    <string name="incomplete_short">Неполный</string>
+    <plurals name="incomplete_excluded">
+        <item quantity="one">%1$d неполный день не учитывается.</item>
+        <item quantity="few">%1$d неполных дня не учитываются.</item>
+        <item quantity="many">%1$d неполных дней не учитываются.</item>
+        <item quantity="other">%1$d неполного дня не учитываются.</item>
+    </plurals>
 </resources>

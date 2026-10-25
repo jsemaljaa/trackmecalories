@@ -2,6 +2,7 @@
 
 package com.jsemalja.trackmecalories.ui.viewmodel
 
+import com.jsemalja.trackmecalories.data.DayLog
 import com.jsemalja.trackmecalories.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -108,6 +109,31 @@ class MainViewModel(
 
     fun changeTrendsWeek(weeks: Long) {
         trendsWeekStart.value = trendsWeekStart.value.plusWeeks(weeks)
+    }
+
+    /** Dates marked incomplete in the trends range (this week and the one before). */
+    val trendsIncompleteDays: StateFlow<Set<String>> = trendsWeekStart
+        .flatMapLatest { start ->
+            dao.getDayLogsBetween(start.minusWeeks(1).toString(), start.plusDays(6).toString())
+        }
+        .map { logs -> logs.filter { !it.complete }.map { it.date }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    /** Completeness of the selected day: true, false, or null if never marked. */
+    val selectedDayComplete: StateFlow<Boolean?> = selectedDate
+        .flatMapLatest { d -> dao.getDayLogsBetween(d.toString(), d.toString()) }
+        .map { it.firstOrNull()?.complete }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /**
+     * Marks a day complete or incomplete (null clears it). Incomplete days are left out of
+     * averages and measured maintenance, so a forgotten meal doesn't skew them.
+     */
+    fun setDayComplete(date: LocalDate, complete: Boolean?) {
+        viewModelScope.launch {
+            if (complete == null) dao.clearDayLog(date.toString())
+            else dao.setDayLog(DayLog(date.toString(), complete))
+        }
     }
 
     // --- Weight ---

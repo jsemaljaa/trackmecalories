@@ -1,5 +1,7 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import androidx.compose.material.icons.outlined.HourglassEmpty
+import androidx.compose.material.icons.outlined.TaskAlt
 import kotlin.math.roundToInt
 import com.jsemalja.trackmecalories.data.kcalUncertainty
 import com.jsemalja.trackmecalories.data.Confidence
@@ -77,6 +79,7 @@ fun HomeScreen(
     val goals by viewModel.userGoal.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
     val waterEntries by viewModel.waterEntries.collectAsState()
+    val dayComplete by viewModel.selectedDayComplete.collectAsState()
 
     var showManualDialog by remember { mutableStateOf(false) }
     var showQuickAddDialog by remember { mutableStateOf(false) }
@@ -192,6 +195,16 @@ fun HomeScreen(
                             }
                         }
                         item(key = "spacer_$meal") { Spacer(Modifier.height(8.dp)) }
+                    }
+                }
+
+                // Not for future days: there's nothing to judge yet.
+                if (!selectedDate.isAfter(LocalDate.now())) {
+                    item(key = "day_status") {
+                        DayStatusRow(
+                            complete = dayComplete,
+                            onChange = { viewModel.setDayComplete(selectedDate, it) }
+                        )
                     }
                 }
             }
@@ -832,6 +845,35 @@ private fun AddFoodAction(icon: androidx.compose.ui.graphics.vector.ImageVector,
         Column {
             Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/**
+ * "Is this day's log finished?" Marking it incomplete keeps a forgotten dinner from reading
+ * as eating less: the day is left out of averages and measured maintenance.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DayStatusRow(complete: Boolean?, onChange: (Boolean?) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Text(stringResource(R.string.day_status), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = complete == true,
+                onClick = { onChange(if (complete == true) null else true) },
+                label = { Text(stringResource(R.string.day_complete)) },
+                leadingIcon = { Icon(Icons.Outlined.TaskAlt, contentDescription = null, modifier = Modifier.size(16.dp)) }
+            )
+            FilterChip(
+                selected = complete == false,
+                onClick = { onChange(if (complete == false) null else false) },
+                label = { Text(stringResource(R.string.day_incomplete)) },
+                leadingIcon = { Icon(Icons.Outlined.HourglassEmpty, contentDescription = null, modifier = Modifier.size(16.dp)) }
+            )
+        }
+        if (complete == false) {
+            Text(stringResource(R.string.day_incomplete_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

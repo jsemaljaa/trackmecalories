@@ -66,9 +66,13 @@ fun TrendsScreen(
     val goal = goals.calorieGoal.coerceAtLeast(1)
     val days = (0L..6L).map { weekStart.plusDays(it) }
     val byDate = totals.associateBy { it.date }
+    val incompleteDays by viewModel.trendsIncompleteDays.collectAsState()
     val weekTotals = days.map { byDate[it.toString()] }
-    val logged = weekTotals.filterNotNull()
+    // Days marked incomplete are shown but don't count toward any average.
+    val logged = weekTotals.filterNotNull().filter { it.date !in incompleteDays }
+    val excludedCount = weekTotals.filterNotNull().count { it.date in incompleteDays }
     val previousLogged = (1L..7L).mapNotNull { byDate[weekStart.minusDays(it).toString()] }
+        .filter { it.date !in incompleteDays }
     val daysSoFar = days.count { !it.isAfter(today) }
     val isCurrentWeek = weekStart == weekStartOf(today)
     var section by rememberSaveable { mutableStateOf(0) }
@@ -131,6 +135,7 @@ fun TrendsScreen(
                     days = days,
                     values = weekTotals.map { it?.totalKcal },
                     uncertainties = weekTotals.map { kotlin.math.sqrt(it?.kcalVariance ?: 0.0) },
+                    incomplete = days.map { it.toString() in incompleteDays },
                     goal = goal,
                     today = today,
                     onDayClick = onOpenDay
@@ -157,6 +162,14 @@ fun TrendsScreen(
             )
         } else {
             WeekStats(logged, previousLogged, goal, daysSoFar)
+            if (excludedCount > 0) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    pluralStringResource(R.plurals.incomplete_excluded, excludedCount, excludedCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Spacer(Modifier.height(16.dp))
             MacroAverages(logged, goals.proteinGoal, goals.carbGoal, goals.fatGoal)
         }
@@ -205,6 +218,7 @@ private fun ChartLegend(goal: Int) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         LegendSwatch(colors.primary, stringResource(R.string.within_goal))
         LegendSwatch(colors.error, stringResource(R.string.over_goal))
+        LegendSwatch(colors.onSurfaceVariant.copy(alpha = 0.3f), stringResource(R.string.incomplete_short))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.width(16.dp).height(2.dp)) {
                 drawLine(
@@ -239,7 +253,8 @@ private fun WeeklyBarChart(
     today: LocalDate,
     onDayClick: (LocalDate) -> Unit,
     // ± kcal per day from entry confidence; drawn as error bars.
-    uncertainties: List<Double> = emptyList()
+    uncertainties: List<Double> = emptyList(),
+    incomplete: List<Boolean> = emptyList()
 ) {
     val colors = MaterialTheme.colorScheme
     val locale = Locale.getDefault()
@@ -295,7 +310,13 @@ private fun WeeklyBarChart(
                                 .fillMaxWidth(0.62f)
                                 .height(BAR_AREA * (value / maxValue).coerceAtLeast(0.02f))
                                 .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
-                                .background(if (value > goal) colors.error else colors.primary)
+                                .background(
+                                    when {
+                                        incomplete.getOrNull(i) == true -> colors.onSurfaceVariant.copy(alpha = 0.3f)
+                                        value > goal -> colors.error
+                                        else -> colors.primary
+                                    }
+                                )
                         )
                     } else if (!isFuture) {
                         // Not logged: a small dash on the baseline rather than a misleading 0 bar.
