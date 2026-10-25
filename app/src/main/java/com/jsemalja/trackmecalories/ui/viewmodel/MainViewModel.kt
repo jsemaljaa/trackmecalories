@@ -2,6 +2,7 @@
 
 package com.jsemalja.trackmecalories.ui.viewmodel
 
+import com.jsemalja.trackmecalories.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -201,11 +202,11 @@ class MainViewModel(
 
     private val _offError = MutableStateFlow(false)
     private val _ktError = MutableStateFlow(false)
-    val searchError: StateFlow<String?> = combine(_offError, _ktError) { off, kt ->
+    val searchError: StateFlow<Int?> = combine(_offError, _ktError) { off, kt ->
         when {
-            off && kt -> "Couldn't reach the online food databases. Check your connection and try again."
-            off -> "Couldn't reach Open Food Facts. Check your connection and try again."
-            kt -> "Couldn't reach Kalorické tabulky. Check your connection and try again."
+            off && kt -> R.string.search_error_all
+            off -> R.string.search_error_off
+            kt -> R.string.search_error_kt
             else -> null
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)

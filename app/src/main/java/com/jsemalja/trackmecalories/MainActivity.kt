@@ -1,5 +1,6 @@
 package com.jsemalja.trackmecalories
 
+import androidx.compose.ui.res.stringResource
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -213,7 +214,7 @@ private fun NavItem(destination: AppDestinations, selected: Boolean, onClick: ()
         ) {
             Icon(
                 if (selected) destination.selectedIcon else destination.icon,
-                contentDescription = destination.label,
+                contentDescription = stringResource(destination.label),
                 modifier = Modifier.size(24.dp)
             )
             AnimatedVisibility(
@@ -223,7 +224,7 @@ private fun NavItem(destination: AppDestinations, selected: Boolean, onClick: ()
             ) {
                 Row {
                     Spacer(Modifier.width(8.dp))
-                    Text(destination.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(destination.label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -231,12 +232,12 @@ private fun NavItem(destination: AppDestinations, selected: Boolean, onClick: ()
 }
 
 enum class AppDestinations(
-    val label: String,
+    @androidx.annotation.StringRes val label: Int,
     val icon: ImageVector,
     val selectedIcon: ImageVector,
 ) {
-    HOME("Today", Icons.Outlined.Home, Icons.Filled.Home),
-    FOOD("Food", Icons.Outlined.Restaurant, Icons.Filled.Restaurant),
-    TRENDS("Trends", Icons.Outlined.BarChart, Icons.Filled.BarChart),
-    SETTINGS("Settings", Icons.Outlined.Settings, Icons.Filled.Settings),
+    HOME(R.string.nav_today, Icons.Outlined.Home, Icons.Filled.Home),
+    FOOD(R.string.nav_food, Icons.Outlined.Restaurant, Icons.Filled.Restaurant),
+    TRENDS(R.string.nav_trends, Icons.Outlined.BarChart, Icons.Filled.BarChart),
+    SETTINGS(R.string.nav_settings, Icons.Outlined.Settings, Icons.Filled.Settings),
 }

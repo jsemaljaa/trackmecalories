@@ -183,4 +183,187 @@
     <string name="cook_meat">Meat ×0.75</string>
     <string name="cook_fish">Fish ×0.8</string>
     <string name="cook_vegetables">Vegetables ×0.8</string>
+
+    <!-- Meals -->
+    <string name="meal">Meal</string>
+    <string name="meal_breakfast">Breakfast</string>
+    <string name="meal_lunch">Lunch</string>
+    <string name="meal_dinner">Dinner</string>
+    <string name="meal_snack">Snack</string>
+    <string name="meal_quick_add">Quick Add</string>
+
+    <!-- Food dialogs -->
+    <plurals name="pieces">
+        <item quantity="one">%1$s piece</item>
+        <item quantity="other">%1$s pieces</item>
+    </plurals>
+    <string name="log_food_title">Log %1$s</string>
+    <string name="log_food">Log food</string>
+    <string name="edit_food">Edit food</string>
+    <string name="how_many_pieces">How many pieces?</string>
+    <string name="how_many_unit">How many %1$s?</string>
+    <string name="edit_entry_title">Edit entry: %1$s</string>
+    <string name="quick_copy">Quick copy</string>
+    <string name="copy_yesterday">Yesterday</string>
+    <string name="copy_tomorrow">Tomorrow</string>
+    <string name="delete_from_log">Delete from log</string>
+    <string name="update">Update</string>
+    <string name="for_amount">for %1$s</string>
+    <string name="per_one_piece">1 piece</string>
+    <string name="values_per_unit">Values are per %1$s · change unit</string>
+    <string name="per_100g">per 100 g</string>
+    <string name="per_100ml">per 100 ml</string>
+    <string name="per_piece">per piece</string>
+    <string name="food_not_found_create">Not found. Create this food?</string>
+    <string name="add_custom_food">New custom food</string>
+    <string name="barcode_value">Barcode: %1$s</string>
+    <string name="food_name">Food name</string>
+    <string name="save_food">Save food</string>
+    <string name="nutrient_kcal_per">kcal/%1$s</string>
+    <string name="nutrient_p_per">P/%1$s</string>
+    <string name="nutrient_c_per">C/%1$s</string>
+    <string name="nutrient_f_per">F/%1$s</string>
+    <string name="nutrient_fib_per">Fib/%1$s</string>
+    <string name="nutrient_salt_per">Salt/%1$s</string>
+    <plurals name="also_fix_entries">
+        <item quantity="one">Also fix the %1$d logged entry of this food</item>
+        <item quantity="other">Also fix the %1$d logged entries of this food</item>
+    </plurals>
+    <string name="unit_change_keeps_entries">Logged entries keep their values when the unit changes</string>
+    <string name="delete_saved_food">Delete this saved food</string>
+    <string name="save_changes">Save changes</string>
+    <string name="delete_food_title">Delete %1$s?</string>
+    <string name="delete_food_body">It\'s removed from your saved foods. Anything you already logged stays in your log.</string>
+
+    <!-- Home -->
+    <string name="deleted_entry">Deleted %1$s</string>
+    <string name="add_food">Add food</string>
+    <string name="daily_log">Daily log</string>
+    <string name="no_entries_day">No entries for this day</string>
+    <string name="water">Water</string>
+    <string name="kcal_over">kcal over</string>
+    <string name="kcal_left">kcal left</string>
+    <string name="eaten">Eaten</string>
+    <string name="goal">Goal</string>
+    <string name="nothing_logged_yet">Nothing logged yet</string>
+    <string name="percent_of_goal">%1$d%% of your goal</string>
+    <string name="percent_of_goal_eaten">%1$d%% of your goal eaten</string>
+    <string name="quick_add_total">Total calories</string>
+    <string name="quick_add_example">e.g. 500</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="tomorrow">Tomorrow</string>
+    <string name="previous_week">Previous week</string>
+    <string name="next_week">Next week</string>
+    <string name="open_calendar">Open calendar</string>
+    <string name="back_to_today">Back to today</string>
+    <string name="add_search">Search foods</string>
+    <string name="add_search_desc">Your foods, restaurants, products</string>
+    <string name="add_scan">Scan a barcode</string>
+    <string name="add_scan_desc">Packaged products</string>
+    <string name="add_quick">Quick add calories</string>
+    <string name="add_quick_desc">Just a number, no food</string>
+    <string name="add_custom">Create a custom food</string>
+    <string name="add_custom_desc">Enter the nutrition label yourself</string>
+
+    <!-- Search -->
+    <string name="nav_today">Today</string>
+    <string name="nav_food">Food</string>
+    <string name="nav_trends">Trends</string>
+    <string name="nav_settings">Settings</string>
+    <string name="source_menu">Restaurant menu</string>
+    <string name="source_kaloricke">Kalorické tabulky</string>
+    <string name="source_off">Open Food Facts</string>
+    <string name="source_off_cz">Open Food Facts · sold in CZ</string>
+    <string name="search_error_all">Couldn\'t reach the online food databases. Check your connection and try again.</string>
+    <string name="search_error_off">Couldn\'t reach Open Food Facts. Check your connection and try again.</string>
+    <string name="search_error_kt">Couldn\'t reach Kalorické tabulky. Check your connection and try again.</string>
+    <string name="could_not_load">Couldn\'t load %1$s. Check your connection.</string>
+    <string name="search_placeholder">e.g. skyr, big mac, caesar bageta</string>
+    <string name="clear_search">Clear search</string>
+    <string name="your_foods">Your foods</string>
+    <string name="results">Results</string>
+    <string name="search_unavailable">Search unavailable</string>
+    <string name="search_partial">Some results are missing</string>
+    <string name="retry">Retry</string>
+    <string name="no_matches">No matches for “%1$s”</string>
+    <string name="no_matches_body">Try fewer or more general words, or add it yourself.</string>
+    <string name="cant_find_create">Can\'t find it? Create a custom food</string>
+    <string name="loading_serving">Loading serving size…</string>
+    <string name="tap_for_macros">Tap for macros &amp; serving size</string>
+    <string name="per_piece_short">piece</string>
+    <string name="macro_line">P %1$sg · C %2$sg · F %3$sg</string>
+    <string name="kcal_per">kcal / %1$s</string>
+    <string name="tab_recent">Recent</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_all">All</string>
+    <string name="tab_recipes">Recipes</string>
+    <string name="favorites_empty">Tap the star on a saved food to pin it here.</string>
+    <string name="saved_empty">Foods you log or create show up here.</string>
+    <string name="pin_favorite">Pin to favorites</string>
+    <string name="unpin_favorite">Unpin from favorites</string>
+    <string name="saved_food_line">%1$d kcal per %2$s · P %3$d · C %4$d · F %5$d</string>
+
+    <!-- Trends -->
+    <string name="calories_per_day">Calories per day</string>
+    <string name="tap_day_to_open">Tap a day to open its log</string>
+    <string name="week_not_started">This week hasn\'t started yet.</string>
+    <string name="week_nothing_logged">Nothing logged this week yet.</string>
+    <string name="this_week">This week</string>
+    <string name="last_week">Last week</string>
+    <string name="week_of">Week of %1$s</string>
+    <string name="within_goal">Within goal</string>
+    <string name="over_goal">Over goal</string>
+    <string name="goal_value">Goal %1$s</string>
+    <string name="daily_average">Daily average</string>
+    <plurals name="over_logged_days">
+        <item quantity="one">over %1$d logged day</item>
+        <item quantity="other">over %1$d logged days</item>
+    </plurals>
+    <string name="vs_last_week_up">▲ %1$s vs last week</string>
+    <string name="vs_last_week_down">▼ %1$s vs last week</string>
+    <string name="vs_last_week_same">same as last week</string>
+    <string name="week_balance">Week balance</string>
+    <string name="balance_over">over your goal in total</string>
+    <string name="balance_under">under your goal in total</string>
+    <string name="balance_exact">exactly on goal</string>
+    <plurals name="days_unit">
+        <item quantity="one">day</item>
+        <item quantity="other">days</item>
+    </plurals>
+    <string name="within_goal_detail">logged days at or under %1$s kcal</string>
+    <string name="days_logged">Days logged</string>
+    <string name="so_far_this_week">so far this week</string>
+    <string name="this_week_lower">this week</string>
+    <string name="average_macros">Average macros</string>
+    <string name="average_macros_detail">per logged day, against your daily goals</string>
+    <string name="calories_come_from">Where your calories come from</string>
+
+    <!-- Settings -->
+    <string name="appearance">Appearance</string>
+    <string name="style">Style</string>
+    <string name="style_flat">Flat</string>
+    <string name="style_glass">Glass</string>
+    <string name="accent_colour">Accent colour</string>
+    <string name="accent_green">Green</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_violet">Violet</string>
+    <string name="accent_rose">Rose</string>
+    <string name="accent_orange">Orange</string>
+    <string name="accent_wallpaper">Wallpaper</string>
+    <string name="language">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="data">Data</string>
+    <string name="export_csv">Export data (CSV)</string>
+    <string name="export_chooser">Export food log</string>
+    <string name="export_failed">Export failed: %1$s</string>
+    <string name="danger_zone">Danger zone</string>
+    <string name="wipe_all">Wipe all data</string>
+    <string name="wipe_all_title">Wipe all data?</string>
+    <string name="wipe_all_body">This permanently deletes all your food and water logs. Saved foods, recipes, weight and goals are kept. This can\'t be undone.</string>
+    <string name="wipe_all_confirm">Delete everything</string>
+    <string name="camera_needed">Camera access is needed to scan barcodes.</string>
+    <string name="grant_permission">Allow camera</string>
 </resources>

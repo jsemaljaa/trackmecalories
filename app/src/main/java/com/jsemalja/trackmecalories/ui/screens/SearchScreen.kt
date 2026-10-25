@@ -82,6 +82,7 @@ fun SearchScreen(
     val savedMatches by viewModel.savedFoodMatches.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
     val searchError by viewModel.searchError.collectAsState()
+    val couldNotLoad = stringResource(R.string.could_not_load)
     val selectedDate by viewModel.selectedDate.collectAsState()
 
     val keyboard = LocalSoftwareKeyboardController.current
@@ -122,7 +123,7 @@ fun SearchScreen(
             if (food != null) {
                 foodToLog = food
             } else {
-                Toast.makeText(context, "Couldn't load ${hit.name}. Check your connection.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, couldNotLoad.format(hit.name), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -134,24 +135,24 @@ fun SearchScreen(
                 Text(stringResource(R.string.recipe_add_ingredient), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
         } else {
-            ScreenHeader(Icons.Outlined.Restaurant, "Food")
+            ScreenHeader(Icons.Outlined.Restaurant, stringResource(R.string.nav_food))
         }
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
             value = query,
             onValueChange = viewModel::searchFoods,
-            placeholder = { Text("e.g. skyr, big mac, caesar bageta") },
+            placeholder = { Text(stringResource(R.string.search_placeholder)) },
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { viewModel.searchFoods("") }) {
-                        Icon(Icons.Default.Close, contentDescription = "Clear search")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_search))
                     }
                 } else {
                     IconButton(onClick = onOpenScanner) {
-                        Icon(Icons.Outlined.QrCodeScanner, contentDescription = "Scan a barcode")
+                        Icon(Icons.Outlined.QrCodeScanner, contentDescription = stringResource(R.string.add_scan))
                     }
                 }
             },
@@ -209,7 +210,7 @@ fun SearchScreen(
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 if (savedMatches.isNotEmpty()) {
-                    item(key = "saved_header") { SectionLabel("Your foods") }
+                    item(key = "saved_header") { SectionLabel(stringResource(R.string.your_foods)) }
                     items(savedMatches, key = { "saved_${it.id}" }) { food ->
                         SavedFoodResultRow(
                             food = food,
@@ -220,7 +221,7 @@ fun SearchScreen(
                 }
 
                 if (results.isNotEmpty()) {
-                    item(key = "results_header") { SectionLabel("Results") }
+                    item(key = "results_header") { SectionLabel(stringResource(R.string.results)) }
                     items(results, key = { it.key }) { hit ->
                         SearchHitRow(hit, isLoading = resolvingKey == hit.key) { open(hit) }
                     }
@@ -230,9 +231,9 @@ fun SearchScreen(
                     item(key = "error") {
                         SearchMessage(
                             icon = Icons.Default.CloudOff,
-                            title = if (results.isEmpty()) "Search unavailable" else "Some results are missing",
-                            body = error,
-                            actionLabel = "Retry",
+                            title = stringResource(if (results.isEmpty()) R.string.search_unavailable else R.string.search_partial),
+                            body = stringResource(error),
+                            actionLabel = stringResource(R.string.retry),
                             onAction = viewModel::retrySearch
                         )
                     }
@@ -242,9 +243,9 @@ fun SearchScreen(
                     item(key = "empty") {
                         SearchMessage(
                             icon = Icons.Default.SearchOff,
-                            title = "No matches for “${query.trim()}”",
-                            body = "Try fewer or more general words, or add it yourself.",
-                            actionLabel = "Create custom food",
+                            title = stringResource(R.string.no_matches, query.trim()),
+                            body = stringResource(R.string.no_matches_body),
+                            actionLabel = stringResource(R.string.add_custom),
                             onAction = { showCreateDialog = true }
                         )
                     }
@@ -256,7 +257,7 @@ fun SearchScreen(
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Can't find it? Create a custom food")
+                            Text(stringResource(R.string.cant_find_create))
                         }
                     }
                 }
@@ -359,7 +360,7 @@ private fun SavedFoodResultRow(food: CustomFood, onClick: () -> Unit, onEdit: ()
         leading = Icons.Default.Bookmark,
         onClick = onClick,
         trailing = {
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Edit ${food.name}") }
+            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_food)) }
         }
     )
 }
@@ -367,9 +368,9 @@ private fun SavedFoodResultRow(food: CustomFood, onClick: () -> Unit, onEdit: ()
 @Composable
 private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit) {
     val macros = when {
-        isLoading -> "Loading serving size…"
+        isLoading -> stringResource(R.string.loading_serving)
         hit.protein != null && hit.carbs != null && hit.fat != null -> macroLine(hit.protein, hit.carbs, hit.fat)
-        else -> "Tap for macros & serving size"
+        else -> stringResource(R.string.tap_for_macros)
     }
     ResultCard(
         title = hit.name,
@@ -378,8 +379,8 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
         macros = macros,
         per = perLabel(hit.unit),
         source = when (hit.source) {
-            SearchSource.OPEN_FOOD_FACTS -> if (hit.isCzech) "Open Food Facts · sold in CZ" else "Open Food Facts"
-            else -> hit.source.label
+            SearchSource.OPEN_FOOD_FACTS -> if (hit.isCzech) stringResource(R.string.source_off_cz) else stringResource(R.string.source_off)
+            else -> stringResource(hit.source.label)
         },
         leading = if (hit.source == SearchSource.MENU) Icons.Default.Restaurant else null,
         onClick = onClick,
@@ -389,10 +390,11 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
     )
 }
 
-private fun perLabel(unit: String) = if (unit == "pcs") "piece" else "100$unit"
+@Composable
+private fun perLabel(unit: String) = if (unit == "pcs") stringResource(R.string.per_piece_short) else "100 $unit"
 
-private fun macroLine(protein: Double, carbs: Double, fat: Double) =
-    "P ${fmt(protein)}g · C ${fmt(carbs)}g · F ${fmt(fat)}g"
+@Composable
+private fun macroLine(protein: Double, carbs: Double, fat: Double) = stringResource(R.string.macro_line, fmt(protein), fmt(carbs), fmt(fat))
 
 @Composable
 private fun ResultCard(
@@ -445,7 +447,7 @@ private fun ResultCard(
             Spacer(Modifier.width(12.dp))
             Column(horizontalAlignment = Alignment.End) {
                 Text("${kcal.roundToInt()}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("kcal / $per", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.kcal_per, per), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             trailing?.invoke()
         }

@@ -1,5 +1,7 @@
 package com.jsemalja.trackmecalories.ui.theme
 
+import com.jsemalja.trackmecalories.R
+import androidx.annotation.StringRes
 import android.content.Context
 import android.os.Build
 import androidx.compose.ui.graphics.Color
@@ -8,9 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** Visual style of surfaces: solid flat cards, or frosted glass over a colourful backdrop. */
-enum class DesignStyle(val label: String) {
-    FLAT("Flat"),
-    GLASS("Glass")
+enum class DesignStyle(@StringRes val label: Int) {
+    FLAT(R.string.style_flat),
+    GLASS(R.string.style_glass)
 }
 
 /**
@@ -19,7 +21,7 @@ enum class DesignStyle(val label: String) {
  * shifts with it. [WALLPAPER] uses Android 12+'s wallpaper-based colours instead.
  */
 enum class AccentColor(
-    val label: String,
+    @StringRes val label: Int,
     val primaryDark: Color,
     val onPrimaryDark: Color,
     val containerDark: Color,
@@ -30,37 +32,37 @@ enum class AccentColor(
     val onContainerLight: Color
 ) {
     GREEN(
-        "Green",
+        R.string.accent_green,
         Color(0xFF8ED6AE), Color(0xFF00391C), Color(0xFF00522F), Color(0xFFA6F2C5),
         Color(0xFF1B6E4F), Color(0xFFFFFFFF), Color(0xFFA6F2C5), Color(0xFF00210F)
     ),
     TEAL(
-        "Teal",
+        R.string.accent_teal,
         Color(0xFF4FDAD1), Color(0xFF003734), Color(0xFF00504C), Color(0xFF71F7EE),
         Color(0xFF006A65), Color(0xFFFFFFFF), Color(0xFF71F7EE), Color(0xFF00201E)
     ),
     BLUE(
-        "Blue",
+        R.string.accent_blue,
         Color(0xFFA8C8FF), Color(0xFF00315F), Color(0xFF194880), Color(0xFFD5E3FF),
         Color(0xFF345F99), Color(0xFFFFFFFF), Color(0xFFD5E3FF), Color(0xFF001C3B)
     ),
     VIOLET(
-        "Violet",
+        R.string.accent_violet,
         Color(0xFFCFBDFF), Color(0xFF36196F), Color(0xFF4D3287), Color(0xFFE9DDFF),
         Color(0xFF6650A1), Color(0xFFFFFFFF), Color(0xFFE9DDFF), Color(0xFF21005D)
     ),
     ROSE(
-        "Rose",
+        R.string.accent_rose,
         Color(0xFFFFB0CA), Color(0xFF5E1134), Color(0xFF7B294B), Color(0xFFFFD9E3),
         Color(0xFF984063), Color(0xFFFFFFFF), Color(0xFFFFD9E3), Color(0xFF3E001E)
     ),
     ORANGE(
-        "Orange",
+        R.string.accent_orange,
         Color(0xFFFFB68B), Color(0xFF522300), Color(0xFF743500), Color(0xFFFFDBC8),
         Color(0xFF964A12), Color(0xFFFFFFFF), Color(0xFFFFDBC8), Color(0xFF321300)
     ),
     WALLPAPER(
-        "Wallpaper",
+        R.string.accent_wallpaper,
         // Fallback (pre-Android 12) is the brand green.
         Color(0xFF8ED6AE), Color(0xFF00391C), Color(0xFF00522F), Color(0xFFA6F2C5),
         Color(0xFF1B6E4F), Color(0xFFFFFFFF), Color(0xFFA6F2C5), Color(0xFF00210F)

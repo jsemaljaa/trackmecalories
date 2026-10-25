@@ -1,5 +1,8 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.R
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,6 +30,27 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 private val MEAL_TYPES = listOf("Breakfast", "Lunch", "Dinner", "Snack")
+
+/** Meal types are stored in English (the database key); this is the display name. */
+@Composable
+fun mealLabel(key: String): String = when (key) {
+    "Breakfast" -> stringResource(R.string.meal_breakfast)
+    "Lunch" -> stringResource(R.string.meal_lunch)
+    "Dinner" -> stringResource(R.string.meal_dinner)
+    "Snack" -> stringResource(R.string.meal_snack)
+    "Quick Add" -> stringResource(R.string.meal_quick_add)
+    else -> key
+}
+
+/** "1 piece" / "2 pieces" (or the localized plural), "150 g" otherwise. */
+@Composable
+fun amountLabel(amount: Double, unit: String): String =
+    if (unit == "pcs") {
+        val quantity = if (amount == Math.floor(amount)) amount.toInt() else 2
+        pluralStringResource(R.plurals.pieces, quantity, amount.clean())
+    } else {
+        "${amount.clean()} $unit"
+    }
 
 /** Sensible meal preselection for "right now", so the common case needs no tap. */
 private fun mealForNow(now: LocalTime = LocalTime.now()): String = when (now.hour) {
@@ -63,10 +87,10 @@ fun PortionEntryDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.Top) {
-                Text(if (showMeal) "Log ${food.name}" else food.name, modifier = Modifier.weight(1f))
+                Text(if (showMeal) stringResource(R.string.log_food_title, food.name) else food.name, modifier = Modifier.weight(1f))
                 if (onEdit != null) {
                     IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit food")
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_food))
                     }
                 }
             }
@@ -84,11 +108,11 @@ fun PortionEntryDialog(
                 )
 
                 if (showMeal) {
-                    Text("Meal", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.meal), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                     // Wraps instead of pushing "Snack" off the edge on narrow phones.
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         MEAL_TYPES.forEach { type ->
-                            FilterChip(selected = mealType == type, onClick = { mealType = type }, label = { Text(type) })
+                            FilterChip(selected = mealType == type, onClick = { mealType = type }, label = { Text(mealLabel(type)) })
                         }
                     }
                 }
@@ -96,7 +120,7 @@ fun PortionEntryDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text(if (food.unit == "pcs") "How many pieces?" else "How many ${food.unit}?") },
+                    label = { Text(if (food.unit == "pcs") stringResource(R.string.how_many_pieces) else stringResource(R.string.how_many_unit, food.unit)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -106,9 +130,9 @@ fun PortionEntryDialog(
         confirmButton = {
             Button(onClick = {
                 onConfirm(amount.toDecimal() ?: food.referenceAmount, mealType)
-            }) { Text(confirmLabel ?: "Log Food") }
+            }) { Text(confirmLabel ?: stringResource(R.string.log_food)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 
@@ -131,7 +155,7 @@ fun EditEntryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Entry: ${entry.name}") },
+        title = { Text(stringResource(R.string.edit_entry_title, entry.name)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 MacroSummary(
@@ -147,19 +171,19 @@ fun EditEntryDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text(if (entry.unit == "pcs") "How many pieces?" else "How many ${entry.unit}?") },
+                    label = { Text(if (entry.unit == "pcs") stringResource(R.string.how_many_pieces) else stringResource(R.string.how_many_unit, entry.unit)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Text("Quick Copy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.quick_copy), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { onCopyToDate(LocalDate.now().minusDays(1)); onDismiss() }, modifier = Modifier.weight(1f)) {
-                        Text("Yesterday")
+                        Text(stringResource(R.string.copy_yesterday))
                     }
                     Button(onClick = { onCopyToDate(LocalDate.now().plusDays(1)); onDismiss() }, modifier = Modifier.weight(1f)) {
-                        Text("Tomorrow")
+                        Text(stringResource(R.string.copy_tomorrow))
                     }
                 }
 
@@ -172,7 +196,7 @@ fun EditEntryDialog(
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Delete from log")
+                    Text(stringResource(R.string.delete_from_log))
                 }
             }
         },
@@ -190,9 +214,9 @@ fun EditEntryDialog(
                     salt = entry.salt * updateRatio
                 ))
                 onDismiss()
-            }) { Text("Update") }
+            }) { Text(stringResource(R.string.update)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 
@@ -211,11 +235,7 @@ fun MacroSummary(
     val currentProtein = protein * ratio
     val currentCarbs = carbs * ratio
     val currentFat = fat * ratio
-    val amountLabel = if (unit == "pcs") {
-        "${amount.clean()} ${if (amount == 1.0) "piece" else "pieces"}"
-    } else {
-        "${amount.clean()} $unit"
-    }
+    val amountText = amountLabel(amount, unit)
 
     Column(
         modifier = Modifier
@@ -226,7 +246,7 @@ fun MacroSummary(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("$currentKcal kcal", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text("for $amountLabel", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.for_amount, amountText), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         Spacer(Modifier.height(8.dp))
 
@@ -234,9 +254,9 @@ fun MacroSummary(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            MacroItem("Protein", currentProtein, MacroProtein)
-            MacroItem("Carbs", currentCarbs, MacroCarbs)
-            MacroItem("Fat", currentFat, MacroFat)
+            MacroItem(stringResource(R.string.protein), currentProtein, MacroProtein)
+            MacroItem(stringResource(R.string.carbs), currentCarbs, MacroCarbs)
+            MacroItem(stringResource(R.string.fat), currentFat, MacroFat)
         }
     }
 }
@@ -249,8 +269,10 @@ fun MacroItem(label: String, value: Double, color: Color) {
     }
 }
 
-/** "100g"/"100ml" for weight/volume units, or "1 pc" for piece-counted foods. */
-private fun referenceLabel(unit: String): String = if (unit == "pcs") "1 pc" else "100$unit"
+/** "100 g"/"100 ml" for weight/volume units, or "1 piece" for piece-counted foods. */
+@Composable
+private fun referenceLabel(unit: String): String =
+    if (unit == "pcs") stringResource(R.string.per_one_piece) else "100 $unit"
 
 private fun referenceAmountFor(unit: String): Double = if (unit == "pcs") 1.0 else 100.0
 
@@ -259,11 +281,11 @@ private fun UnitDropdown(unit: String, onUnitChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-            Text("Values are per ${referenceLabel(unit)} · change unit")
+            Text(stringResource(R.string.values_per_unit, referenceLabel(unit)))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            listOf("g" to "per 100 g", "ml" to "per 100 ml", "pcs" to "per piece").forEach { (u, label) ->
-                DropdownMenuItem(text = { Text(label) }, onClick = { onUnitChange(u); expanded = false })
+            listOf("g" to R.string.per_100g, "ml" to R.string.per_100ml, "pcs" to R.string.per_piece).forEach { (u, label) ->
+                DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { onUnitChange(u); expanded = false })
             }
         }
     }
@@ -301,30 +323,30 @@ fun CustomFoodEntryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (barcode != null) "Food Not Found. Create Custom?" else "Add New Custom Food") },
+        title = { Text(stringResource(if (barcode != null) R.string.food_not_found_create else R.string.add_custom_food)) },
         text = {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (barcode != null) {
-                    item { Text("Barcode: $barcode", style = MaterialTheme.typography.labelSmall) }
+                    item { Text(stringResource(R.string.barcode_value, barcode), style = MaterialTheme.typography.labelSmall) }
                 }
-                item { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Food Name") }, modifier = Modifier.fillMaxWidth()) }
+                item { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.food_name)) }, modifier = Modifier.fillMaxWidth()) }
                 item { UnitDropdown(unit = unit) { unit = it } }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        NutrientField("kcal/$refLabel", kcal) { kcal = it }
-                        NutrientField("P/$refLabel", protein) { protein = it }
+                        NutrientField(stringResource(R.string.nutrient_kcal_per, refLabel), kcal) { kcal = it }
+                        NutrientField(stringResource(R.string.nutrient_p_per, refLabel), protein) { protein = it }
                     }
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        NutrientField("C/$refLabel", carbs) { carbs = it }
-                        NutrientField("F/$refLabel", fat) { fat = it }
+                        NutrientField(stringResource(R.string.nutrient_c_per, refLabel), carbs) { carbs = it }
+                        NutrientField(stringResource(R.string.nutrient_f_per, refLabel), fat) { fat = it }
                     }
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        NutrientField("Fib/$refLabel", fiber) { fiber = it }
-                        NutrientField("Salt/$refLabel", salt) { salt = it }
+                        NutrientField(stringResource(R.string.nutrient_fib_per, refLabel), fiber) { fiber = it }
+                        NutrientField(stringResource(R.string.nutrient_salt_per, refLabel), salt) { salt = it }
                     }
                 }
             }
@@ -344,9 +366,9 @@ fun CustomFoodEntryDialog(
                     referenceAmount = referenceAmountFor(unit)
                 )
                 onSave(food)
-            }) { Text("Save to Database") }
+            }) { Text(stringResource(R.string.save_food)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 
@@ -381,27 +403,27 @@ fun EditCustomFoodDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit food") },
+        title = { Text(stringResource(R.string.edit_food)) },
         text = {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                item { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Food Name") }, modifier = Modifier.fillMaxWidth()) }
+                item { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.food_name)) }, modifier = Modifier.fillMaxWidth()) }
                 item { UnitDropdown(unit = unit) { unit = it } }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        NutrientField("kcal/$refLabel", kcal) { kcal = it }
-                        NutrientField("P/$refLabel", protein) { protein = it }
+                        NutrientField(stringResource(R.string.nutrient_kcal_per, refLabel), kcal) { kcal = it }
+                        NutrientField(stringResource(R.string.nutrient_p_per, refLabel), protein) { protein = it }
                     }
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        NutrientField("C/$refLabel", carbs) { carbs = it }
-                        NutrientField("F/$refLabel", fat) { fat = it }
+                        NutrientField(stringResource(R.string.nutrient_c_per, refLabel), carbs) { carbs = it }
+                        NutrientField(stringResource(R.string.nutrient_f_per, refLabel), fat) { fat = it }
                     }
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        NutrientField("Fib/$refLabel", fiber) { fiber = it }
-                        NutrientField("Salt/$refLabel", salt) { salt = it }
+                        NutrientField(stringResource(R.string.nutrient_fib_per, refLabel), fiber) { fiber = it }
+                        NutrientField(stringResource(R.string.nutrient_salt_per, refLabel), salt) { salt = it }
                     }
                 }
                 if (loggedEntryCount > 0) {
@@ -420,9 +442,9 @@ fun EditCustomFoodDialog(
                             )
                             Text(
                                 if (canUpdateLogged) {
-                                    "Also fix the $loggedEntryCount logged ${if (loggedEntryCount == 1) "entry" else "entries"} of this food"
+                                    pluralStringResource(R.plurals.also_fix_entries, loggedEntryCount, loggedEntryCount)
                                 } else {
-                                    "Logged entries keep their values when the unit changes"
+                                    stringResource(R.string.unit_change_keeps_entries)
                                 },
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -433,7 +455,7 @@ fun EditCustomFoodDialog(
                     TextButton(
                         onClick = { confirmDelete = true },
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                    ) { Text("Delete this saved food") }
+                    ) { Text(stringResource(R.string.delete_saved_food)) }
                 }
             }
         },
@@ -453,23 +475,23 @@ fun EditCustomFoodDialog(
                     ),
                     updateLogged && canUpdateLogged
                 )
-            }) { Text("Save Changes") }
+            }) { Text(stringResource(R.string.save_changes)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete ${food.name}?") },
-            text = { Text("It's removed from your saved foods. Anything you already logged stays in your log.") },
+            title = { Text(stringResource(R.string.delete_food_title, food.name)) },
+            text = { Text(stringResource(R.string.delete_food_body)) },
             confirmButton = {
                 Button(
                     onClick = { confirmDelete = false; onDelete() },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.delete)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 }

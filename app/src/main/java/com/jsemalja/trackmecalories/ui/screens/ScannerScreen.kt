@@ -57,7 +57,7 @@ fun ScannerScreen(
                     .padding(12.dp)
                     .align(Alignment.TopStart)
             ) {
-                Icon(Icons.Default.Close, contentDescription = "Close scanner")
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
             }
         }
     }
@@ -251,7 +251,7 @@ fun PermissionRequestScreen(onRequestPermission: () -> Unit, modifier: Modifier 
     ) {
         Icon(imageVector = Icons.Default.Camera, contentDescription = null, modifier = Modifier.size(64.dp))
         Spacer(Modifier.height(16.dp))
-        Text(text = "Camera access is needed!", textAlign = TextAlign.Center)
-        Button(onClick = onRequestPermission) { Text("Grant Permission") }
+        Text(text = stringResource(R.string.camera_needed), textAlign = TextAlign.Center)
+        Button(onClick = onRequestPermission) { Text(stringResource(R.string.grant_permission)) }
     }
 }

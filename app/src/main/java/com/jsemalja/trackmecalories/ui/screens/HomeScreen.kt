@@ -86,6 +86,9 @@ fun HomeScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    // Resolved here: the snackbar is shown from a coroutine, outside composition.
+    val deletedMessage = stringResource(R.string.deleted_entry)
+    val undoLabel = stringResource(R.string.undo)
 
     // Every delete (swipe or the dialog's button) is undoable for a few seconds, so an
     // accidental swipe never loses anything.
@@ -94,8 +97,8 @@ fun HomeScreen(
         scope.launch {
             snackbarHostState.currentSnackbarData?.dismiss()
             val result = snackbarHostState.showSnackbar(
-                message = "Deleted ${entry.name}",
-                actionLabel = "Undo",
+                message = deletedMessage.format(entry.name),
+                actionLabel = undoLabel,
                 duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.restoreEntry(entry)
@@ -123,7 +126,7 @@ fun HomeScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add food")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_food))
             }
         }
     ) { padding ->
@@ -149,7 +152,7 @@ fun HomeScreen(
                             onAddWater = { viewModel.addWater(it) }
                         )
                         Spacer(Modifier.height(20.dp))
-                        Text("Daily Log", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.daily_log), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                     }
                 }
@@ -157,7 +160,7 @@ fun HomeScreen(
                 if (entries.isEmpty()) {
                     item(key = "empty") {
                         Text(
-                            "No entries for this day",
+                            stringResource(R.string.no_entries_day),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -259,7 +262,7 @@ fun MealSectionHeader(meal: String, totalKcal: Int) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(meal, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text(mealLabel(meal), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Text("$totalKcal kcal", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -280,7 +283,7 @@ fun WaterCard(waterEntries: List<WaterEntry>, goalMl: Double, onAddWater: (Doubl
             Icon(Icons.Default.LocalDrink, contentDescription = null, tint = if (isGlass) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.tertiary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("Water", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.water), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Text("${totalMl.toInt()} / ${goalMl.toInt()} ml", style = MaterialTheme.typography.bodyMedium)
             }
             OutlinedButton(onClick = { onAddWater(250.0) }) { Text("+250") }
@@ -326,7 +329,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
                         color = if (isOver) colors.error else onCard
                     )
                     Text(
-                        if (isOver) "kcal over" else "kcal left",
+                        stringResource(if (isOver) R.string.kcal_over else R.string.kcal_left),
                         style = MaterialTheme.typography.labelMedium,
                         color = if (isOver) colors.error else onCard.copy(alpha = 0.75f)
                     )
@@ -335,14 +338,14 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
                 Spacer(Modifier.width(20.dp))
 
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    CalorieStat("Eaten", eaten, onCard)
-                    CalorieStat("Goal", goal, onCard)
+                    CalorieStat(stringResource(R.string.eaten), eaten, onCard)
+                    CalorieStat(stringResource(R.string.goal), goal, onCard)
                     HorizontalDivider(color = onCard.copy(alpha = 0.15f))
                     Text(
                         when {
-                            eaten == 0 -> "Nothing logged yet"
-                            isOver -> "${eaten * 100 / goal}% of your goal"
-                            else -> "${eaten * 100 / goal}% of your goal eaten"
+                            eaten == 0 -> stringResource(R.string.nothing_logged_yet)
+                            isOver -> stringResource(R.string.percent_of_goal, eaten * 100 / goal)
+                            else -> stringResource(R.string.percent_of_goal_eaten, eaten * 100 / goal)
                         },
                         style = MaterialTheme.typography.labelMedium,
                         color = if (isOver) statusColor else onCard.copy(alpha = 0.75f)
@@ -354,15 +357,15 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
 
             // Fixed 3-column grid so the second row lines up with the first.
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                NutrientProgress("Protein", entries.sumOf { it.protein }, goals.proteinGoal, MacroProtein, Modifier.weight(1f))
-                NutrientProgress("Carbs", entries.sumOf { it.carbs }, goals.carbGoal, MacroCarbs, Modifier.weight(1f))
-                NutrientProgress("Fat", entries.sumOf { it.fat }, goals.fatGoal, MacroFat, Modifier.weight(1f))
+                NutrientProgress(stringResource(R.string.protein), entries.sumOf { it.protein }, goals.proteinGoal, MacroProtein, Modifier.weight(1f))
+                NutrientProgress(stringResource(R.string.carbs), entries.sumOf { it.carbs }, goals.carbGoal, MacroCarbs, Modifier.weight(1f))
+                NutrientProgress(stringResource(R.string.fat), entries.sumOf { it.fat }, goals.fatGoal, MacroFat, Modifier.weight(1f))
             }
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                NutrientProgress("Fiber", entries.sumOf { it.fiber }, goals.fiberGoal, MacroFiber, Modifier.weight(1f))
+                NutrientProgress(stringResource(R.string.fiber), entries.sumOf { it.fiber }, goals.fiberGoal, MacroFiber, Modifier.weight(1f))
                 // Salt is a limit, not a target — going over it is flagged.
-                NutrientProgress("Salt", entries.sumOf { it.salt }, goals.saltGoal, MacroSalt, Modifier.weight(1f), isLimit = true, decimals = true)
+                NutrientProgress(stringResource(R.string.salt), entries.sumOf { it.salt }, goals.saltGoal, MacroSalt, Modifier.weight(1f), isLimit = true, decimals = true)
                 Spacer(Modifier.weight(1f))
             }
         }
@@ -375,7 +378,7 @@ private fun CalorieStat(label: String, kcal: Int, color: Color) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f))
         Row(verticalAlignment = Alignment.Bottom) {
             Text("%,d".format(kcal), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
-            Text(" kcal", style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 3.dp))
+            Text(" " + stringResource(R.string.unit_kcal), style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 3.dp))
         }
     }
 }
@@ -461,11 +464,7 @@ private fun NutrientProgress(
 
 @Composable
 fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
-    val amount = if (entry.unit == "pcs") {
-        "${entry.amount.clean()} ${if (entry.amount == 1.0) "piece" else "pieces"}"
-    } else {
-        "${entry.amount.clean()} ${entry.unit}"
-    }
+    val amount = amountLabel(entry.amount, entry.unit)
     AppCard(
         onClick = onClick,
         shape = shape,
@@ -546,7 +545,7 @@ fun SwipeToDeleteContainer(
                 modifier = Modifier.fillMaxSize().clip(shape).background(color).padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onErrorContainer)
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onErrorContainer)
             }
         },
         content = { content() }
@@ -558,24 +557,24 @@ fun QuickAddDialog(onDismiss: () -> Unit, onSave: (Int) -> Unit) {
     var kcal by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Quick Add Calories") },
+        title = { Text(stringResource(R.string.add_quick)) },
         text = {
             OutlinedTextField(
                 value = kcal,
                 onValueChange = { kcal = it },
-                label = { Text("Total Calories") },
+                label = { Text(stringResource(R.string.quick_add_total)) },
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("e.g. 500") }
+                placeholder = { Text(stringResource(R.string.quick_add_example)) }
             )
         },
         confirmButton = {
             Button(onClick = {
                 kcal.toIntOrNull()?.let { onSave(it) }
                 onDismiss()
-            }) { Text("Add") }
+            }) { Text(stringResource(R.string.recipe_add)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 
@@ -592,9 +591,9 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
     val weekStart = selectedDate.with(TemporalAdjusters.previousOrSame(WeekFields.of(locale).firstDayOfWeek))
 
     val title = when (selectedDate) {
-        today -> "Today"
-        today.minusDays(1) -> "Yesterday"
-        today.plusDays(1) -> "Tomorrow"
+        today -> stringResource(R.string.today)
+        today.minusDays(1) -> stringResource(R.string.yesterday)
+        today.plusDays(1) -> stringResource(R.string.tomorrow)
         else -> selectedDate.format(DateTimeFormatter.ofPattern("EEEE", locale)).replaceFirstChar { it.titlecase(locale) }
     }
     val subtitle = selectedDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale))
@@ -602,7 +601,7 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { onDateSelected(selectedDate.minusWeeks(1)) }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous week")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.previous_week))
             }
             Column(
                 modifier = Modifier
@@ -617,14 +616,14 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
                     Text(subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Icon(
                         Icons.Default.ArrowDropDown,
-                        contentDescription = "Open calendar",
+                        contentDescription = stringResource(R.string.open_calendar),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
                 }
             }
             IconButton(onClick = { onDateSelected(selectedDate.plusWeeks(1)) }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next week")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.next_week))
             }
         }
 
@@ -652,7 +651,7 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
             ) {
                 Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Back to today")
+                Text(stringResource(R.string.back_to_today))
             }
         }
     }
@@ -669,9 +668,9 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
                         onDateSelected(date)
                     }
                     showPicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { showPicker = false }) { Text(stringResource(R.string.cancel)) } }
         ) {
             DatePicker(state = state)
         }
@@ -738,14 +737,14 @@ private fun AddFoodSheet(
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 24.dp)) {
             Text(
-                "Add food",
+                stringResource(R.string.add_food),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
             )
-            AddFoodAction(Icons.Outlined.Search, "Search foods", "Your foods, restaurants, products", onSearch)
-            AddFoodAction(Icons.Outlined.QrCodeScanner, "Scan a barcode", "Packaged products", onScan)
-            AddFoodAction(Icons.Outlined.Bolt, "Quick add calories", "Just a number, no food", onQuickAdd)
-            AddFoodAction(Icons.Outlined.EditNote, "Create a custom food", "Enter the nutrition label yourself", onCustom)
+            AddFoodAction(Icons.Outlined.Search, stringResource(R.string.add_search), stringResource(R.string.add_search_desc), onSearch)
+            AddFoodAction(Icons.Outlined.QrCodeScanner, stringResource(R.string.add_scan), stringResource(R.string.add_scan_desc), onScan)
+            AddFoodAction(Icons.Outlined.Bolt, stringResource(R.string.add_quick), stringResource(R.string.add_quick_desc), onQuickAdd)
+            AddFoodAction(Icons.Outlined.EditNote, stringResource(R.string.add_custom), stringResource(R.string.add_custom_desc), onCustom)
             HorizontalDivider(Modifier.padding(vertical = 4.dp, horizontal = 12.dp))
             AddFoodAction(Icons.Outlined.MonitorWeight, stringResource(R.string.weight_log), stringResource(R.string.weight_log_desc), onLogWeight)
         }

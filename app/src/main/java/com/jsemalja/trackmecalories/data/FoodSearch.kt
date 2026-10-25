@@ -3,10 +3,10 @@ package com.jsemalja.trackmecalories.data
 import java.text.Normalizer
 
 /** Where a search result came from; shown on the result so you know how far to trust it. */
-enum class SearchSource(val label: String) {
-    MENU("Restaurant menu"),
-    KALORICKE("Kalorické tabulky"),
-    OPEN_FOOD_FACTS("Open Food Facts")
+enum class SearchSource(@androidx.annotation.StringRes val label: Int) {
+    MENU(com.jsemalja.trackmecalories.R.string.source_menu),
+    KALORICKE(com.jsemalja.trackmecalories.R.string.source_kaloricke),
+    OPEN_FOOD_FACTS(com.jsemalja.trackmecalories.R.string.source_off)
 }
 
 /**

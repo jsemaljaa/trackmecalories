@@ -1,5 +1,8 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import android.os.LocaleList
+import android.os.Build
+import android.app.LocaleManager
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import android.content.Intent
@@ -58,14 +61,17 @@ fun SettingsScreen(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val exportChooserTitle = stringResource(R.string.export_chooser)
+    val exportFailed = stringResource(R.string.export_failed)
 
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        ScreenHeader(Icons.Default.Settings, "Settings")
+        ScreenHeader(Icons.Default.Settings, stringResource(R.string.nav_settings))
 
         Spacer(Modifier.height(24.dp))
 
-        SettingsSectionCard(title = "Appearance", titleColor = MaterialTheme.colorScheme.primary) {
+        SettingsSectionCard(title = stringResource(R.string.appearance), titleColor = MaterialTheme.colorScheme.primary) {
             AppearanceSettings(appearance, onStyleChange, onAccentChange)
+            LanguageSettings()
         }
 
         Spacer(Modifier.height(16.dp))
@@ -83,7 +89,7 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        SettingsSectionCard(title = "Data", titleColor = MaterialTheme.colorScheme.primary) {
+        SettingsSectionCard(title = stringResource(R.string.data), titleColor = MaterialTheme.colorScheme.primary) {
             OutlinedButton(
                 onClick = {
                     scope.launch {
@@ -97,10 +103,10 @@ fun SettingsScreen(
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
-                            context.startActivity(Intent.createChooser(intent, "Export Food Log"))
+                            context.startActivity(Intent.createChooser(intent, exportChooserTitle))
                             null
                         } catch (e: Exception) {
-                            "Export failed: ${e.message}"
+                            exportFailed.format(e.message ?: "")
                         }
                     }
                 },
@@ -108,7 +114,7 @@ fun SettingsScreen(
             ) {
                 Icon(Icons.Default.Download, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Export Data (CSV)")
+                Text(stringResource(R.string.export_csv))
             }
 
             exportError?.let {
@@ -119,7 +125,7 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        SettingsSectionCard(title = "Danger Zone", titleColor = MaterialTheme.colorScheme.error) {
+        SettingsSectionCard(title = stringResource(R.string.danger_zone), titleColor = MaterialTheme.colorScheme.error) {
             OutlinedButton(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier.fillMaxWidth(),
@@ -127,7 +133,7 @@ fun SettingsScreen(
             ) {
                 Icon(Icons.Default.DeleteForever, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Wipe All Data")
+                Text(stringResource(R.string.wipe_all))
             }
         }
     }
@@ -135,8 +141,8 @@ fun SettingsScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Wipe All Data?") },
-            text = { Text("This will permanently delete all your food logs. This action cannot be undone.") },
+            title = { Text(stringResource(R.string.wipe_all_title)) },
+            text = { Text(stringResource(R.string.wipe_all_body)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -144,10 +150,10 @@ fun SettingsScreen(
                         showDeleteDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Delete Everything") }
+                ) { Text(stringResource(R.string.wipe_all_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -175,7 +181,7 @@ private fun AppearanceSettings(
     onStyleChange: (DesignStyle) -> Unit,
     onAccentChange: (AccentColor) -> Unit
 ) {
-    Text("Style", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(R.string.style), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         DesignStyle.entries.forEachIndexed { i, style ->
@@ -184,12 +190,12 @@ private fun AppearanceSettings(
                 onClick = { onStyleChange(style) },
                 shape = SegmentedButtonDefaults.itemShape(i, DesignStyle.entries.size),
                 colors = appSegmentedColors()
-            ) { Text(style.label) }
+            ) { Text(stringResource(style.label)) }
         }
     }
 
     Spacer(Modifier.height(20.dp))
-    Text("Accent colour", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(R.string.accent_colour), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(10.dp))
     val dark = isSystemInDarkTheme()
     FlowRow(
@@ -240,6 +246,40 @@ private fun AccentSwatch(accent: AccentColor, color: Color, selected: Boolean, o
             }
         }
         Spacer(Modifier.height(4.dp))
-        Text(accent.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(accent.label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/**
+ * In-app language (Android 13+ per-app language; the same setting appears in the system's
+ * app info). "System" follows the phone's language.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LanguageSettings() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+    val context = LocalContext.current
+    val localeManager = remember { context.getSystemService(LocaleManager::class.java) }
+    var current by remember { mutableStateOf(localeManager.applicationLocales.toLanguageTags()) }
+    val options = listOf("" to R.string.language_system, "en" to R.string.language_english, "ru" to R.string.language_russian)
+
+    Spacer(Modifier.height(20.dp))
+    Text(stringResource(R.string.language), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        options.forEachIndexed { i, (tag, label) ->
+            SegmentedButton(
+                selected = current == tag,
+                onClick = {
+                    current = tag
+                    // The activity restarts in the new language; the open tab is kept.
+                    localeManager.applicationLocales =
+                        if (tag.isEmpty()) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag)
+                },
+                shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                colors = appSegmentedColors(),
+                icon = {}
+            ) { Text(stringResource(label)) }
+        }
     }
 }

@@ -26,11 +26,11 @@ import kotlin.math.roundToInt
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 
 /** Which saved foods the Food tab lists while the search box is empty. */
-enum class SavedFoodsTab(val label: String) {
-    RECENT("Recent"),
-    FAVORITES("Favorites"),
-    ALL("All"),
-    RECIPES("Recipes")
+enum class SavedFoodsTab(@androidx.annotation.StringRes val label: Int) {
+    RECENT(R.string.tab_recent),
+    FAVORITES(R.string.tab_favorites),
+    ALL(R.string.tab_all),
+    RECIPES(R.string.tab_recipes)
 }
 
 /**
@@ -61,7 +61,7 @@ fun LazyListScope.savedFoodsSection(
                     shape = SegmentedButtonDefaults.itemShape(i, tabs.size),
                     colors = appSegmentedColors(),
                     icon = {}
-                ) { Text(entry.label) }
+                ) { Text(stringResource(entry.label)) }
             }
         }
     }
@@ -75,8 +75,8 @@ fun LazyListScope.savedFoodsSection(
         item(key = "saved_empty") {
             Text(
                 when (tab) {
-                    SavedFoodsTab.FAVORITES -> "Tap the star on a saved food to pin it here."
-                    else -> "Foods you log or create show up here."
+                    SavedFoodsTab.FAVORITES -> stringResource(R.string.favorites_empty)
+                    else -> stringResource(R.string.saved_empty)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -112,9 +112,12 @@ fun SavedFoodRow(
         Row(Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(food.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                val refLabel = if (food.unit == "pcs") "piece" else "100 ${food.unit}"
+                val refLabel = if (food.unit == "pcs") stringResource(R.string.per_piece_short) else "100 ${food.unit}"
                 Text(
-                    "${food.kcalPer100.toInt()} kcal per $refLabel · P ${food.proteinPer100.toInt()} · C ${food.carbsPer100.toInt()} · F ${food.fatPer100.toInt()}",
+                    stringResource(
+                        R.string.saved_food_line, food.kcalPer100.toInt(), refLabel,
+                        food.proteinPer100.toInt(), food.carbsPer100.toInt(), food.fatPer100.toInt()
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -122,12 +125,12 @@ fun SavedFoodRow(
             IconButton(onClick = onToggleFavorite) {
                 Icon(
                     if (food.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                    contentDescription = if (food.isFavorite) "Unpin from favorites" else "Pin to favorites",
+                    contentDescription = stringResource(if (food.isFavorite) R.string.unpin_favorite else R.string.pin_favorite),
                     tint = if (food.isFavorite) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = onEdit) {
-                Icon(Icons.Outlined.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit_food), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

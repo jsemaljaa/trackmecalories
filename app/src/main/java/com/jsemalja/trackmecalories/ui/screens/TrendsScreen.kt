@@ -1,5 +1,6 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import androidx.compose.ui.res.pluralStringResource
 import com.jsemalja.trackmecalories.ui.theme.isGlass
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import androidx.compose.foundation.Canvas
@@ -78,7 +79,7 @@ fun TrendsScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        ScreenHeader(Icons.Default.BarChart, "Trends")
+        ScreenHeader(Icons.Default.BarChart, stringResource(R.string.nav_trends))
         Spacer(Modifier.height(12.dp))
 
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -122,7 +123,7 @@ fun TrendsScreen(
 
         AppCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("Calories per day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.calories_per_day), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 ChartLegend(goal)
                 Spacer(Modifier.height(12.dp))
@@ -135,7 +136,7 @@ fun TrendsScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "Tap a day to open its log",
+                    stringResource(R.string.tap_day_to_open),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -147,7 +148,7 @@ fun TrendsScreen(
 
         if (logged.isEmpty()) {
             Text(
-                if (daysSoFar == 0) "This week hasn't started yet." else "Nothing logged this week yet.",
+                stringResource(if (daysSoFar == 0) R.string.week_not_started else R.string.week_nothing_logged),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -173,9 +174,9 @@ private fun WeekSelector(
     val weekEnd = weekStart.plusDays(6)
     val thisWeek = weekStartOf(today)
     val title = when (weekStart) {
-        thisWeek -> "This week"
-        thisWeek.minusWeeks(1) -> "Last week"
-        else -> "Week of ${weekStart.format(DateTimeFormatter.ofPattern("d MMM", locale))}"
+        thisWeek -> stringResource(R.string.this_week)
+        thisWeek.minusWeeks(1) -> stringResource(R.string.last_week)
+        else -> stringResource(R.string.week_of, weekStart.format(DateTimeFormatter.ofPattern("d MMM", locale)))
     }
     val range = if (weekStart.month == weekEnd.month) {
         "${weekStart.dayOfMonth} – ${weekEnd.format(DateTimeFormatter.ofPattern("d MMM yyyy", locale))}"
@@ -185,14 +186,14 @@ private fun WeekSelector(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onPrevious) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous week")
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.previous_week))
         }
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(range, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         IconButton(onClick = onNext, enabled = canGoForward) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next week")
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.next_week))
         }
     }
 }
@@ -201,8 +202,8 @@ private fun WeekSelector(
 private fun ChartLegend(goal: Int) {
     val colors = MaterialTheme.colorScheme
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        LegendSwatch(colors.primary, "Within goal")
-        LegendSwatch(colors.error, "Over goal")
+        LegendSwatch(colors.primary, stringResource(R.string.within_goal))
+        LegendSwatch(colors.error, stringResource(R.string.over_goal))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.width(16.dp).height(2.dp)) {
                 drawLine(
@@ -211,7 +212,7 @@ private fun ChartLegend(goal: Int) {
                 )
             }
             Spacer(Modifier.width(4.dp))
-            Text("Goal ${"%,d".format(goal)}", style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+            Text(stringResource(R.string.goal_value, "%,d".format(goal)), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
         }
     }
 }
@@ -337,56 +338,51 @@ private fun WeekStats(logged: List<DailyTotal>, previousLogged: List<DailyTotal>
     val prevAvg = previousLogged.takeIf { it.isNotEmpty() }?.let { p -> p.sumOf { it.totalKcal } / p.size }
     val withinGoal = logged.count { it.totalKcal <= goal }
     val balance = logged.sumOf { it.totalKcal - goal }
-    val dayWord = { n: Int -> if (n == 1) "day" else "days" }
+    val kcal = stringResource(R.string.unit_kcal)
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatTile(
-                label = "Daily average",
+                label = stringResource(R.string.daily_average),
                 value = "%,d".format(avg),
-                unit = "kcal",
-                detail = buildString {
-                    append("over ${logged.size} logged ${dayWord(logged.size)}")
-                    if (prevAvg != null) {
-                        val diff = avg - prevAvg
-                        append(
-                            when {
-                                diff > 0 -> "\n▲ ${"%,d".format(diff)} vs last week"
-                                diff < 0 -> "\n▼ ${"%,d".format(-diff)} vs last week"
-                                else -> "\nsame as last week"
-                            }
-                        )
-                    }
+                unit = kcal,
+                detail = pluralStringResource(R.plurals.over_logged_days, logged.size, logged.size) + when {
+                    prevAvg == null -> ""
+                    avg > prevAvg -> "\n" + stringResource(R.string.vs_last_week_up, "%,d".format(avg - prevAvg))
+                    avg < prevAvg -> "\n" + stringResource(R.string.vs_last_week_down, "%,d".format(prevAvg - avg))
+                    else -> "\n" + stringResource(R.string.vs_last_week_same)
                 },
                 valueColor = if (avg > goal) colors.error else colors.onSurface,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
-                label = "Week balance",
+                label = stringResource(R.string.week_balance),
                 value = (if (balance > 0) "+" else if (balance < 0) "−" else "") + "%,d".format(abs(balance)),
-                unit = "kcal",
-                detail = when {
-                    balance > 0 -> "over your goal in total"
-                    balance < 0 -> "under your goal in total"
-                    else -> "exactly on goal"
-                },
+                unit = kcal,
+                detail = stringResource(
+                    when {
+                        balance > 0 -> R.string.balance_over
+                        balance < 0 -> R.string.balance_under
+                        else -> R.string.balance_exact
+                    }
+                ),
                 valueColor = if (balance > 0) colors.error else colors.primary,
                 modifier = Modifier.weight(1f)
             )
         }
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatTile(
-                label = "Within goal",
+                label = stringResource(R.string.within_goal),
                 value = "$withinGoal / ${logged.size}",
-                unit = dayWord(logged.size),
-                detail = "logged days at or under ${"%,d".format(goal)} kcal",
+                unit = pluralStringResource(R.plurals.days_unit, logged.size),
+                detail = stringResource(R.string.within_goal_detail, "%,d".format(goal)),
                 modifier = Modifier.weight(1f)
             )
             StatTile(
-                label = "Days logged",
+                label = stringResource(R.string.days_logged),
                 value = "${logged.size} / $daysSoFar",
-                unit = dayWord(daysSoFar),
-                detail = if (daysSoFar < 7) "so far this week" else "this week",
+                unit = pluralStringResource(R.plurals.days_unit, daysSoFar),
+                detail = stringResource(if (daysSoFar < 7) R.string.so_far_this_week else R.string.this_week_lower),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -429,28 +425,28 @@ private fun MacroAverages(logged: List<DailyTotal>, proteinGoal: Double, carbGoa
     AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column {
-                Text("Average macros", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.average_macros), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    "per logged day, against your daily goals",
+                    stringResource(R.string.average_macros_detail),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            MacroGoalRow("Protein", protein, proteinGoal, MacroProtein)
-            MacroGoalRow("Carbs", carbs, carbGoal, MacroCarbs)
-            MacroGoalRow("Fat", fat, fatGoal, MacroFat)
+            MacroGoalRow(stringResource(R.string.protein), protein, proteinGoal, MacroProtein)
+            MacroGoalRow(stringResource(R.string.carbs), carbs, carbGoal, MacroCarbs)
+            MacroGoalRow(stringResource(R.string.fat), fat, fatGoal, MacroFat)
 
             if (macroKcal > 0) {
                 val shares = listOf(protein * 4 / macroKcal, carbs * 4 / macroKcal, fat * 9 / macroKcal)
                 HorizontalDivider()
-                Text("Where your calories come from", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.calories_come_from), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Row(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp))) {
                     listOf(MacroProtein, MacroCarbs, MacroFat).forEachIndexed { i, color ->
                         if (shares[i] > 0) Box(Modifier.weight(shares[i].toFloat()).fillMaxHeight().background(color))
                     }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    listOf("Protein" to MacroProtein, "Carbs" to MacroCarbs, "Fat" to MacroFat).forEachIndexed { i, (label, color) ->
+                    listOf(stringResource(R.string.protein) to MacroProtein, stringResource(R.string.carbs) to MacroCarbs, stringResource(R.string.fat) to MacroFat).forEachIndexed { i, (label, color) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(color))
                             Spacer(Modifier.width(4.dp))
