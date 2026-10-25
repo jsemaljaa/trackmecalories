@@ -44,6 +44,15 @@ fun mealLabel(key: String): String = when (key) {
     else -> key
 }
 
+/** Display name of a stored unit key ("g", "ml", "pcs"). */
+@Composable
+fun unitLabel(unit: String): String = when (unit) {
+    "g" -> stringResource(R.string.unit_g)
+    "ml" -> stringResource(R.string.unit_ml)
+    "pcs" -> stringResource(R.string.unit_pcs)
+    else -> unit
+}
+
 /** "1 piece" / "2 pieces" (or the localized plural), "150 g" otherwise. */
 @Composable
 fun amountLabel(amount: Double, unit: String): String =
@@ -51,7 +60,7 @@ fun amountLabel(amount: Double, unit: String): String =
         val quantity = if (amount == Math.floor(amount)) amount.toInt() else 2
         pluralStringResource(R.plurals.pieces, quantity, amount.clean())
     } else {
-        "${amount.clean()} $unit"
+        "${amount.clean()} ${unitLabel(unit)}"
     }
 
 /** Sensible meal preselection for "right now", so the common case needs no tap. */
@@ -123,7 +132,7 @@ fun PortionEntryDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text(if (food.unit == "pcs") stringResource(R.string.how_many_pieces) else stringResource(R.string.how_many_unit, food.unit)) },
+                    label = { Text(if (food.unit == "pcs") stringResource(R.string.how_many_pieces) else stringResource(R.string.how_many_unit, unitLabel(food.unit))) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -176,7 +185,7 @@ fun EditEntryDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text(if (entry.unit == "pcs") stringResource(R.string.how_many_pieces) else stringResource(R.string.how_many_unit, entry.unit)) },
+                    label = { Text(if (entry.unit == "pcs") stringResource(R.string.how_many_pieces) else stringResource(R.string.how_many_unit, unitLabel(entry.unit))) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -282,7 +291,7 @@ fun MacroItem(label: String, value: Double, color: Color) {
 /** "100 g"/"100 ml" for weight/volume units, or "1 piece" for piece-counted foods. */
 @Composable
 private fun referenceLabel(unit: String): String =
-    if (unit == "pcs") stringResource(R.string.per_one_piece) else "100 $unit"
+    if (unit == "pcs") stringResource(R.string.per_one_piece) else "100 ${unitLabel(unit)}"
 
 private fun referenceAmountFor(unit: String): Double = if (unit == "pcs") 1.0 else 100.0
 

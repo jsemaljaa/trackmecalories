@@ -112,7 +112,7 @@ fun SavedFoodRow(
         Row(Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(food.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                val refLabel = if (food.unit == "pcs") stringResource(R.string.per_piece_short) else "100 ${food.unit}"
+                val refLabel = if (food.unit == "pcs") stringResource(R.string.per_piece_short) else "100 ${unitLabel(food.unit)}"
                 Text(
                     stringResource(
                         R.string.saved_food_line, food.kcalPer100.toInt(), refLabel,

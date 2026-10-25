@@ -391,7 +391,7 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
 }
 
 @Composable
-private fun perLabel(unit: String) = if (unit == "pcs") stringResource(R.string.per_piece_short) else "100 $unit"
+private fun perLabel(unit: String) = if (unit == "pcs") stringResource(R.string.per_piece_short) else "100 ${unitLabel(unit)}"
 
 @Composable
 private fun macroLine(protein: Double, carbs: Double, fat: Double) = stringResource(R.string.macro_line, fmt(protein), fmt(carbs), fmt(fat))

@@ -370,4 +370,7 @@
     <!-- Water -->
     <string name="water_entries_title">Water today</string>
     <string name="water_entries_empty">No water logged yet.</string>
+
+    <!-- Log row -->
+    <string name="entry_line">%1$s · P %2$d · C %3$d · F %4$d</string>
 </resources>

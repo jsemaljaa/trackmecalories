@@ -465,9 +465,9 @@ private fun MacroGoalRow(label: String, value: Double, goal: Double, color: Colo
     Column {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text("${value.roundToInt()} g", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text("${value.roundToInt()} ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
             Text(
-                " / ${goal.roundToInt()} g · $pct%",
+                " / ${goal.roundToInt()} ${stringResource(R.string.unit_g)} · $pct%",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

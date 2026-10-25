@@ -296,7 +296,7 @@ private fun IngredientRow(ing: RecipeIngredient, onClick: () -> Unit, onRemove: 
         Row(Modifier.padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(ing.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                val amount = "${ing.amount.clean()} ${if (ing.unit == "pcs") stringResource(R.string.unit_pcs) else ing.unit}"
+                val amount = "${ing.amount.clean()} ${unitLabel(ing.unit)}"
                 val cook = if (abs(ing.cookFactor - 1.0) > 0.001) " · " + stringResource(R.string.recipe_cooks_to, (ing.amount * ing.gramsPerUnit * ing.cookFactor).roundToInt()) else ""
                 Text(amount + cook, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -340,7 +340,7 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
                     value = amount,
                     onValueChange = { amount = it },
                     label = { Text(stringResource(R.string.recipe_amount)) },
-                    suffix = { Text(if (ingredient.unit == "pcs") stringResource(R.string.unit_pcs) else ingredient.unit) },
+                    suffix = { Text(unitLabel(ingredient.unit)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()

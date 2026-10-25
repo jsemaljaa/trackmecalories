@@ -204,7 +204,7 @@ private fun ComputedMacro(label: String, grams: Double, color: androidx.compose.
             .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("${grams.roundToInt()} g", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("${grams.roundToInt()} ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
 }

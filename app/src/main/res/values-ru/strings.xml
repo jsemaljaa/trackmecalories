@@ -376,4 +376,7 @@
     <!-- Water -->
     <string name="water_entries_title">Вода сегодня</string>
     <string name="water_entries_empty">Вода ещё не записана.</string>
+
+    <!-- Log row -->
+    <string name="entry_line">%1$s · Б %2$d · Ж %4$d · У %3$d</string>
 </resources>

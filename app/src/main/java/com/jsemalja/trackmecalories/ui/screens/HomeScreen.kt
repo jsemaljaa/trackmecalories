@@ -264,7 +264,7 @@ fun MealSectionHeader(meal: String, totalKcal: Int) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(mealLabel(meal), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Text("$totalKcal kcal", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("$totalKcal ${stringResource(R.string.unit_kcal)}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -480,7 +480,7 @@ private fun NutrientProgress(
                 color = if (overLimit) MaterialTheme.colorScheme.error else onCard
             )
             Text(
-                " / ${fmt(goal)} g",
+                " / ${fmt(goal)} ${stringResource(R.string.unit_g)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = onCard.copy(alpha = 0.65f),
                 modifier = Modifier.padding(bottom = 1.dp)
@@ -522,7 +522,7 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    "$amount · P ${entry.protein.toInt()} · C ${entry.carbs.toInt()} · F ${entry.fat.toInt()}",
+                    stringResource(R.string.entry_line, amount, entry.protein.toInt(), entry.carbs.toInt(), entry.fat.toInt()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -531,7 +531,7 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text("${entry.kcal}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    " kcal",
+                    " " + stringResource(R.string.unit_kcal),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 2.dp)
