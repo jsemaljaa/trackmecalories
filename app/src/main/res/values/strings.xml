@@ -384,6 +384,8 @@
     <!-- Water -->
     <string name="water_entries_title">Water today</string>
     <string name="water_entries_empty">No water logged yet.</string>
+    <string name="water_tracking">Track water</string>
+    <string name="water_tracking_desc">Show the water card on Today. Turning it off only hides it; water you\'ve logged is kept.</string>
 
     <!-- Log row -->
     <string name="entry_line">%1$s · P %2$d · C %3$d · F %4$d</string>
@@ -473,8 +475,11 @@
     <string name="health_manage">Manage access in Health Connect</string>
     <string name="health_install">Open Google Play</string>
     <string name="health_zepp_note">Using Zepp (Amazfit)? In the Zepp app, go to Profile → Add accounts → Health Connect and turn on syncing, otherwise there\'s nothing to read.</string>
+    <string name="health_samsung_note">Using Samsung Health (Galaxy Watch)? In Samsung Health, open Settings → Health Connect and allow it to share your data. Workout calories count as active calories, since that\'s all Samsung shares.</string>
+    <string name="health_open_samsung">Open Samsung Health</string>
+    <string name="health_grant_missing">Allow the new data types</string>
     <string name="health_rationale_title">Why TrackMe Calories reads health data</string>
-    <string name="health_rationale_body">The app reads your steps, active calories and workouts from Health Connect to show them next to what you ate on the Today screen and, if you turn it on, to add part of the calories you burned to that day\'s goal.</string>
+    <string name="health_rationale_body">The app reads your steps, active calories, workouts and workout calories from Health Connect to show them next to what you ate on the Today screen and, if you turn it on, to add part of the calories you burned to that day\'s goal.</string>
     <string name="health_rationale_privacy">The data is only read while the app is open, for the day you\'re viewing. It isn\'t saved, shared or sent anywhere, and the app never writes to Health Connect. You can revoke access at any time in Health Connect.</string>
     <string name="eat_back">Eat back activity calories</string>
     <string name="eat_back_desc">Add part of today\'s active calories to today\'s goal. Watches tend to overestimate what you burn, so 50% is the safer choice.</string>

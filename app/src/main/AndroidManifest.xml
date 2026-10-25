@@ -7,11 +7,15 @@
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <!-- Samsung Health syncs workout calories only as total calories. -->
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
     <uses-feature android:name="android.hardware.camera.any" />
 
-    <!-- Android 13 and older: Health Connect is a separate app. -->
+    <!-- Android 13 and older: Health Connect is a separate app. Samsung Health: to offer
+         opening it from Settings. -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
+        <package android:name="com.sec.android.app.shealth" />
     </queries>
     <application
         android:allowBackup="true"

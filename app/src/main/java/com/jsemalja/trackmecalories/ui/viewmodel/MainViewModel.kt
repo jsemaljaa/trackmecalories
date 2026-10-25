@@ -172,6 +172,12 @@ class MainViewModel(
 
     fun setWeeklyBudget(enabled: Boolean) = userPrefs.setWeeklyBudget(enabled)
 
+    // --- Water ---
+
+    val waterTrackingEnabled: StateFlow<Boolean> = userPrefs.waterTracking
+
+    fun setWaterTracking(enabled: Boolean) = userPrefs.setWaterTracking(enabled)
+
     /** This week's budget and today's flexible target; null when weekly budgeting is off. */
     val weeklyBudget: StateFlow<WeeklyBudget?> = run {
         val today = LocalDate.now()
@@ -198,6 +204,9 @@ class MainViewModel(
     private val _healthStatus = MutableStateFlow(health.status())
     val healthStatus: StateFlow<HealthStatus> = _healthStatus
     private val healthTick = MutableStateFlow(0)
+    private val _healthMissing = MutableStateFlow(false)
+    /** Connected, but some data types (e.g. ones added in an update) aren't allowed yet. */
+    val healthMissing: StateFlow<Boolean> = _healthMissing
 
     /**
      * Re-checks permissions and re-reads the day's activity. Called on resume (the watch may
@@ -206,6 +215,7 @@ class MainViewModel(
     fun refreshHealth() {
         viewModelScope.launch {
             _healthStatus.value = health.currentStatus()
+            _healthMissing.value = _healthStatus.value == HealthStatus.CONNECTED && health.missingPermissions()
             healthTick.value++
         }
     }

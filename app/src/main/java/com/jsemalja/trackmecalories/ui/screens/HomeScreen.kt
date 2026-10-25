@@ -93,6 +93,7 @@ fun HomeScreen(
     val goals by viewModel.userGoal.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
     val waterEntries by viewModel.waterEntries.collectAsState()
+    val waterTracking by viewModel.waterTrackingEnabled.collectAsState()
     val dayComplete by viewModel.selectedDayComplete.collectAsState()
     val weekly by viewModel.weeklyBudget.collectAsState()
     val healthStatus by viewModel.healthStatus.collectAsState()
@@ -191,13 +192,16 @@ fun HomeScreen(
                 item(key = "progress") { DailyProgressCard(entries, goals, if (isToday) weekly else null, activityBonus) }
                 item(key = "water") {
                     Column {
-                        Spacer(Modifier.height(8.dp))
-                        WaterCard(
-                            waterEntries = waterEntries,
-                            goalMl = goals.waterGoalMl,
-                            onAddWater = { viewModel.addWater(it) },
-                            onRemove = { viewModel.deleteWaterEntry(it) }
-                        )
+                        // Optional (Settings > Goals > Track water).
+                        if (waterTracking) {
+                            Spacer(Modifier.height(8.dp))
+                            WaterCard(
+                                waterEntries = waterEntries,
+                                goalMl = goals.waterGoalMl,
+                                onAddWater = { viewModel.addWater(it) },
+                                onRemove = { viewModel.deleteWaterEntry(it) }
+                            )
+                        }
                         // Only once connected (Settings > Health data); otherwise nothing to show.
                         val dayActivity = activity
                         if (healthStatus == HealthStatus.CONNECTED && dayActivity != null) {

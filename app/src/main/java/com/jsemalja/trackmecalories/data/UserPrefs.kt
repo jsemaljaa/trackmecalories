@@ -29,8 +29,18 @@ class UserPrefs(context: Context) {
         _eatBack.value = value
     }
 
+    private val _waterTracking = MutableStateFlow(prefs.getBoolean(KEY_WATER_TRACKING, true))
+    /** Show the water card on Today. Off only hides it; logged water is kept. */
+    val waterTracking: StateFlow<Boolean> = _waterTracking.asStateFlow()
+
+    fun setWaterTracking(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_WATER_TRACKING, enabled).apply()
+        _waterTracking.value = enabled
+    }
+
     private companion object {
         const val KEY_WEEKLY_BUDGET = "weekly_budget"
         const val KEY_EAT_BACK = "eat_back"
+        const val KEY_WATER_TRACKING = "water_tracking"
     }
 }

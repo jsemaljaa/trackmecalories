@@ -382,6 +382,8 @@
     <string name="grant_permission">Разрешить камеру</string>
 
     <!-- Water -->
+    <string name="water_tracking">Учёт воды</string>
+    <string name="water_tracking_desc">Показывать карточку воды на экране «Сегодня». Выключение только скрывает её, записанная вода сохраняется.</string>
     <string name="water_entries_title">Вода сегодня</string>
     <string name="water_entries_empty">Вода ещё не записана.</string>
 
@@ -477,8 +479,11 @@
     <string name="health_manage">Управлять доступом в Health Connect</string>
     <string name="health_install">Открыть Google Play</string>
     <string name="health_zepp_note">Пользуетесь Zepp (Amazfit)? В приложении Zepp откройте Профиль → Добавить аккаунты → Health Connect и включите синхронизацию, иначе читать будет нечего.</string>
+    <string name="health_samsung_note">Пользуетесь Samsung Health (Galaxy Watch)? В Samsung Health откройте Настройки → Health Connect и разрешите передавать данные. Калории тренировок засчитываются как активные: другого Samsung не передаёт.</string>
+    <string name="health_open_samsung">Открыть Samsung Health</string>
+    <string name="health_grant_missing">Разрешить новые типы данных</string>
     <string name="health_rationale_title">Зачем TrackMe Calories читает данные о здоровье</string>
-    <string name="health_rationale_body">Приложение читает шаги, активные калории и тренировки из Health Connect, чтобы показать их рядом с тем, что вы съели, на экране «Сегодня», а если вы включите эту настройку, — добавить часть сожжённых калорий к цели на этот день.</string>
+    <string name="health_rationale_body">Приложение читает шаги, активные калории, тренировки и их калории из Health Connect, чтобы показать их рядом с тем, что вы съели, на экране «Сегодня», а если вы включите эту настройку, — добавить часть сожжённых калорий к цели на этот день.</string>
     <string name="health_rationale_privacy">Данные читаются только пока приложение открыто и только за выбранный день. Они не сохраняются, никуда не передаются, и приложение ничего не записывает в Health Connect. Отозвать доступ можно в любой момент в Health Connect.</string>
     <string name="eat_back">Учитывать калории активности</string>
     <string name="eat_back_desc">Добавлять часть сегодняшних активных калорий к цели на сегодня. Часы обычно завышают расход, поэтому 50% — более осторожный вариант.</string>

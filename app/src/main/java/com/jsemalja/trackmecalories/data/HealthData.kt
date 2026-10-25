@@ -6,6 +6,8 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.records.metadata.DataOrigin
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -43,8 +45,8 @@ data class Workout(
 )
 
 /**
- * Reads steps, active calories and workouts from Health Connect (where Zepp, Fitbit etc.
- * sync to). Read live for the day being viewed; nothing is stored in our database.
+ * Reads steps, active calories and workouts from Health Connect (where Zepp, Fitbit, Samsung
+ * Health etc. sync to). Read live for the day being viewed; nothing is stored in our database.
  */
 class HealthData(private val context: Context) {
 
@@ -71,6 +73,9 @@ class HealthData(private val context: Context) {
         emptySet()
     }
 
+    /** Something we ask for hasn't been granted (e.g. a type added in an app update). */
+    suspend fun missingPermissions(): Boolean = granted() != permissions
+
     /**
      * The day's activity, or null if nothing can be read (not connected, the app is in the
      * background, Health Connect's rate limit...). Each data type is read only if granted,
@@ -86,7 +91,6 @@ class HealthData(private val context: Context) {
             val steps = if (STEPS in granted) {
                 client.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL), day))[StepsRecord.COUNT_TOTAL]
             } else null
-            val active = if (ACTIVE in granted) activeKcal(day) else null
             val workouts = if (EXERCISE in granted) {
                 client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, day)).records
                     .sortedBy { it.startTime }
@@ -95,10 +99,14 @@ class HealthData(private val context: Context) {
                             title = s.title?.takeIf { it.isNotBlank() },
                             exerciseType = s.exerciseType,
                             minutes = Duration.between(s.startTime, s.endTime).toMinutes().toInt(),
-                            activeKcal = if (ACTIVE in granted) activeKcal(TimeRangeFilter.between(s.startTime, s.endTime)) else null
+                            activeKcal = (if (ACTIVE in granted) activeKcal(TimeRangeFilter.between(s.startTime, s.endTime)) else null)
+                                ?: if (TOTAL in granted) samsungWorkoutKcal(s) else null
                         )
                     }
             } else emptyList()
+            // Samsung Health syncs no active calories, only each workout's; count those instead.
+            val active = (if (ACTIVE in granted) activeKcal(day) else null)
+                ?: workouts.mapNotNull { it.activeKcal }.takeIf { it.isNotEmpty() }?.sum()
             DayActivity(steps, active, workouts)
         }
     } catch (e: CancellationException) {
@@ -112,12 +120,30 @@ class HealthData(private val context: Context) {
             ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL
         ]?.inKilocalories?.roundToInt()
 
+    /**
+     * Samsung Health writes a workout's calories as a total-calories record of its own, not as
+     * active calories. Only trusted from Samsung: other apps' totals include resting burn.
+     */
+    private suspend fun samsungWorkoutKcal(s: ExerciseSessionRecord): Int? {
+        if (s.metadata.dataOrigin.packageName != SAMSUNG_HEALTH) return null
+        return client.readRecords(
+            ReadRecordsRequest(
+                TotalCaloriesBurnedRecord::class,
+                TimeRangeFilter.between(s.startTime, s.endTime),
+                dataOriginFilter = setOf(DataOrigin(SAMSUNG_HEALTH))
+            )
+        ).records.takeIf { it.isNotEmpty() }?.sumOf { it.energy.inKilocalories }?.roundToInt()
+    }
+
     companion object {
+        const val SAMSUNG_HEALTH = "com.sec.android.app.shealth"
+
         private val STEPS = HealthPermission.getReadPermission(StepsRecord::class)
         private val ACTIVE = HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class)
         private val EXERCISE = HealthPermission.getReadPermission(ExerciseSessionRecord::class)
+        private val TOTAL = HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class)
 
         /** Everything we ask for; must match the manifest. */
-        val permissions = setOf(STEPS, ACTIVE, EXERCISE)
+        val permissions = setOf(STEPS, ACTIVE, EXERCISE, TOTAL)
     }
 }

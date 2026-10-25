@@ -88,10 +88,12 @@ fun SettingsScreen(
         SettingsSectionCard(title = stringResource(R.string.goals_title), titleColor = MaterialTheme.colorScheme.primary) {
             val weights by viewModel.weightEntries.collectAsState()
             val measured by viewModel.adaptiveMaintenance.collectAsState()
+            val waterOn by viewModel.waterTrackingEnabled.collectAsState()
             GoalsEditor(
                 goals = currentGoals,
                 latestWeightKg = weights.maxByOrNull { it.date }?.weightKg,
                 measuredMaintenance = measured?.kcal,
+                showWater = waterOn,
                 onSave = viewModel::updateGoals
             )
             val weeklyOn by viewModel.weeklyBudgetEnabled.collectAsState()
@@ -103,6 +105,15 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = weeklyOn, onCheckedChange = viewModel::setWeeklyBudget)
+            }
+            Spacer(Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.water_tracking), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.water_tracking_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = waterOn, onCheckedChange = viewModel::setWaterTracking)
             }
         }
 
@@ -186,13 +197,15 @@ fun SettingsScreen(
 
 /**
  * Health Connect: connection status, the button to grant access (or fix why it can't be),
- * and how to get Zepp syncing into it.
+ * and how to get Zepp or Samsung Health syncing into it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HealthSettings(viewModel: MainViewModel) {
     val status by viewModel.healthStatus.collectAsState()
+    val missing by viewModel.healthMissing.collectAsState()
     val context = LocalContext.current
+    val samsungHealth = remember { context.packageManager.getLaunchIntentForPackage(HealthData.SAMSUNG_HEALTH) }
     var denied by remember { mutableStateOf(false) }
     val requestPermissions = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
         denied = granted.isEmpty()
@@ -220,12 +233,21 @@ private fun HealthSettings(viewModel: MainViewModel) {
             Text(stringResource(R.string.health_connect))
         }
         // Granting more (or revoking) happens in Health Connect's own screen.
-        HealthStatus.CONNECTED -> OutlinedButton(
-            onClick = {
-                runCatching { context.startActivity(HealthConnectClient.getHealthConnectManageDataIntent(context)) }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text(stringResource(R.string.health_manage)) }
+        HealthStatus.CONNECTED -> {
+            // E.g. total calories, added for Samsung Health after the user had connected.
+            if (missing) {
+                Button(onClick = { requestPermissions.launch(HealthData.permissions) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.health_grant_missing))
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+            OutlinedButton(
+                onClick = {
+                    runCatching { context.startActivity(HealthConnectClient.getHealthConnectManageDataIntent(context)) }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text(stringResource(R.string.health_manage)) }
+        }
         HealthStatus.NEEDS_INSTALL -> OutlinedButton(
             onClick = {
                 runCatching {
@@ -259,6 +281,13 @@ private fun HealthSettings(viewModel: MainViewModel) {
     if (status != HealthStatus.UNAVAILABLE) {
         Spacer(Modifier.height(12.dp))
         Text(stringResource(R.string.health_zepp_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.health_samsung_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (samsungHealth != null) {
+            TextButton(onClick = { runCatching { context.startActivity(samsungHealth) } }) {
+                Text(stringResource(R.string.health_open_samsung))
+            }
+        }
     }
 }
 

@@ -39,7 +39,7 @@ import kotlin.math.roundToInt
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: Int? = null, onSave: (UserGoal) -> Unit) {
+fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: Int? = null, showWater: Boolean = true, onSave: (UserGoal) -> Unit) {
     var kcal by remember(goals) { mutableStateOf(goals.calorieGoal.toString()) }
     var diet by remember(goals) { mutableStateOf(Diet.from(goals.dietType)) }
     var protein by remember(goals) { mutableStateOf(goals.proteinGoal.clean()) }
@@ -136,7 +136,11 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
     Spacer(Modifier.height(12.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         GoalField(stringResource(R.string.salt_limit_g), salt, Modifier.weight(1f)) { salt = it; saved = false }
-        GoalField(stringResource(R.string.water_goal_ml), water, Modifier.weight(1f)) { water = it; saved = false }
+        if (showWater) {
+            GoalField(stringResource(R.string.water_goal_ml), water, Modifier.weight(1f)) { water = it; saved = false }
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
     }
 
     Spacer(Modifier.height(16.dp))
