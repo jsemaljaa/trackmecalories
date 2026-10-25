@@ -95,7 +95,8 @@ fun PortionEntryDialog(
     showMeal: Boolean = true,
     confirmLabel: String? = null
 ) {
-    var amount by remember { mutableStateOf(food.referenceAmount.clean()) }
+    // The package size for a scanned product, then whatever was logged last time.
+    var amount by remember { mutableStateOf((food.defaultAmount ?: food.referenceAmount).clean()) }
     var confidence by remember { mutableStateOf(Confidence.ESTIMATED) }
     var mealType by remember { mutableStateOf(mealForNow()) }
 
@@ -143,12 +144,21 @@ fun PortionEntryDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // One-tap amounts: the usual portion and the reference amount.
+                val usual = food.defaultAmount
+                if (usual != null && usual != food.referenceAmount) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        AssistChip(onClick = { amount = usual.clean() }, label = { Text(stringResource(R.string.amount_usual, amountLabel(usual, food.unit))) })
+                        AssistChip(onClick = { amount = food.referenceAmount.clean() }, label = { Text(amountLabel(food.referenceAmount, food.unit)) })
+                    }
+                }
+
                 if (showMeal) ConfidenceChips(confidence) { confidence = it }
             }
         },
         confirmButton = {
             Button(onClick = {
-                onConfirm(amount.toDecimal() ?: food.referenceAmount, mealType, confidence)
+                onConfirm(amount.toDecimal() ?: food.defaultAmount ?: food.referenceAmount, mealType, confidence)
             }) { Text(confirmLabel ?: stringResource(R.string.log_food)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }

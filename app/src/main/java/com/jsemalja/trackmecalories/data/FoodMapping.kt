@@ -44,8 +44,31 @@ fun FoodInfo.toCustomFood(): CustomFood = CustomFood(
     fiberPer100 = fiberPer100,
     saltPer100 = saltPer100,
     unit = unit,
-    referenceAmount = referenceAmount
+    referenceAmount = referenceAmount,
+    // People usually eat the whole package, not "100 g".
+    defaultAmount = packageAmount(quantity, unit)
 )
+
+/**
+ * The amount in one package, in [unit], from Open Food Facts' free-text quantity:
+ * "350 g" -> 350, "0,5 l" -> 500 (ml), "4 x 125 g" -> 125 (one pot of a multipack).
+ * Null when there's nothing usable (or the food is counted in pieces).
+ */
+fun packageAmount(quantity: String?, unit: String): Double? {
+    if (quantity.isNullOrBlank() || unit == "pcs") return null
+    val m = PACKAGE_REGEX.find(quantity.lowercase()) ?: return null
+    val value = m.groupValues[2].replace(',', '.').toDoubleOrNull() ?: return null
+    val grams = when (m.groupValues[3]) {
+        "kg", "l" -> value * 1000
+        "cl" -> value * 10
+        "dl" -> value * 100
+        else -> value // g, ml
+    }
+    return grams.takeIf { it in 1.0..5000.0 }
+}
+
+// Optional "4 x " multipack prefix, then the per-item amount and its unit.
+private val PACKAGE_REGEX = Regex("""(?:(\d+)\s*[x×]\s*)?(\d+(?:[.,]\d+)?)\s*(kg|g|ml|cl|dl|l)\b""")
 
 fun FoodCache.toFoodInfo(): FoodInfo = FoodInfo(
     name = name,
@@ -57,7 +80,8 @@ fun FoodCache.toFoodInfo(): FoodInfo = FoodInfo(
     saltPer100 = saltPer100,
     barcode = barcode,
     unit = unit,
-    referenceAmount = referenceAmount
+    referenceAmount = referenceAmount,
+    quantity = quantity
 )
 
 /** Only barcoded products are worth caching — search results without a barcode can't be re-looked-up. */
@@ -74,6 +98,7 @@ fun FoodInfo.toCache(): FoodCache? {
         fiberPer100 = fiberPer100,
         saltPer100 = saltPer100,
         unit = unit,
-        referenceAmount = referenceAmount
+        referenceAmount = referenceAmount,
+        quantity = quantity
     )
 }

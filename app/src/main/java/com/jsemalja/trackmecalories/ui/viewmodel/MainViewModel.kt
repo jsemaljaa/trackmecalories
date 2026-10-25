@@ -459,6 +459,8 @@ class MainViewModel(
             }
             // Linked to its saved food, so suggestions and insights can find it again.
             dao.insertEntry(food.copy(id = foodId).toEntry(amount, mealType, date, confidence))
+            // Next time, start from the portion actually eaten.
+            dao.setDefaultAmount(foodId, amount)
         }
     }
 

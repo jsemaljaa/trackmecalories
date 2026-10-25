@@ -389,4 +389,7 @@
         <item quantity="one">%1$d incomplete day isn\'t counted.</item>
         <item quantity="other">%1$d incomplete days aren\'t counted.</item>
     </plurals>
+
+    <!-- Amount shortcuts -->
+    <string name="amount_usual">Usual: %1$s</string>
 </resources>
