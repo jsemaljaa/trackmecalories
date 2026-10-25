@@ -451,7 +451,8 @@ class MainViewModel(
      */
     fun restoreEntry(entry: FoodEntry) {
         viewModelScope.launch {
-            dao.insertEntry(entry)
+            // Upsert: restoring must never fail, even if the delete hadn't landed yet.
+            dao.upsertEntry(entry)
         }
     }
 

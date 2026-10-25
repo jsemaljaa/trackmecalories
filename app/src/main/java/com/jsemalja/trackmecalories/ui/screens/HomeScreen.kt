@@ -565,6 +565,10 @@ fun SwipeToDeleteContainer(
     LaunchedEffect(state.currentValue) {
         if (state.currentValue == SwipeToDismissBoxValue.EndToStart) {
             onDelete()
+            // Reset right away. Undo brings the entry back with the same id, and the list
+            // can reuse this row's state for it — left "dismissed", the restored row stayed
+            // swiped off-screen (or got deleted again), so Undo looked like it did nothing.
+            state.snapTo(SwipeToDismissBoxValue.Settled)
         }
     }
 

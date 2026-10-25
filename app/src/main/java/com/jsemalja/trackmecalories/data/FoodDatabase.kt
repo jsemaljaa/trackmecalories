@@ -244,6 +244,9 @@ interface FoodDao {
     @Insert
     suspend fun insertEntry(entry: FoodEntry)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertEntry(entry: FoodEntry)
+
     @Update
     suspend fun updateEntry(entry: FoodEntry)
 
