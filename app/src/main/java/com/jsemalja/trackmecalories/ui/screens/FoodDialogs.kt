@@ -24,6 +24,8 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.ui.theme.MacroCarbs
 import com.jsemalja.trackmecalories.ui.theme.MacroFat
+import com.jsemalja.trackmecalories.ui.theme.MacroFiber
+import kotlin.math.roundToInt
 import com.jsemalja.trackmecalories.ui.theme.MacroProtein
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import java.time.LocalDate
@@ -102,6 +104,7 @@ fun PortionEntryDialog(
                     protein = food.proteinPer100,
                     carbs = food.carbsPer100,
                     fat = food.fatPer100,
+                    fiber = food.fiberPer100,
                     amount = amount.toDecimal() ?: food.referenceAmount,
                     referenceAmount = food.referenceAmount,
                     unit = food.unit
@@ -152,6 +155,7 @@ fun EditEntryDialog(
     val proteinPer100 = entry.protein * ratio
     val carbsPer100 = entry.carbs * ratio
     val fatPer100 = entry.fat * ratio
+    val fiberPer100 = entry.fiber * ratio
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -163,6 +167,7 @@ fun EditEntryDialog(
                     protein = proteinPer100,
                     carbs = carbsPer100,
                     fat = fatPer100,
+                    fiber = fiberPer100,
                     amount = amount.toDecimal() ?: entry.amount,
                     referenceAmount = entry.referenceAmount,
                     unit = entry.unit
@@ -226,6 +231,7 @@ fun MacroSummary(
     protein: Double,
     carbs: Double,
     fat: Double,
+    fiber: Double,
     amount: Double,
     unit: String,
     referenceAmount: Double = 100.0
@@ -235,6 +241,7 @@ fun MacroSummary(
     val currentProtein = protein * ratio
     val currentCarbs = carbs * ratio
     val currentFat = fat * ratio
+    val currentFiber = fiber * ratio
     val amountText = amountLabel(amount, unit)
 
     Column(
@@ -245,7 +252,7 @@ fun MacroSummary(
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("$currentKcal kcal", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text("$currentKcal ${stringResource(R.string.unit_kcal)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Text(stringResource(R.string.for_amount, amountText), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         Spacer(Modifier.height(8.dp))
@@ -257,6 +264,7 @@ fun MacroSummary(
             MacroItem(stringResource(R.string.protein), currentProtein, MacroProtein)
             MacroItem(stringResource(R.string.carbs), currentCarbs, MacroCarbs)
             MacroItem(stringResource(R.string.fat), currentFat, MacroFat)
+            MacroItem(stringResource(R.string.fiber), currentFiber, MacroFiber)
         }
     }
 }
@@ -265,7 +273,9 @@ fun MacroSummary(
 fun MacroItem(label: String, value: Double, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelSmall)
-        Text("${value.toInt()}g", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
+        // One decimal below 10 g, so 2.5 g of fiber doesn't show as "2 g".
+        val grams = if (value < 10) "%.1f".format(value).removeSuffix(".0").removeSuffix(",0") else value.roundToInt().toString()
+        Text("$grams ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
