@@ -437,4 +437,39 @@
     <string name="sort_energy_density">Самое сытное</string>
     <string name="nutrient_sugar_per">Сахар/%1$s</string>
     <string name="nutrient_satfat_per">Нас. жиры/%1$s</string>
+    <!-- Health Connect -->
+    <string name="health_data">Данные о здоровье</string>
+    <string name="health_activity">Активность</string>
+    <string name="health_nothing_synced">За этот день пока ничего не синхронизировано</string>
+    <plurals name="steps_count">
+        <item quantity="one">%1$s шаг</item>
+        <item quantity="few">%1$s шага</item>
+        <item quantity="many">%1$s шагов</item>
+        <item quantity="other">%1$s шага</item>
+    </plurals>
+    <string name="health_active_kcal">%1$s ккал активности</string>
+    <string name="unit_min">мин</string>
+    <string name="workout_walking">Ходьба</string>
+    <string name="workout_running">Бег</string>
+    <string name="workout_biking">Велосипед</string>
+    <string name="workout_swimming">Плавание</string>
+    <string name="workout_strength">Силовая тренировка</string>
+    <string name="workout_hiking">Поход</string>
+    <string name="workout_yoga">Йога</string>
+    <string name="workout_elliptical">Эллипсоид</string>
+    <string name="workout_rowing">Гребля</string>
+    <string name="workout_hiit">Интервальная тренировка</string>
+    <string name="workout_other">Тренировка</string>
+    <string name="health_status_connected">Подключено к Health Connect. Шаги, активные калории и тренировки показываются на экране «Сегодня» за выбранный день; в приложение ничего не копируется.</string>
+    <string name="health_status_not_connected">Показывать шаги, активные калории и тренировки с часов на экране «Сегодня». Только чтение; данные остаются на телефоне.</string>
+    <string name="health_status_needs_install">Чтобы пользоваться этим, установите или обновите Health Connect в Google Play.</string>
+    <string name="health_status_unavailable">Health Connect недоступен на этом телефоне.</string>
+    <string name="health_denied">Доступ не выдан. Попробуйте ещё раз или разрешите его в настройках Health Connect.</string>
+    <string name="health_connect">Подключить Health Connect</string>
+    <string name="health_manage">Управлять доступом в Health Connect</string>
+    <string name="health_install">Открыть Google Play</string>
+    <string name="health_zepp_note">Пользуетесь Zepp (Amazfit)? В приложении Zepp откройте Профиль → Добавить аккаунты → Health Connect и включите синхронизацию, иначе читать будет нечего.</string>
+    <string name="health_rationale_title">Зачем TrackMe Calories читает данные о здоровье</string>
+    <string name="health_rationale_body">Приложение читает шаги, активные калории и тренировки из Health Connect, чтобы показать их рядом с тем, что вы съели, на экране «Сегодня», а если вы включите эту настройку, — добавить часть сожжённых калорий к цели на этот день.</string>
+    <string name="health_rationale_privacy">Данные читаются только пока приложение открыто и только за выбранный день. Они не сохраняются, никуда не передаются, и приложение ничего не записывает в Health Connect. Отозвать доступ можно в любой момент в Health Connect.</string>
 </resources>

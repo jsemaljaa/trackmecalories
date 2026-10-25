@@ -429,4 +429,37 @@
     <string name="sort_energy_density">Most filling</string>
     <string name="nutrient_sugar_per">Sugar/%1$s</string>
     <string name="nutrient_satfat_per">Sat. fat/%1$s</string>
+    <!-- Health Connect -->
+    <string name="health_data">Health data</string>
+    <string name="health_activity">Activity</string>
+    <string name="health_nothing_synced">Nothing synced for this day yet</string>
+    <plurals name="steps_count">
+        <item quantity="one">%1$s step</item>
+        <item quantity="other">%1$s steps</item>
+    </plurals>
+    <string name="health_active_kcal">%1$s kcal active</string>
+    <string name="unit_min">min</string>
+    <string name="workout_walking">Walk</string>
+    <string name="workout_running">Run</string>
+    <string name="workout_biking">Ride</string>
+    <string name="workout_swimming">Swim</string>
+    <string name="workout_strength">Strength training</string>
+    <string name="workout_hiking">Hike</string>
+    <string name="workout_yoga">Yoga</string>
+    <string name="workout_elliptical">Elliptical</string>
+    <string name="workout_rowing">Rowing</string>
+    <string name="workout_hiit">Interval training</string>
+    <string name="workout_other">Workout</string>
+    <string name="health_status_connected">Connected to Health Connect. Steps, active calories and workouts are shown on Today for the day you\'re viewing; nothing is copied into the app.</string>
+    <string name="health_status_not_connected">Show steps, active calories and workouts from your watch on Today. Read-only; the data stays on your phone.</string>
+    <string name="health_status_needs_install">Install or update Health Connect from Google Play to use this.</string>
+    <string name="health_status_unavailable">Health Connect isn\'t available on this phone.</string>
+    <string name="health_denied">No access was granted. Try again, or allow it in Health Connect\'s settings.</string>
+    <string name="health_connect">Connect Health Connect</string>
+    <string name="health_manage">Manage access in Health Connect</string>
+    <string name="health_install">Open Google Play</string>
+    <string name="health_zepp_note">Using Zepp (Amazfit)? In the Zepp app, go to Profile → Add accounts → Health Connect and turn on syncing, otherwise there\'s nothing to read.</string>
+    <string name="health_rationale_title">Why TrackMe Calories reads health data</string>
+    <string name="health_rationale_body">The app reads your steps, active calories and workouts from Health Connect to show them next to what you ate on the Today screen and, if you turn it on, to add part of the calories you burned to that day\'s goal.</string>
+    <string name="health_rationale_privacy">The data is only read while the app is open, for the day you\'re viewing. It isn\'t saved, shared or sent anywhere, and the app never writes to Health Connect. You can revoke access at any time in Health Connect.</string>
 </resources>

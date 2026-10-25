@@ -3,6 +3,9 @@
 package com.jsemalja.trackmecalories.ui.viewmodel
 
 import com.jsemalja.trackmecalories.data.weeklyBudget
+import com.jsemalja.trackmecalories.data.DayActivity
+import com.jsemalja.trackmecalories.data.HealthData
+import com.jsemalja.trackmecalories.data.HealthStatus
 import com.jsemalja.trackmecalories.data.WeeklyBudget
 import com.jsemalja.trackmecalories.data.UserPrefs
 import com.jsemalja.trackmecalories.data.suggestionHistoryStart
@@ -58,7 +61,8 @@ import kotlin.math.roundToInt
 class MainViewModel(
     private val dao: FoodDao,
     private val restaurantMenu: RestaurantMenu,
-    private val userPrefs: UserPrefs
+    private val userPrefs: UserPrefs,
+    private val health: HealthData
 ) : ViewModel() {
 
     private val repository = FoodRepository(dao)
@@ -171,6 +175,31 @@ class MainViewModel(
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    // --- Health Connect ---
+
+    private val _healthStatus = MutableStateFlow(health.status())
+    val healthStatus: StateFlow<HealthStatus> = _healthStatus
+    private val healthTick = MutableStateFlow(0)
+
+    /**
+     * Re-checks permissions and re-reads the day's activity. Called on resume (the watch may
+     * have synced, or permissions changed in Health Connect) and after a permission request.
+     */
+    fun refreshHealth() {
+        viewModelScope.launch {
+            _healthStatus.value = health.currentStatus()
+            healthTick.value++
+        }
+    }
+
+    /** Steps, active calories and workouts for the selected day; read live, never stored. */
+    val dayActivity: StateFlow<DayActivity?> = combine(selectedDate, healthTick) { date, _ -> date }
+        .mapLatest { date ->
+            if (_healthStatus.value != HealthStatus.CONNECTED || date.isAfter(LocalDate.now())) null
+            else health.activityFor(date)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // --- Weight ---
 
@@ -707,12 +736,13 @@ fun weekStartOf(date: LocalDate): LocalDate =
 class MainViewModelFactory(
     private val dao: FoodDao,
     private val restaurantMenu: RestaurantMenu,
-    private val userPrefs: UserPrefs
+    private val userPrefs: UserPrefs,
+    private val health: HealthData
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(dao, restaurantMenu, userPrefs) as T
+            return MainViewModel(dao, restaurantMenu, userPrefs, health) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

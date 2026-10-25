@@ -1,6 +1,7 @@
 package com.jsemalja.trackmecalories
 
 import com.jsemalja.trackmecalories.data.UserPrefs
+import com.jsemalja.trackmecalories.data.HealthData
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import com.jsemalja.trackmecalories.widget.TodayWidget
 import com.jsemalja.trackmecalories.data.Database
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import android.content.Intent
@@ -80,6 +82,7 @@ import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModelFactory
 class MainActivity : ComponentActivity() {
     // Set by a launcher shortcut or widget button; consumed once by the UI.
     private val pendingAction = MutableStateFlow<QuickAction?>(null)
+    private lateinit var viewModelFactory: MainViewModelFactory
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,12 +99,13 @@ class MainActivity : ComponentActivity() {
         val restaurantMenu = RestaurantMenu(applicationContext.assets)
         val appearancePrefs = AppearancePrefs(applicationContext)
         val userPrefs = UserPrefs(applicationContext)
+        viewModelFactory = MainViewModelFactory(dao, restaurantMenu, userPrefs, HealthData(applicationContext))
 
         enableEdgeToEdge()
         setContent {
             val appearance by appearancePrefs.appearance.collectAsState()
             TrackmecaloriesTheme(appearance = appearance) {
-                val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(dao, restaurantMenu, userPrefs))
+                val mainViewModel: MainViewModel = viewModel(factory = viewModelFactory)
                 val action by pendingAction.collectAsState()
                 TrackmecaloriesApp(mainViewModel, appearancePrefs, action, onActionHandled = { pendingAction.value = null })
             }
@@ -111,6 +115,13 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         QuickAction.from(intent)?.let { pendingAction.value = it }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // The watch may have synced (or permissions changed) while we were away. Same
+        // instance as the UI's viewModel(): both come from this activity's store.
+        ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java].refreshHealth()
     }
 
     override fun onStop() {

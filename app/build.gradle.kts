@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.jsemalja.trackmecalories"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.jsemalja.trackmecalories"
@@ -84,4 +84,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
 
     implementation("androidx.compose.material:material-icons-extended")
+
+    // Health Connect: steps, workouts and active calories synced by Zepp (Amazfit) etc.
+    implementation("androidx.health.connect:connect-client:1.1.0")
 }

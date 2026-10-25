@@ -1,6 +1,7 @@
 package com.jsemalja.trackmecalories.ui.screens
 
 import com.jsemalja.trackmecalories.data.WeeklyBudget
+import com.jsemalja.trackmecalories.data.HealthStatus
 import com.jsemalja.trackmecalories.QuickAction
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.AutoAwesome
@@ -95,6 +96,8 @@ fun HomeScreen(
     val waterEntries by viewModel.waterEntries.collectAsState()
     val dayComplete by viewModel.selectedDayComplete.collectAsState()
     val weekly by viewModel.weeklyBudget.collectAsState()
+    val healthStatus by viewModel.healthStatus.collectAsState()
+    val activity by viewModel.dayActivity.collectAsState()
     val history by viewModel.historyEntries.collectAsState()
     val savedFoods by viewModel.allCustomFoods.collectAsState()
     var showWhatFits by remember { mutableStateOf(false) }
@@ -190,6 +193,12 @@ fun HomeScreen(
                             onAddWater = { viewModel.addWater(it) },
                             onRemove = { viewModel.deleteWaterEntry(it) }
                         )
+                        // Only once connected (Settings > Health data); otherwise nothing to show.
+                        val dayActivity = activity
+                        if (healthStatus == HealthStatus.CONNECTED && dayActivity != null) {
+                            Spacer(Modifier.height(8.dp))
+                            ActivityCard(dayActivity)
+                        }
                         if (suggestions.isNotEmpty()) {
                             Spacer(Modifier.height(16.dp))
                             SuggestionsRow(suggestions) { habit ->
