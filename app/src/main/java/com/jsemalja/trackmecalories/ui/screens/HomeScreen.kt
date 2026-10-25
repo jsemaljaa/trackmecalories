@@ -1,5 +1,14 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
+import java.time.LocalDateTime
+import com.jsemalja.trackmecalories.data.whatFits
+import com.jsemalja.trackmecalories.data.timeSuggestions
+import com.jsemalja.trackmecalories.data.FitSuggestion
+import com.jsemalja.trackmecalories.data.FoodHabit
 import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.TaskAlt
 import kotlin.math.roundToInt
@@ -80,6 +89,14 @@ fun HomeScreen(
     val selectedDate by viewModel.selectedDate.collectAsState()
     val waterEntries by viewModel.waterEntries.collectAsState()
     val dayComplete by viewModel.selectedDayComplete.collectAsState()
+    val history by viewModel.historyEntries.collectAsState()
+    val savedFoods by viewModel.allCustomFoods.collectAsState()
+    var showWhatFits by remember { mutableStateOf(false) }
+    val isToday = selectedDate == LocalDate.now()
+    // Recomputed when the history changes; the clock moving a few minutes doesn't matter.
+    val suggestions = remember(history, savedFoods, isToday) {
+        if (isToday) timeSuggestions(history, savedFoods, LocalDateTime.now()) else emptyList()
+    }
 
     var showManualDialog by remember { mutableStateOf(false) }
     var showQuickAddDialog by remember { mutableStateOf(false) }
@@ -158,6 +175,12 @@ fun HomeScreen(
                             onAddWater = { viewModel.addWater(it) },
                             onRemove = { viewModel.deleteWaterEntry(it) }
                         )
+                        if (suggestions.isNotEmpty()) {
+                            Spacer(Modifier.height(16.dp))
+                            SuggestionsRow(suggestions) { habit ->
+                                showPortionDialogFor = habit.food.copy(defaultAmount = habit.typicalAmount)
+                            }
+                        }
                         Spacer(Modifier.height(20.dp))
                         Text(stringResource(R.string.daily_log), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
@@ -239,7 +262,24 @@ fun HomeScreen(
             onScan = { showAddMenu = false; onOpenScanner() },
             onQuickAdd = { showAddMenu = false; showQuickAddDialog = true },
             onCustom = { showAddMenu = false; showManualDialog = true },
-            onLogWeight = { showAddMenu = false; showLogWeight = true }
+            onLogWeight = { showAddMenu = false; showLogWeight = true },
+            onWhatFits = { showAddMenu = false; showWhatFits = true }
+        )
+    }
+
+    if (showWhatFits) {
+        val remainingKcal = (goals.calorieGoal - entries.sumOf { it.kcal }).toDouble()
+        val remainingProtein = goals.proteinGoal - entries.sumOf { it.protein }
+        WhatFitsDialog(
+            fits = remember(history, savedFoods, remainingKcal, remainingProtein) {
+                whatFits(history, savedFoods, remainingKcal, remainingProtein)
+            },
+            remainingKcal = remainingKcal,
+            onDismiss = { showWhatFits = false },
+            onPick = { fit ->
+                showWhatFits = false
+                showPortionDialogFor = fit.food.copy(defaultAmount = fit.amount)
+            }
         )
     }
 
@@ -811,7 +851,8 @@ private fun AddFoodSheet(
     onScan: () -> Unit,
     onQuickAdd: () -> Unit,
     onCustom: () -> Unit,
-    onLogWeight: () -> Unit
+    onLogWeight: () -> Unit,
+    onWhatFits: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 24.dp)) {
@@ -820,6 +861,7 @@ private fun AddFoodSheet(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
             )
+            AddFoodAction(Icons.Outlined.AutoAwesome, stringResource(R.string.what_fits), stringResource(R.string.what_fits_desc), onWhatFits)
             AddFoodAction(Icons.Outlined.Search, stringResource(R.string.add_search), stringResource(R.string.add_search_desc), onSearch)
             AddFoodAction(Icons.Outlined.QrCodeScanner, stringResource(R.string.add_scan), stringResource(R.string.add_scan_desc), onScan)
             AddFoodAction(Icons.Outlined.Bolt, stringResource(R.string.add_quick), stringResource(R.string.add_quick_desc), onQuickAdd)
@@ -876,4 +918,69 @@ private fun DayStatusRow(complete: Boolean?, onChange: (Boolean?) -> Unit) {
             Text(stringResource(R.string.day_incomplete_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+/** "Usually around now": one tap opens the food at your usual portion. */
+@Composable
+private fun SuggestionsRow(habits: List<FoodHabit>, onPick: (FoodHabit) -> Unit) {
+    Column {
+        Text(stringResource(R.string.suggestions_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(6.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(habits, key = { it.food.id }) { habit ->
+                AssistChip(
+                    onClick = { onPick(habit) },
+                    label = {
+                        Text(
+                            "${habit.food.name} · ${amountLabel(habit.typicalAmount, habit.food.unit)}",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 220.dp)
+                        )
+                    },
+                    leadingIcon = { Icon(Icons.Outlined.History, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                )
+            }
+        }
+    }
+}
+
+/** Foods from your own history that fit what's left today, best protein value first. */
+@Composable
+private fun WhatFitsDialog(fits: List<FitSuggestion>, remainingKcal: Double, onDismiss: () -> Unit, onPick: (FitSuggestion) -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.what_fits)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.what_fits_left, remainingKcal.roundToInt().coerceAtLeast(0)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (fits.isEmpty()) {
+                    Text(stringResource(R.string.what_fits_empty), style = MaterialTheme.typography.bodyMedium)
+                }
+                fits.forEach { fit ->
+                    AppCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, strong = true, onClick = { onPick(fit) }) {
+                        Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                            Text(fit.food.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                stringResource(
+                                    R.string.what_fits_line,
+                                    amountLabel(fit.amount, fit.food.unit),
+                                    fit.kcal.roundToInt(),
+                                    fit.protein.roundToInt(),
+                                    "%.1f".format(fit.fiber)
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
+    )
 }

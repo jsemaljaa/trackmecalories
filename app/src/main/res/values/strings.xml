@@ -392,4 +392,12 @@
 
     <!-- Amount shortcuts -->
     <string name="amount_usual">Usual: %1$s</string>
+
+    <!-- Suggestions -->
+    <string name="suggestions_title">Usually around now</string>
+    <string name="what_fits">What fits?</string>
+    <string name="what_fits_desc">Your foods that fit what\'s left today</string>
+    <string name="what_fits_left">%1$d kcal left today. From foods you actually eat, at your usual portion, best protein value first.</string>
+    <string name="what_fits_empty">Nothing from your history fits that. A drink or a small snack?</string>
+    <string name="what_fits_line">%1$s · %2$d kcal · %3$d g protein · %4$s g fiber</string>
 </resources>

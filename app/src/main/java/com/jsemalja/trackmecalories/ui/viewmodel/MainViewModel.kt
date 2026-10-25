@@ -2,6 +2,7 @@
 
 package com.jsemalja.trackmecalories.ui.viewmodel
 
+import com.jsemalja.trackmecalories.data.suggestionHistoryStart
 import com.jsemalja.trackmecalories.data.DayLog
 import com.jsemalja.trackmecalories.R
 import androidx.lifecycle.ViewModel
@@ -135,6 +136,10 @@ class MainViewModel(
             else dao.setDayLog(DayLog(date.toString(), complete))
         }
     }
+
+    /** The last 90 days of entries: the history suggestions and "What fits?" learn from. */
+    val historyEntries: StateFlow<List<FoodEntry>> = dao.observeEntriesSince(suggestionHistoryStart().toString())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // --- Weight ---
 
