@@ -67,14 +67,13 @@ import com.jsemalja.trackmecalories.ui.theme.MacroFiber
 import com.jsemalja.trackmecalories.ui.theme.MacroProtein
 import com.jsemalja.trackmecalories.ui.theme.MacroSalt
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import com.jsemalja.trackmecalories.ui.viewmodel.weekStartOf
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.time.temporal.TemporalAdjusters
-import java.time.temporal.WeekFields
 import java.util.Locale
 
 // Section order for the daily log; anything else (custom meal types) is appended alphabetically.
@@ -799,7 +798,7 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
     var showPicker by remember { mutableStateOf(false) }
     val today = LocalDate.now()
     val locale = Locale.getDefault()
-    val weekStart = selectedDate.with(TemporalAdjusters.previousOrSame(WeekFields.of(locale).firstDayOfWeek))
+    val weekStart = weekStartOf(selectedDate)
 
     val title = when (selectedDate) {
         today -> stringResource(R.string.today)

@@ -52,10 +52,9 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
-import java.time.temporal.WeekFields
-import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -751,9 +750,9 @@ private const val KT_MACRO_PREFETCH = 8
 // foreign ones; a clearly better name match still wins.
 private const val CZECH_BOOST = 0.7
 
-/** First day of [date]'s week, by the device locale (Monday in Czechia). */
+/** First day of [date]'s week. Weeks always start on Monday, whatever the device locale. */
 fun weekStartOf(date: LocalDate): LocalDate =
-    date.with(TemporalAdjusters.previousOrSame(WeekFields.of(Locale.getDefault()).firstDayOfWeek))
+    date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
 class MainViewModelFactory(
     private val dao: FoodDao,
