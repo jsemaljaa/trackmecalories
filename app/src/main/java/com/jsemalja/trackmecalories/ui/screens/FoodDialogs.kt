@@ -51,7 +51,10 @@ fun PortionEntryDialog(
     onDismiss: () -> Unit,
     onConfirm: (Double, String) -> Unit,
     // Shown for already-saved foods, so a wrong macro can be fixed right where it's noticed.
-    onEdit: (() -> Unit)? = null
+    onEdit: (() -> Unit)? = null,
+    // Ingredient mode (recipes): no meal choice, and a different confirm label.
+    showMeal: Boolean = true,
+    confirmLabel: String? = null
 ) {
     var amount by remember { mutableStateOf(food.referenceAmount.clean()) }
     var mealType by remember { mutableStateOf(mealForNow()) }
@@ -60,7 +63,7 @@ fun PortionEntryDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.Top) {
-                Text("Log ${food.name}", modifier = Modifier.weight(1f))
+                Text(if (showMeal) "Log ${food.name}" else food.name, modifier = Modifier.weight(1f))
                 if (onEdit != null) {
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit food")
@@ -80,11 +83,13 @@ fun PortionEntryDialog(
                     unit = food.unit
                 )
 
-                Text("Meal", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                // Wraps instead of pushing "Snack" off the edge on narrow phones.
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    MEAL_TYPES.forEach { type ->
-                        FilterChip(selected = mealType == type, onClick = { mealType = type }, label = { Text(type) })
+                if (showMeal) {
+                    Text("Meal", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    // Wraps instead of pushing "Snack" off the edge on narrow phones.
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        MEAL_TYPES.forEach { type ->
+                            FilterChip(selected = mealType == type, onClick = { mealType = type }, label = { Text(type) })
+                        }
                     }
                 }
 
@@ -101,7 +106,7 @@ fun PortionEntryDialog(
         confirmButton = {
             Button(onClick = {
                 onConfirm(amount.toDecimal() ?: food.referenceAmount, mealType)
-            }) { Text("Log Food") }
+            }) { Text(confirmLabel ?: "Log Food") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )

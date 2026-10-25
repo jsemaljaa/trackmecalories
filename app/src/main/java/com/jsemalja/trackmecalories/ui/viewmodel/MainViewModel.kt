@@ -13,6 +13,8 @@ import com.jsemalja.trackmecalories.data.FoodInfo
 import com.jsemalja.trackmecalories.data.FoodRepository
 import com.jsemalja.trackmecalories.data.KalorickeTabulkyRepository
 import com.jsemalja.trackmecalories.data.KtHit
+import com.jsemalja.trackmecalories.data.Recipe
+import com.jsemalja.trackmecalories.data.RecipeIngredient
 import com.jsemalja.trackmecalories.data.RestaurantMenu
 import com.jsemalja.trackmecalories.data.AdaptiveMaintenance
 import com.jsemalja.trackmecalories.data.WeightEntry
@@ -152,6 +154,35 @@ class MainViewModel(
 
     fun setTargetWeight(kg: Double?) {
         viewModelScope.launch { dao.setUserGoal(userGoal.value.copy(targetWeightKg = kg)) }
+    }
+
+    // --- Recipes ---
+
+    /** Recipes with the saved food they're logged through (for per-serving kcal etc.). */
+    val recipes: StateFlow<List<RecipeListItem>> = combine(dao.getRecipes(), dao.getAllCustomFoods()) { recipes, foods ->
+        val byId = foods.associateBy { it.id }
+        recipes.map { RecipeListItem(it, it.customFoodId?.let(byId::get)) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    suspend fun loadRecipe(id: Int): Pair<Recipe, List<RecipeIngredient>>? {
+        val recipe = dao.getRecipe(id) ?: return null
+        return recipe to dao.getIngredients(id)
+    }
+
+    /** The recipe a saved food belongs to, if it's a recipe's food. */
+    suspend fun recipeIdForFood(foodId: Int): Int? = dao.getRecipeForFood(foodId)?.id
+
+    /**
+     * Saves the recipe and (re)computes its loggable food from the ingredients, keeping the
+     * food's id, favorite flag and recency on edits. Returns the recipe id.
+     */
+    suspend fun saveRecipe(recipe: Recipe, ingredients: List<RecipeIngredient>): Int {
+        val existing = recipe.customFoodId?.let { dao.getCustomFood(it) }
+        return dao.saveRecipe(recipe, ingredients, recipe.toCustomFood(ingredients, existing))
+    }
+
+    fun deleteRecipe(id: Int) {
+        viewModelScope.launch { dao.deleteRecipe(id) }
     }
 
     // Search state. The query lives here (not in the screen) so results and the text field
@@ -581,6 +612,9 @@ class MainViewModel(
         }
     }
 }
+
+/** A recipe and the saved food it's logged through (null if that food was deleted). */
+data class RecipeListItem(val recipe: Recipe, val food: CustomFood?)
 
 private const val SEARCH_DEBOUNCE_MS = 350L
 private const val MAX_RESULTS = 150 // a chain shortcut lists its whole menu

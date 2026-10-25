@@ -31,17 +31,25 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodInfo
 import com.jsemalja.trackmecalories.data.toCustomFood
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import androidx.compose.ui.res.stringResource
+import com.jsemalja.trackmecalories.R
 
 /**
  * Screen providing barcode scanning functionality.
  * Uses ML Kit for barcode recognition and Open Food Facts API for data retrieval.
  */
 @Composable
-fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onClose: () -> Unit) {
+fun ScannerScreen(
+    viewModel: MainViewModel,
+    modifier: Modifier = Modifier,
+    onClose: () -> Unit,
+    // Recipe ingredient mode: hand the scanned food and amount back instead of logging it.
+    onPick: ((CustomFood, Double) -> Unit)? = null
+) {
     // Full-screen overlay over the app: opaque background, close button over the camera.
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 1f)) {
         Box(Modifier.fillMaxSize()) {
-            ScannerContent(viewModel, Modifier.fillMaxSize(), onLogged = onClose)
+            ScannerContent(viewModel, Modifier.fillMaxSize(), onLogged = onClose, onPick = onPick)
             FilledTonalIconButton(
                 onClick = onClose,
                 modifier = Modifier
@@ -56,7 +64,12 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onClo
 }
 
 @Composable
-private fun ScannerContent(viewModel: MainViewModel, modifier: Modifier = Modifier, onLogged: () -> Unit) {
+private fun ScannerContent(
+    viewModel: MainViewModel,
+    modifier: Modifier = Modifier,
+    onLogged: () -> Unit,
+    onPick: ((CustomFood, Double) -> Unit)?
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -141,7 +154,13 @@ private fun ScannerContent(viewModel: MainViewModel, modifier: Modifier = Modifi
                 foundFood = null
                 isScanning = false
             },
+            showMeal = onPick == null,
+            confirmLabel = if (onPick != null) stringResource(R.string.recipe_add) else null,
             onConfirm = { amount, mealType ->
+                if (onPick != null) {
+                    onPick(foundFood!!, amount)
+                    return@PortionEntryDialog
+                }
                 viewModel.logCustomFood(foundFood!!, amount, mealType, viewModel.selectedDate.value.toString())
 
                 showPortionDialog = false

@@ -38,6 +38,8 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.SearchHit
 import com.jsemalja.trackmecalories.data.SearchSource
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import androidx.compose.ui.res.stringResource
+import com.jsemalja.trackmecalories.R
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -54,7 +56,23 @@ private val POPULAR_SPOTS = listOf(
  * a barcode button that opens the scanner.
  */
 @Composable
-fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onOpenScanner: () -> Unit) {
+fun SearchScreen(
+    viewModel: MainViewModel,
+    modifier: Modifier = Modifier,
+    onOpenScanner: () -> Unit,
+    // Set when picking a recipe ingredient: tapping a food asks for an amount and hands it back.
+    pick: IngredientPick? = null
+) {
+    val recipes by viewModel.recipes.collectAsState()
+    var recipeEditorOpen by remember { mutableStateOf(false) }
+    var recipeEditorId by remember { mutableStateOf<Int?>(null) }
+    if (pick != null) {
+        // Start the picker with an empty box, and leave the Food tab's search clean after.
+        DisposableEffect(Unit) {
+            viewModel.searchFoods("")
+            onDispose { viewModel.searchFoods("") }
+        }
+    }
     val recentFoods by viewModel.recentFoods.collectAsState()
     val favoriteFoods by viewModel.favoriteFoods.collectAsState()
     val allFoods by viewModel.allCustomFoods.collectAsState()
@@ -81,6 +99,18 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onOpen
     // New query -> start at the top instead of wherever the previous list was scrolled.
     LaunchedEffect(query.trim()) { listState.scrollToItem(0) }
 
+    fun editFood(food: CustomFood) {
+        scope.launch {
+            val recipeId = if (food.id != 0) viewModel.recipeIdForFood(food.id) else null
+            if (recipeId != null) {
+                recipeEditorId = recipeId
+                recipeEditorOpen = true
+            } else {
+                editingFood = food
+            }
+        }
+    }
+
     fun open(hit: SearchHit) {
         hit.food?.let { foodToLog = it; return }
         val ktHit = hit.ktHit ?: return
@@ -98,7 +128,14 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onOpen
     }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        ScreenHeader(Icons.Outlined.Restaurant, "Food")
+        if (pick != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = pick.onClose) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close)) }
+                Text(stringResource(R.string.recipe_add_ingredient), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            }
+        } else {
+            ScreenHeader(Icons.Outlined.Restaurant, "Food")
+        }
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -154,10 +191,15 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onOpen
                         SavedFoodsTab.RECENT -> recentFoods
                         SavedFoodsTab.FAVORITES -> favoriteFoods
                         SavedFoodsTab.ALL -> allFoods
+                        SavedFoodsTab.RECIPES -> emptyList()
                     },
                     onLog = { foodToLog = it },
-                    onEdit = { editingFood = it },
-                    onToggleFavorite = { viewModel.toggleFavorite(it) }
+                    onEdit = { editFood(it) },
+                    onToggleFavorite = { viewModel.toggleFavorite(it) },
+                    recipes = recipes,
+                    onNewRecipe = { recipeEditorId = null; recipeEditorOpen = true },
+                    onOpenRecipe = { recipeEditorId = it; recipeEditorOpen = true },
+                    showRecipesTab = pick == null
                 )
             }
         } else {
@@ -172,7 +214,7 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onOpen
                         SavedFoodResultRow(
                             food = food,
                             onClick = { foodToLog = food },
-                            onEdit = { editingFood = food }
+                            onEdit = { editFood(food) }
                         )
                     }
                 }
@@ -227,16 +269,26 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onOpen
             food = food,
             onDismiss = { foodToLog = null },
             onConfirm = { amount, mealType ->
-                viewModel.logCustomFood(food, amount, mealType, selectedDate.toString())
+                if (pick != null) {
+                    pick.onPick(food, amount)
+                } else {
+                    viewModel.logCustomFood(food, amount, mealType, selectedDate.toString())
+                }
                 foodToLog = null
             },
-            onEdit = if (food.id != 0) {
+            onEdit = if (food.id != 0 && pick == null) {
                 {
                     foodToLog = null
-                    editingFood = food
+                    editFood(food)
                 }
-            } else null
+            } else null,
+            showMeal = pick == null,
+            confirmLabel = if (pick != null) stringResource(R.string.recipe_add) else null
         )
+    }
+
+    if (recipeEditorOpen) {
+        RecipeEditor(viewModel, recipeEditorId, onDismiss = { recipeEditorOpen = false })
     }
 
     editingFood?.let { food ->
