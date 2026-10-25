@@ -478,4 +478,24 @@
     <string name="eat_back_half">50%</string>
     <string name="eat_back_full">100%</string>
     <string name="goal_activity_bonus">вкл. +%1$s за активность</string>
+    <!-- Meal rating (satiety) -->
+    <string name="rate_meal">Оценить</string>
+    <string name="rate_meal_title">Оценка: %1$s</string>
+    <string name="rate_meal_hint">Лучше через час-два после еды. Оценка относится ко всему в этом приёме пищи.</string>
+    <string name="fullness">Сытость</string>
+    <string name="energy">Энергия</string>
+    <string name="rating_fullness_short">Сытость %1$d/5</string>
+    <string name="rating_energy_short">Энергия %1$d/5</string>
+    <string name="rating_clear">Сбросить оценку</string>
+    <string name="rating_scale_hint">1 — %1$s, 5 — %2$s</string>
+    <string name="fullness_1">Всё ещё хочется есть</string>
+    <string name="fullness_2">Немного голодно</string>
+    <string name="fullness_3">Сытно в меру</string>
+    <string name="fullness_4">Сытно</string>
+    <string name="fullness_5">Слишком сытно</string>
+    <string name="energy_1">Без сил</string>
+    <string name="energy_2">Вяло</string>
+    <string name="energy_3">Обычно</string>
+    <string name="energy_4">Бодро</string>
+    <string name="energy_5">Полно энергии</string>
 </resources>

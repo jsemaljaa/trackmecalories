@@ -126,6 +126,7 @@ fun HomeScreen(
     }
     val weightEntries by viewModel.weightEntries.collectAsState()
     var editingEntry by remember { mutableStateOf<FoodEntry?>(null) }
+    var ratingMeal by remember { mutableStateOf<String?>(null) }
 
     var showPortionDialogFor by remember { mutableStateOf<CustomFood?>(null) }
 
@@ -230,7 +231,14 @@ fun HomeScreen(
                     orderedMeals.forEach { meal ->
                         val mealEntries = grouped[meal].orEmpty()
                         item(key = "header_$meal") {
-                            MealSectionHeader(meal, mealEntries.sumOf { it.kcal })
+                            MealSectionHeader(
+                                meal,
+                                mealEntries.sumOf { it.kcal },
+                                satiety = mealEntries.firstNotNullOfOrNull { it.satiety },
+                                energy = mealEntries.firstNotNullOfOrNull { it.energyLevel },
+                                // A bare calorie number says nothing about a food; future meals aren't eaten yet.
+                                onRate = if (meal == "Quick Add" || selectedDate.isAfter(LocalDate.now())) null else { { ratingMeal = meal } }
+                            )
                         }
                         itemsIndexed(mealEntries, key = { _, entry -> entry.id }) { index, entry ->
                             // One rounded block per meal: outer corners round, inner ones tight.
@@ -327,6 +335,20 @@ fun HomeScreen(
         )
     }
 
+    ratingMeal?.let { meal ->
+        val mealEntries = grouped[meal].orEmpty()
+        RateMealDialog(
+            meal = meal,
+            satiety = mealEntries.firstNotNullOfOrNull { it.satiety },
+            energy = mealEntries.firstNotNullOfOrNull { it.energyLevel },
+            onDismiss = { ratingMeal = null },
+            onSave = { satiety, energy ->
+                viewModel.rateMeal(selectedDate, meal, satiety, energy)
+                ratingMeal = null
+            }
+        )
+    }
+
     editingEntry?.let { entry ->
         EditEntryDialog(
             entry = entry,
@@ -342,13 +364,25 @@ fun HomeScreen(
 }
 
 @Composable
-fun MealSectionHeader(meal: String, totalKcal: Int) {
+fun MealSectionHeader(
+    meal: String,
+    totalKcal: Int,
+    satiety: Int? = null,
+    energy: Int? = null,
+    // Null hides the rating chip.
+    onRate: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(mealLabel(meal), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        if (onRate != null) {
+            Spacer(Modifier.width(8.dp))
+            MealRatingChip(satiety, energy, onRate)
+        }
+        Spacer(Modifier.weight(1f))
         Text("$totalKcal ${stringResource(R.string.unit_kcal)}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

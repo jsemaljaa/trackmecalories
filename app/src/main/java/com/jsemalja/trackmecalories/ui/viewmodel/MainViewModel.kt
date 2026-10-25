@@ -146,6 +146,14 @@ class MainViewModel(
         }
     }
 
+    /**
+     * Rates how full and energetic a meal left you (1–5 each; null clears). Stored on every
+     * entry of that meal for Trends > Insights.
+     */
+    fun rateMeal(date: LocalDate, mealType: String, satiety: Int?, energy: Int?) {
+        viewModelScope.launch { dao.rateMeal(date.toString(), mealType, satiety, energy) }
+    }
+
     /** The last 90 days of entries: the history suggestions and "What fits?" learn from. */
     val historyEntries: StateFlow<List<FoodEntry>> = dao.observeEntriesSince(suggestionHistoryStart().toString())
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
