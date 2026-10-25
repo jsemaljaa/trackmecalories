@@ -1,5 +1,7 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.ui.theme.isGlass
+import com.jsemalja.trackmecalories.ui.theme.AppCard
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -81,7 +83,7 @@ fun TrendsScreen(
         )
         Spacer(Modifier.height(12.dp))
 
-        ElevatedCard(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+        AppCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("Calories per day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
@@ -243,7 +245,7 @@ private fun WeeklyBarChart(
                             // Backed by the card colour so the dashed goal line doesn't strike through it.
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(colors.surfaceContainerLow)
+                                .background(if (isGlass) Color.Transparent else colors.surfaceContainerLow)
                                 .padding(horizontal = 3.dp)
                         )
                         Spacer(Modifier.height(2.dp))
@@ -363,7 +365,7 @@ private fun StatTile(
     modifier: Modifier = Modifier,
     valueColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
-    ElevatedCard(modifier = modifier.fillMaxHeight(), shape = MaterialTheme.shapes.large) {
+    AppCard(modifier = modifier.fillMaxHeight()) {
         Column(Modifier.padding(14.dp)) {
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(4.dp))
@@ -387,7 +389,7 @@ private fun MacroAverages(logged: List<DailyTotal>, proteinGoal: Double, carbGoa
     // Share of calories from each macro (4/4/9 kcal per gram).
     val macroKcal = protein * 4 + carbs * 4 + fat * 9
 
-    ElevatedCard(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column {
                 Text("Average macros", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

@@ -1,5 +1,7 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.ui.theme.AppCard
+import com.jsemalja.trackmecalories.ui.theme.isGlass
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
@@ -17,7 +19,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.filled.LocalDrink
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -56,7 +61,12 @@ import java.util.Locale
 private val MEAL_ORDER = listOf("Breakfast", "Lunch", "Dinner", "Snack", "Quick Add")
 
 @Composable
-fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    viewModel: MainViewModel,
+    modifier: Modifier = Modifier,
+    onOpenSearch: () -> Unit,
+    onOpenScanner: () -> Unit
+) {
     val entries by viewModel.foodEntries.collectAsState()
     val goals by viewModel.userGoal.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
@@ -64,6 +74,7 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
 
     var showManualDialog by remember { mutableStateOf(false) }
     var showQuickAddDialog by remember { mutableStateOf(false) }
+    var showAddMenu by remember { mutableStateOf(false) }
     var editingEntry by remember { mutableStateOf<FoodEntry?>(null) }
 
     var showPortionDialogFor by remember { mutableStateOf<CustomFood?>(null) }
@@ -93,29 +104,25 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     }
 
     Scaffold(
+        // Padded by the app scaffold, so the button and snackbar sit above the nav bar.
+        modifier = modifier,
         // The app-level Scaffold already applies system-bar insets; applying them again here
         // pushed Home's content down by an extra status-bar height.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                SmallFloatingActionButton(
-                    onClick = { showQuickAddDialog = true },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    Icon(Icons.Default.FlashOn, contentDescription = "Quick Add")
-                }
-                Spacer(Modifier.height(8.dp))
-                FloatingActionButton(
-                    onClick = { showManualDialog = true },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Manual Add")
-                }
+            // One entry point for every way of adding food (see AddFoodSheet).
+            FloatingActionButton(
+                onClick = { showAddMenu = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add food")
             }
         }
     ) { padding ->
-        Column(modifier = modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(16.dp))
             DateSelector(selectedDate) { viewModel.changeDate(it) }
             Spacer(Modifier.height(8.dp))
@@ -124,7 +131,7 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             // the bottom third of the screen.
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(3.dp),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 136.dp), // clear the FABs
+                contentPadding = PaddingValues(top = 8.dp, bottom = 88.dp), // clear the add button
                 modifier = Modifier.weight(1f)
             ) {
                 item(key = "progress") { DailyProgressCard(entries, goals) }
@@ -200,6 +207,16 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         )
     }
 
+    if (showAddMenu) {
+        AddFoodSheet(
+            onDismiss = { showAddMenu = false },
+            onSearch = { showAddMenu = false; onOpenSearch() },
+            onScan = { showAddMenu = false; onOpenScanner() },
+            onQuickAdd = { showAddMenu = false; showQuickAddDialog = true },
+            onCustom = { showAddMenu = false; showManualDialog = true }
+        )
+    }
+
     if (showQuickAddDialog) {
         QuickAddDialog(
             onDismiss = { showQuickAddDialog = false },
@@ -237,16 +254,16 @@ fun MealSectionHeader(meal: String, totalKcal: Int) {
 fun WaterCard(waterEntries: List<WaterEntry>, goalMl: Double, onAddWater: (Double) -> Unit) {
     val totalMl = waterEntries.sumOf { it.amountMl }
 
-    ElevatedCard(
+    AppCard(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+        tint = MaterialTheme.colorScheme.tertiaryContainer
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.LocalDrink, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
+            Icon(Icons.Default.LocalDrink, contentDescription = null, tint = if (isGlass) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.tertiary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text("Water", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
@@ -271,12 +288,13 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
     val remaining = goal - eaten
     val isOver = remaining < 0
     val statusColor = if (isOver) colors.error else colors.primary
-    val onCard = colors.onPrimaryContainer
+    // Glass tints the card with primaryContainer; flat keeps it neutral.
+    val onCard = if (isGlass) colors.onPrimaryContainer else colors.onSurface
 
-    ElevatedCard(
+    AppCard(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.elevatedCardColors(containerColor = colors.primaryContainer)
+        tint = colors.primaryContainer
     ) {
         Column(Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -391,7 +409,7 @@ private fun NutrientProgress(
     isLimit: Boolean = false,
     decimals: Boolean = false
 ) {
-    val onCard = MaterialTheme.colorScheme.onPrimaryContainer
+    val onCard = if (isGlass) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     val overLimit = isLimit && value > goal
     val fmt: (Double) -> String = { if (decimals) "%.1f".format(it).removeSuffix(".0").removeSuffix(",0") else "${it.toInt()}" }
 
@@ -434,10 +452,9 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
     } else {
         "${entry.amount.clean()} ${entry.unit}"
     }
-    Surface(
+    AppCard(
         onClick = onClick,
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -503,6 +520,8 @@ fun SwipeToDeleteContainer(
         state = state,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
+            // Only while swiping: glass rows are translucent, so a resting icon would show through.
+            if (state.dismissDirection != SwipeToDismissBoxValue.EndToStart) return@SwipeToDismissBox
             val color by animateColorAsState(
                 when (state.targetValue) {
                     SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
@@ -688,5 +707,49 @@ private fun DayCell(
             fontWeight = FontWeight.Bold,
             color = contentColor
         )
+    }
+}
+
+/** Every way to add food, behind Home's single + button. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddFoodSheet(
+    onDismiss: () -> Unit,
+    onSearch: () -> Unit,
+    onScan: () -> Unit,
+    onQuickAdd: () -> Unit,
+    onCustom: () -> Unit
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 24.dp)) {
+            Text(
+                "Add food",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
+            )
+            AddFoodAction(Icons.Outlined.Search, "Search foods", "Your foods, restaurants, products", onSearch)
+            AddFoodAction(Icons.Outlined.QrCodeScanner, "Scan a barcode", "Packaged products", onScan)
+            AddFoodAction(Icons.Outlined.Bolt, "Quick add calories", "Just a number, no food", onQuickAdd)
+            AddFoodAction(Icons.Outlined.EditNote, "Create a custom food", "Enter the nutrition label yourself", onCustom)
+        }
+    }
+}
+
+@Composable
+private fun AddFoodAction(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }

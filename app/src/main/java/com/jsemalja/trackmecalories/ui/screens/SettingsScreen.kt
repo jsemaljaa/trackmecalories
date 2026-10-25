@@ -1,6 +1,22 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.ui.theme.AppCard
+import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.Color
+import com.jsemalja.trackmecalories.ui.theme.AccentColor
+import com.jsemalja.trackmecalories.ui.theme.Appearance
+import com.jsemalja.trackmecalories.ui.theme.DesignStyle
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,7 +42,13 @@ import java.time.LocalDate
  * Settings screen for user configuration.
  */
 @Composable
-fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    viewModel: MainViewModel,
+    modifier: Modifier = Modifier,
+    appearance: Appearance,
+    onStyleChange: (DesignStyle) -> Unit,
+    onAccentChange: (AccentColor) -> Unit
+) {
     val currentGoals by viewModel.userGoal.collectAsState()
     
     var calorieGoal by remember(currentGoals) { mutableStateOf(currentGoals.calorieGoal.toString()) }
@@ -47,6 +69,12 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         ScreenHeader(Icons.Default.Settings, "Settings")
 
         Spacer(Modifier.height(24.dp))
+
+        SettingsSectionCard(title = "Appearance", titleColor = MaterialTheme.colorScheme.primary) {
+            AppearanceSettings(appearance, onStyleChange, onAccentChange)
+        }
+
+        Spacer(Modifier.height(16.dp))
 
         SettingsSectionCard(title = "Nutritional Goals", titleColor = MaterialTheme.colorScheme.primary) {
             OutlinedTextField(
@@ -212,15 +240,87 @@ private fun SettingsSectionCard(
     titleColor: androidx.compose.ui.graphics.Color,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = titleColor)
             Spacer(Modifier.height(12.dp))
             content()
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun AppearanceSettings(
+    appearance: Appearance,
+    onStyleChange: (DesignStyle) -> Unit,
+    onAccentChange: (AccentColor) -> Unit
+) {
+    Text("Style", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        DesignStyle.entries.forEachIndexed { i, style ->
+            SegmentedButton(
+                selected = appearance.style == style,
+                onClick = { onStyleChange(style) },
+                shape = SegmentedButtonDefaults.itemShape(i, DesignStyle.entries.size),
+                colors = appSegmentedColors()
+            ) { Text(style.label) }
+        }
+    }
+
+    Spacer(Modifier.height(20.dp))
+    Text("Accent colour", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(10.dp))
+    val dark = isSystemInDarkTheme()
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        AccentColor.available.forEach { accent ->
+            AccentSwatch(
+                accent = accent,
+                color = if (dark) accent.primaryDark else accent.primaryLight,
+                selected = appearance.accent == accent,
+                onClick = { onAccentChange(accent) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccentSwatch(accent: AccentColor, color: Color, selected: Boolean, onClick: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .then(
+                    if (accent == AccentColor.WALLPAPER) {
+                        // Wallpaper colours are unknown up front: show a colour wheel.
+                        Modifier.background(Brush.sweepGradient(listOf(Color(0xFF8ED6AE), Color(0xFFA8C8FF), Color(0xFFCFBDFF), Color(0xFFFFB0CA), Color(0xFFFFB68B), Color(0xFF8ED6AE))))
+                    } else {
+                        Modifier.background(color)
+                    }
+                )
+                .border(
+                    width = if (selected) 3.dp else 0.dp,
+                    color = if (selected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                    shape = CircleShape
+                )
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selected) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = if (color.luminance() > 0.4f) Color.Black.copy(alpha = 0.75f) else Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(accent.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

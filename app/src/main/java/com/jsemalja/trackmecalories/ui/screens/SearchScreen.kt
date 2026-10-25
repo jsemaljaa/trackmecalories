@@ -1,11 +1,16 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.ui.theme.AppCard
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -43,12 +48,17 @@ private val POPULAR_SPOTS = listOf(
 )
 
 /**
- * One search box over everything: your saved foods first, then a single list ranked by
- * relevance from bundled restaurant menus, Kalorické tabulky and Open Food Facts.
+ * The Food tab. One search box over everything: your saved foods first, then a single list
+ * ranked by relevance from bundled restaurant menus, Kalorické tabulky and Open Food Facts.
+ * With nothing typed it lists your saved foods (recent / favorites / all), and the box has
+ * a barcode button that opens the scanner.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
+fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onOpenScanner: () -> Unit) {
+    val recentFoods by viewModel.recentFoods.collectAsState()
+    val favoriteFoods by viewModel.favoriteFoods.collectAsState()
+    val allFoods by viewModel.allCustomFoods.collectAsState()
+    var savedTab by rememberSaveable { mutableStateOf(SavedFoodsTab.RECENT) }
     val query by viewModel.searchQuery.collectAsState()
     val results by viewModel.searchResults.collectAsState()
     val savedMatches by viewModel.savedFoodMatches.collectAsState()
@@ -88,7 +98,7 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        ScreenHeader(Icons.Default.Search, "Search Foods")
+        ScreenHeader(Icons.Outlined.Restaurant, "Food")
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -101,6 +111,10 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { viewModel.searchFoods("") }) {
                         Icon(Icons.Default.Close, contentDescription = "Clear search")
+                    }
+                } else {
+                    IconButton(onClick = onOpenScanner) {
+                        Icon(Icons.Outlined.QrCodeScanner, contentDescription = "Scan a barcode")
                     }
                 }
             },
@@ -117,22 +131,34 @@ fun SearchScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         Spacer(Modifier.height(8.dp))
 
         if (!hasQuery) {
-            Column {
-                SearchMessage(
-                    icon = Icons.Default.Search,
-                    title = "Find a food",
-                    body = "Your saved foods, Czech restaurant menus, Kalorické tabulky and Open Food Facts — all in one search. Half-typed words and missing accents are fine."
-                )
-                SectionLabel("Popular spots")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    POPULAR_SPOTS.forEach { spot ->
-                        AssistChip(
-                            onClick = { viewModel.searchFoods(spot) },
-                            label = { Text(spot) },
-                            leadingIcon = { Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                        )
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                item(key = "spots") {
+                    // One scrollable line of chain shortcuts keeps the screen calm.
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(POPULAR_SPOTS) { spot ->
+                            AssistChip(
+                                onClick = { viewModel.searchFoods(spot) },
+                                label = { Text(spot) },
+                                leadingIcon = { Icon(Icons.Outlined.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                            )
+                        }
                     }
                 }
+                savedFoodsSection(
+                    tab = savedTab,
+                    onTabChange = { savedTab = it },
+                    foods = when (savedTab) {
+                        SavedFoodsTab.RECENT -> recentFoods
+                        SavedFoodsTab.FAVORITES -> favoriteFoods
+                        SavedFoodsTab.ALL -> allFoods
+                    },
+                    onLog = { foodToLog = it },
+                    onEdit = { editingFood = it },
+                    onToggleFavorite = { viewModel.toggleFavorite(it) }
+                )
             }
         } else {
             LazyColumn(
@@ -328,9 +354,11 @@ private fun ResultCard(
     onClick: () -> Unit,
     trailing: (@Composable () -> Unit)? = null
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        strong = true,
+        onClick = onClick
     ) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (leading != null) {

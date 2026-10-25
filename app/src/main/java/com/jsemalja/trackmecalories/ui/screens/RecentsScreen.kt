@@ -1,138 +1,81 @@
 package com.jsemalja.trackmecalories.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.data.CustomFood
-import com.jsemalja.trackmecalories.data.normalizedForSearch
-import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import com.jsemalja.trackmecalories.ui.theme.AppCard
+import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
+
+/** Which saved foods the Food tab lists while the search box is empty. */
+enum class SavedFoodsTab(val label: String) {
+    RECENT("Recent"),
+    FAVORITES("Favorites"),
+    ALL("All")
+}
 
 /**
- * Screen for one-tap logging of saved foods: recently used, pinned favorites, and every
- * saved food (so anything you've created can be found and edited, not just the latest 30).
+ * Saved foods (recently used, pinned favorites, or everything) as a section of the Food
+ * tab's list — shown while nothing is typed, so the former Recents tab needs no tab of
+ * its own. Typing searches these too, accent-insensitively.
  */
-@Composable
-fun RecentsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
-    val recentFoods by viewModel.recentFoods.collectAsState()
-    val favoriteFoods by viewModel.favoriteFoods.collectAsState()
-    val allFoods by viewModel.allCustomFoods.collectAsState()
-    val selectedDate by viewModel.selectedDate.collectAsState()
-
-    var selectedTab by rememberSaveable { mutableStateOf(0) }
-    var filter by rememberSaveable { mutableStateOf("") }
-    var selectedFood by remember { mutableStateOf<CustomFood?>(null) }
-    var editingFood by remember { mutableStateOf<CustomFood?>(null) }
-
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        ScreenHeader(Icons.Default.History, "Saved Foods")
-
-        Spacer(Modifier.height(16.dp))
-
-        TabRow(selectedTabIndex = selectedTab) {
-            Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Recent") })
-            Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Favorites") })
-            Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("All (${allFoods.size})") })
+@OptIn(ExperimentalMaterial3Api::class)
+fun LazyListScope.savedFoodsSection(
+    tab: SavedFoodsTab,
+    onTabChange: (SavedFoodsTab) -> Unit,
+    foods: List<CustomFood>,
+    onLog: (CustomFood) -> Unit,
+    onEdit: (CustomFood) -> Unit,
+    onToggleFavorite: (CustomFood) -> Unit
+) {
+    item(key = "saved_tabs") {
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            SavedFoodsTab.entries.forEachIndexed { i, entry ->
+                SegmentedButton(
+                    selected = tab == entry,
+                    onClick = { onTabChange(entry) },
+                    shape = SegmentedButtonDefaults.itemShape(i, SavedFoodsTab.entries.size),
+                    colors = appSegmentedColors(),
+                    icon = {}
+                ) { Text(entry.label) }
+            }
         }
+    }
 
-        Spacer(Modifier.height(12.dp))
-
-        if (selectedTab == 2) {
-            OutlinedTextField(
-                value = filter,
-                onValueChange = { filter = it },
-                placeholder = { Text("Filter your foods") },
-                leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = null) },
-                trailingIcon = {
-                    if (filter.isNotEmpty()) {
-                        IconButton(onClick = { filter = "" }) { Icon(Icons.Default.Close, contentDescription = "Clear filter") }
-                    }
+    if (foods.isEmpty()) {
+        item(key = "saved_empty") {
+            Text(
+                when (tab) {
+                    SavedFoodsTab.FAVORITES -> "Tap the star on a saved food to pin it here."
+                    else -> "Foods you log or create show up here."
                 },
-                singleLine = true,
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.fillMaxWidth()
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp)
             )
-            Spacer(Modifier.height(12.dp))
         }
-
-        val list = when (selectedTab) {
-            0 -> recentFoods
-            1 -> favoriteFoods
-            else -> {
-                val needle = filter.normalizedForSearch()
-                if (needle.isBlank()) allFoods
-                else allFoods.filter { needle in it.name.normalizedForSearch() }
-            }
+    } else {
+        items(foods, key = { "saved_list_${it.id}" }) { food ->
+            SavedFoodRow(
+                food = food,
+                onClick = { onLog(food) },
+                onEdit = { onEdit(food) },
+                onToggleFavorite = { onToggleFavorite(food) }
+            )
         }
-
-        if (list.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
-                    Text(
-                        when (selectedTab) {
-                            0 -> "No saved foods yet"
-                            1 -> "No favorites yet"
-                            else -> if (filter.isBlank()) "No saved foods yet" else "Nothing matches “${filter.trim()}”"
-                        },
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        if (selectedTab == 1) "Tap the star on a saved food to pin it here" else "Scan or add foods to see them here",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
-                items(list, key = { it.id }) { food ->
-                    SavedFoodRow(
-                        food = food,
-                        onClick = { selectedFood = food },
-                        onEdit = { editingFood = food },
-                        onToggleFavorite = { viewModel.toggleFavorite(food) }
-                    )
-                }
-            }
-        }
-    }
-
-    selectedFood?.let { food ->
-        PortionEntryDialog(
-            food = food,
-            onDismiss = { selectedFood = null },
-            onConfirm = { amount, mealType ->
-                viewModel.logCustomFood(food, amount, mealType, selectedDate.toString())
-                selectedFood = null
-            },
-            onEdit = {
-                selectedFood = null
-                editingFood = food
-            }
-        )
-    }
-
-    editingFood?.let { food ->
-        EditSavedFoodDialog(viewModel, food, onDismiss = { editingFood = null })
     }
 }
 
@@ -143,13 +86,15 @@ fun SavedFoodRow(
     onEdit: () -> Unit,
     onToggleFavorite: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        strong = true,
+        onClick = onClick
     ) {
         Row(Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(food.name, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(food.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val refLabel = if (food.unit == "pcs") "piece" else "100 ${food.unit}"
                 Text(
                     "${food.kcalPer100.toInt()} kcal per $refLabel · P ${food.proteinPer100.toInt()} · C ${food.carbsPer100.toInt()} · F ${food.fatPer100.toInt()}",
@@ -159,16 +104,13 @@ fun SavedFoodRow(
             }
             IconButton(onClick = onToggleFavorite) {
                 Icon(
-                    if (food.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                    if (food.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                     contentDescription = if (food.isFavorite) "Unpin from favorites" else "Pin to favorites",
-                    tint = if (food.isFavorite) Color(0xFFFFC107) else LocalContentColor.current
+                    tint = if (food.isFavorite) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit")
-            }
-            IconButton(onClick = onClick) {
-                Icon(Icons.Default.Add, contentDescription = "Log")
+                Icon(Icons.Outlined.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

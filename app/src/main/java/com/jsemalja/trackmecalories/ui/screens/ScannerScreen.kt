@@ -15,6 +15,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +37,26 @@ import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
  * Uses ML Kit for barcode recognition and Open Food Facts API for data retrieval.
  */
 @Composable
-fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
+fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier, onClose: () -> Unit) {
+    // Full-screen overlay over the app: opaque background, close button over the camera.
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 1f)) {
+        Box(Modifier.fillMaxSize()) {
+            ScannerContent(viewModel, Modifier.fillMaxSize(), onLogged = onClose)
+            FilledTonalIconButton(
+                onClick = onClose,
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(12.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Close scanner")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScannerContent(viewModel: MainViewModel, modifier: Modifier = Modifier, onLogged: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -127,6 +147,7 @@ fun ScannerScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 showPortionDialog = false
                 foundFood = null
                 isScanning = false
+                onLogged()
             }
         )
     }
