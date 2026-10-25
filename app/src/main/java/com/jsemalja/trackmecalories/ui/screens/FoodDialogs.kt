@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -21,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.data.Confidence
 import com.jsemalja.trackmecalories.data.CustomFood
@@ -128,7 +131,8 @@ fun PortionEntryDialog(
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Scrolls on short screens or with a large font instead of cutting off the bottom.
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 MacroSummary(
                     kcal = food.kcalPer100,
                     protein = food.proteinPer100,
@@ -163,7 +167,7 @@ fun PortionEntryDialog(
                 // One-tap amounts: the usual portion and the reference amount.
                 val usual = food.defaultAmount
                 if (usual != null && usual != food.referenceAmount) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         AssistChip(onClick = { amount = usual.clean() }, label = { Text(stringResource(R.string.amount_usual, amountLabel(usual, food.unit))) })
                         AssistChip(onClick = { amount = food.referenceAmount.clean() }, label = { Text(amountLabel(food.referenceAmount, food.unit)) })
                     }
@@ -204,7 +208,7 @@ fun EditEntryDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.edit_entry_title, entry.name)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 MacroSummary(
                     kcal = kcalPer100,
                     protein = proteinPer100,
@@ -229,11 +233,12 @@ fun EditEntryDialog(
 
                 Text(stringResource(R.string.quick_copy), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { onCopyToDate(LocalDate.now().minusDays(1)); onDismiss() }, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.copy_yesterday))
+                    val padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    Button(onClick = { onCopyToDate(LocalDate.now().minusDays(1)); onDismiss() }, modifier = Modifier.weight(1f), contentPadding = padding) {
+                        FitText(stringResource(R.string.copy_yesterday))
                     }
-                    Button(onClick = { onCopyToDate(LocalDate.now().plusDays(1)); onDismiss() }, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.copy_tomorrow))
+                    Button(onClick = { onCopyToDate(LocalDate.now().plusDays(1)); onDismiss() }, modifier = Modifier.weight(1f), contentPadding = padding) {
+                        FitText(stringResource(R.string.copy_tomorrow))
                     }
                 }
 
@@ -298,30 +303,31 @@ fun MacroSummary(
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("$currentKcal ${stringResource(R.string.unit_kcal)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        FitText("$currentKcal ${stringResource(R.string.unit_kcal)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Text(stringResource(R.string.for_amount, amountText), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         Spacer(Modifier.height(8.dp))
 
+        // Four equal columns: a long nutrient name shrinks instead of crowding its neighbours.
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            MacroItem(stringResource(R.string.protein), currentProtein, MacroProtein)
-            MacroItem(stringResource(R.string.carbs), currentCarbs, MacroCarbs)
-            MacroItem(stringResource(R.string.fat), currentFat, MacroFat)
-            MacroItem(stringResource(R.string.fiber), currentFiber, MacroFiber)
+            MacroItem(stringResource(R.string.protein), currentProtein, MacroProtein, Modifier.weight(1f))
+            MacroItem(stringResource(R.string.carbs), currentCarbs, MacroCarbs, Modifier.weight(1f))
+            MacroItem(stringResource(R.string.fat), currentFat, MacroFat, Modifier.weight(1f))
+            MacroItem(stringResource(R.string.fiber), currentFiber, MacroFiber, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-fun MacroItem(label: String, value: Double, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelSmall)
+fun MacroItem(label: String, value: Double, color: Color, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        FitText(label, style = MaterialTheme.typography.labelSmall)
         // One decimal below 10 g, so 2.5 g of fiber doesn't show as "2 g".
         val grams = if (value < 10) "%.1f".format(value).removeSuffix(".0").removeSuffix(",0") else value.roundToInt().toString()
-        Text("$grams ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
+        FitText("$grams ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
@@ -353,7 +359,8 @@ private fun RowScope.NutrientField(label: String, value: String, onValueChange: 
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        // Half the dialog's width: one line, ellipsized, rather than a label wrapping over the value.
+        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         modifier = Modifier.weight(1f),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)

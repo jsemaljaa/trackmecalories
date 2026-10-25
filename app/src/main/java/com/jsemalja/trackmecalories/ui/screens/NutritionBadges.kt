@@ -9,12 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.rating
@@ -50,7 +50,8 @@ fun NutriScoreBadge(grade: Char, estimated: Boolean, size: Dp = 22.dp) {
             grade.toString(),
             color = if (estimated) color else if (grade == 'C') Color.Black else Color.White,
             fontWeight = FontWeight.Bold,
-            fontSize = (size.value * 0.6f).sp
+            // Sized from the box in dp, so a large system font can't push the letter out of it.
+            fontSize = with(LocalDensity.current) { (size * 0.6f).toSp() }
         )
     }
 }

@@ -6,6 +6,8 @@ import android.view.WindowManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -152,15 +154,17 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                     }
                     item {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = { picking = true }, modifier = Modifier.weight(1f)) {
+                            // Half the width each: labels shrink rather than wrap on narrow phones.
+                            val padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                            OutlinedButton(onClick = { picking = true }, modifier = Modifier.weight(1f), contentPadding = padding) {
                                 Icon(Icons.Outlined.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text(stringResource(R.string.recipe_add_search))
+                                FitText(stringResource(R.string.recipe_add_search))
                             }
-                            OutlinedButton(onClick = { scanning = true }, modifier = Modifier.weight(1f)) {
+                            OutlinedButton(onClick = { scanning = true }, modifier = Modifier.weight(1f), contentPadding = padding) {
                                 Icon(Icons.Outlined.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text(stringResource(R.string.recipe_add_scan))
+                                FitText(stringResource(R.string.recipe_add_scan))
                             }
                         }
                     }
@@ -187,11 +191,14 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                         AppCard(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(stringResource(R.string.recipe_per_100g), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Row(verticalAlignment = Alignment.Bottom) {
-                                    Text(per100?.kcal?.roundToInt()?.toString() ?: "—", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(stringResource(R.string.unit_kcal), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 6.dp))
-                                }
+                                ValueWithUnit(
+                                    per100?.kcal?.roundToInt()?.toString() ?: "—",
+                                    stringResource(R.string.unit_kcal),
+                                    MaterialTheme.typography.displaySmall,
+                                    unitStyle = MaterialTheme.typography.titleMedium,
+                                    unitColor = LocalContentColor.current,
+                                    gap = 6.dp
+                                )
                                 if (per100 != null) {
                                     Text(
                                         stringResource(R.string.macro_line, short(per100.protein), short(per100.carbs), short(per100.fat)),
@@ -237,7 +244,7 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                                     shape = SegmentedButtonDefaults.itemShape(i, 2),
                                     colors = appSegmentedColors(),
                                     icon = {}
-                                ) { Text(stringResource(label)) }
+                                ) { FitText(stringResource(label)) }
                             }
                         }
                         Spacer(Modifier.height(4.dp))
@@ -393,7 +400,7 @@ private fun IngredientRow(ing: RecipeIngredient, onClick: () -> Unit, onRemove: 
                     Text(stringResource(R.string.recipe_piece_weight_missing), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
             }
-            Text("${ing.totals().kcal.roundToInt()} ${stringResource(R.string.unit_kcal)}", fontWeight = FontWeight.SemiBold)
+            Text("${ing.totals().kcal.roundToInt()} ${stringResource(R.string.unit_kcal)}", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
             IconButton(onClick = onRemove) {
                 Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -432,7 +439,7 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
         onDismissRequest = onDismiss,
         title = { Text(ingredient.name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },

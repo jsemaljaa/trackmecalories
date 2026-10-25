@@ -274,7 +274,7 @@ private fun HealthSettings(viewModel: MainViewModel) {
                     onClick = { viewModel.setEatBack(option) },
                     shape = SegmentedButtonDefaults.itemShape(i, EatBack.entries.size),
                     colors = appSegmentedColors()
-                ) { Text(stringResource(option.label)) }
+                ) { FitText(stringResource(option.label)) }
             }
         }
     }
@@ -323,7 +323,7 @@ private fun AppearanceSettings(
                 onClick = { onStyleChange(style) },
                 shape = SegmentedButtonDefaults.itemShape(i, DesignStyle.entries.size),
                 colors = appSegmentedColors()
-            ) { Text(stringResource(style.label)) }
+            ) { FitText(stringResource(style.label)) }
         }
     }
 
@@ -426,7 +426,7 @@ private fun LanguageSettings() {
                 shape = SegmentedButtonDefaults.itemShape(i, options.size),
                 colors = appSegmentedColors(),
                 icon = {}
-            ) { Text(stringResource(label)) }
+            ) { FitText(stringResource(label)) }
         }
     }
 }

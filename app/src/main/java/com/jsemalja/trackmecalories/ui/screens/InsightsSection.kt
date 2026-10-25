@@ -79,7 +79,7 @@ fun InsightsSection(insights: SatietyInsights) {
                         shape = SegmentedButtonDefaults.itemShape(i, 2),
                         colors = appSegmentedColors(),
                         icon = {}
-                    ) { Text(stringResource(label)) }
+                    ) { FitText(stringResource(label)) }
                 }
             }
             Spacer(Modifier.height(8.dp))

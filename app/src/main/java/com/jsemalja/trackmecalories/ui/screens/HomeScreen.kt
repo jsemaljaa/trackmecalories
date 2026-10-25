@@ -28,6 +28,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.em
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -380,13 +386,27 @@ fun MealSectionHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(mealLabel(meal), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        if (onRate != null) {
-            Spacer(Modifier.width(8.dp))
-            MealRatingChip(satiety, energy, onRate)
+        Text(
+            mealLabel(meal),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false)
+        )
+        // The chip takes whatever is left between the name and the total, and ellipsizes
+        // there, so the total never gets pushed off a narrow screen.
+        Box(Modifier.weight(1f).padding(horizontal = 8.dp)) {
+            if (onRate != null) MealRatingChip(satiety, energy, onRate)
         }
-        Spacer(Modifier.weight(1f))
-        Text("$totalKcal ${stringResource(R.string.unit_kcal)}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            "$totalKcal ${stringResource(R.string.unit_kcal)}",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            softWrap = false
+        )
     }
 }
 
@@ -417,9 +437,11 @@ fun WaterCard(
                 Text(stringResource(R.string.water), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Text("${totalMl.toInt()} / ${goalMl.toInt()} ${stringResource(R.string.unit_ml)}", style = MaterialTheme.typography.bodyMedium)
             }
-            OutlinedButton(onClick = { onAddWater(250.0) }) { Text("+250") }
+            // Tighter than the default 24 dp padding, so the label keeps room on narrow phones.
+            val buttonPadding = PaddingValues(horizontal = 12.dp)
+            OutlinedButton(onClick = { onAddWater(250.0) }, contentPadding = buttonPadding) { Text("+250", maxLines = 1) }
             Spacer(Modifier.width(8.dp))
-            OutlinedButton(onClick = { onAddWater(500.0) }) { Text("+500") }
+            OutlinedButton(onClick = { onAddWater(500.0) }, contentPadding = buttonPadding) { Text("+500", maxLines = 1) }
         }
     }
 
@@ -431,14 +453,16 @@ fun WaterCard(
                 if (waterEntries.isEmpty()) {
                     Text(stringResource(R.string.water_entries_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
-                    Column {
+                    Column(Modifier.verticalScroll(rememberScrollState())) {
                         val timeFormat = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(Locale.getDefault())
                         waterEntries.sortedByDescending { it.time }.forEach { entry ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     Instant.ofEpochMilli(entry.time).atZone(ZoneId.systemDefault()).toLocalTime().format(timeFormat),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.width(72.dp)
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    modifier = Modifier.widthIn(min = 72.dp).padding(end = 8.dp)
                                 )
                                 Text("${entry.amountMl.toInt()} ${stringResource(R.string.unit_ml)}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                                 IconButton(onClick = { onRemove(entry) }) {
@@ -477,56 +501,63 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
         tint = colors.primaryContainer
     ) {
         Column(Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CalorieRing(
-                    progress = eaten.toFloat() / goal,
-                    color = colors.primary,
-                    overColor = colors.error,
-                    trackColor = onCard.copy(alpha = 0.12f),
-                    modifier = Modifier.size(132.dp)
-                ) {
-                    Text(
-                        "%,d".format(kotlin.math.abs(remaining)),
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isOver) colors.error else onCard
-                    )
-                    // Narrower than the ring's inside, so longer translations wrap instead of
-                    // running over the stroke.
-                    Text(
-                        stringResource(if (isOver) R.string.kcal_over else R.string.kcal_left),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (isOver) colors.error else onCard.copy(alpha = 0.75f),
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        modifier = Modifier.widthIn(max = 80.dp)
-                    )
-                }
-
-                Spacer(Modifier.width(20.dp))
-
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    CalorieStat(stringResource(R.string.eaten), eaten, onCard, uncertainty = entries.kcalUncertainty().roundToInt())
-                    Column {
-                        CalorieStat(stringResource(if (weekly != null) R.string.goal_today_flex else R.string.goal), goal, onCard)
-                        if (activityBonus > 0) {
-                            Text(
-                                stringResource(R.string.goal_activity_bonus, "%,d".format(activityBonus)),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = onCard.copy(alpha = 0.7f)
-                            )
-                        }
+            BoxWithConstraints {
+                // The ring gives up width on narrow phones so the stats beside it still fit.
+                val ringSize = (maxWidth * 0.42f).coerceIn(100.dp, 132.dp)
+                val ringGap = if (maxWidth < 280.dp) 14.dp else 20.dp
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CalorieRing(
+                        progress = eaten.toFloat() / goal,
+                        color = colors.primary,
+                        overColor = colors.error,
+                        trackColor = onCard.copy(alpha = 0.12f),
+                        modifier = Modifier.size(ringSize)
+                    ) {
+                        // Both stay inside the stroke: the number shrinks if it's wide (big
+                        // numbers, large system font), longer translations wrap.
+                        FitText(
+                            "%,d".format(kotlin.math.abs(remaining)),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isOver) colors.error else onCard,
+                            modifier = Modifier.widthIn(max = ringSize - 36.dp)
+                        )
+                        Text(
+                            stringResource(if (isOver) R.string.kcal_over else R.string.kcal_left),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isOver) colors.error else onCard.copy(alpha = 0.75f),
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = ringSize * 0.6f)
+                        )
                     }
-                    HorizontalDivider(color = onCard.copy(alpha = 0.15f))
-                    Text(
-                        when {
-                            eaten == 0 -> stringResource(R.string.nothing_logged_yet)
-                            isOver -> stringResource(R.string.percent_of_goal, eaten * 100 / goal)
-                            else -> stringResource(R.string.percent_of_goal_eaten, eaten * 100 / goal)
-                        },
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (isOver) statusColor else onCard.copy(alpha = 0.75f)
-                    )
+
+                    Spacer(Modifier.width(ringGap))
+
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        CalorieStat(stringResource(R.string.eaten), eaten, onCard, uncertainty = entries.kcalUncertainty().roundToInt())
+                        Column {
+                            CalorieStat(stringResource(if (weekly != null) R.string.goal_today_flex else R.string.goal), goal, onCard)
+                            if (activityBonus > 0) {
+                                Text(
+                                    stringResource(R.string.goal_activity_bonus, "%,d".format(activityBonus)),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = onCard.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                        HorizontalDivider(color = onCard.copy(alpha = 0.15f))
+                        Text(
+                            when {
+                                eaten == 0 -> stringResource(R.string.nothing_logged_yet)
+                                isOver -> stringResource(R.string.percent_of_goal, eaten * 100 / goal)
+                                else -> stringResource(R.string.percent_of_goal_eaten, eaten * 100 / goal)
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isOver) statusColor else onCard.copy(alpha = 0.75f)
+                        )
+                    }
                 }
             }
 
@@ -571,19 +602,14 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
 private fun CalorieStat(label: String, kcal: Int, color: Color, uncertainty: Int = 0) {
     Column {
         Text(label, style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f))
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text("%,d".format(kcal), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
-            Text(" " + stringResource(R.string.unit_kcal), style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 3.dp))
+        ValueWithUnit(
+            value = "%,d".format(kcal),
             // How far off the total could be, given how each entry was measured.
-            if (uncertainty >= 5) {
-                Text(
-                    "  ± %,d".format(uncertainty),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = color.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(bottom = 3.dp)
-                )
-            }
-        }
+            unit = stringResource(R.string.unit_kcal) + if (uncertainty >= 5) "  ± %,d".format(uncertainty) else "",
+            valueStyle = MaterialTheme.typography.titleLarge,
+            valueColor = color,
+            unitColor = color.copy(alpha = 0.7f)
+        )
     }
 }
 
@@ -634,23 +660,23 @@ private fun NutrientProgress(
     val overLimit = isLimit && value > goal
     val fmt: (Double) -> String = { if (decimals) "%.1f".format(it).removeSuffix(".0").removeSuffix(",0") else "${it.toInt()}" }
 
+    val unitG = stringResource(R.string.unit_g)
+
+    // A third of the card: long nutrient names and big numbers shrink rather than wrap.
     Column(modifier) {
-        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = onCard)
+        FitText(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = onCard)
         Spacer(Modifier.height(2.dp))
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                fmt(value),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (overLimit) MaterialTheme.colorScheme.error else onCard
-            )
-            Text(
-                " / ${fmt(goal)} ${stringResource(R.string.unit_g)}",
-                style = MaterialTheme.typography.labelSmall,
-                color = onCard.copy(alpha = 0.65f),
-                modifier = Modifier.padding(bottom = 1.dp)
-            )
-        }
+        FitText(
+            buildAnnotatedString {
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = if (overLimit) MaterialTheme.colorScheme.error else onCard)) {
+                    append(fmt(value))
+                }
+                withStyle(SpanStyle(fontSize = 0.8.em, color = onCard.copy(alpha = 0.65f))) {
+                    append(" / ${fmt(goal)} $unitG")
+                }
+            },
+            style = MaterialTheme.typography.bodyMedium
+        )
         Spacer(Modifier.height(4.dp))
         Box(
             modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(color.copy(alpha = 0.22f))
@@ -925,15 +951,15 @@ private fun DayCell(
             .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
+        // A seventh of the screen: shrink rather than wrap on small phones with a large font.
+        FitText(
             date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, locale)
                 .replaceFirstChar { it.titlecase(locale) },
             style = MaterialTheme.typography.labelSmall,
-            color = contentColor.copy(alpha = contentColor.alpha * 0.8f),
-            maxLines = 1
+            color = contentColor.copy(alpha = contentColor.alpha * 0.8f)
         )
         Spacer(Modifier.height(2.dp))
-        Text(
+        FitText(
             "${date.dayOfMonth}",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
@@ -1052,7 +1078,7 @@ private fun WhatFitsDialog(fits: List<FitSuggestion>, remainingKcal: Double, onD
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.what_fits)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     stringResource(R.string.what_fits_left, remainingKcal.roundToInt().coerceAtLeast(0)),
                     style = MaterialTheme.typography.bodySmall,

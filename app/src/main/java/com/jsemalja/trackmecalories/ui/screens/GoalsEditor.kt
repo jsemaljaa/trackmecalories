@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.ActivityLevel
@@ -55,21 +56,38 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
     val kcalValue = kcal.toIntOrNull() ?: goals.calorieGoal
     val computed = diet.macrosFor(kcalValue)
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    val kcalField = @Composable { modifier: Modifier ->
         OutlinedTextField(
             value = kcal,
             onValueChange = { kcal = it.filter(Char::isDigit); saved = false },
-            label = { Text(stringResource(R.string.goal_calories)) },
+            label = { Text(stringResource(R.string.goal_calories), maxLines = 1, overflow = TextOverflow.Ellipsis) },
             suffix = { Text(stringResource(R.string.unit_kcal)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
-            modifier = Modifier.weight(1f)
+            modifier = modifier
         )
-        Spacer(Modifier.width(8.dp))
-        FilledTonalButton(onClick = { showCalculator = true }, contentPadding = PaddingValues(horizontal = 14.dp)) {
+    }
+    val calculateButton = @Composable { modifier: Modifier ->
+        FilledTonalButton(onClick = { showCalculator = true }, contentPadding = PaddingValues(horizontal = 14.dp), modifier = modifier) {
             Icon(Icons.Outlined.Calculate, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.goal_calculate))
+            Text(stringResource(R.string.goal_calculate), maxLines = 1)
+        }
+    }
+    // Side by side when there's room; on narrow phones the field would be squeezed to a
+    // few digits, so the button moves under it.
+    BoxWithConstraints {
+        if (maxWidth >= 300.dp) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                kcalField(Modifier.weight(1f))
+                Spacer(Modifier.width(8.dp))
+                calculateButton(Modifier)
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                kcalField(Modifier.fillMaxWidth())
+                calculateButton(Modifier.fillMaxWidth())
+            }
         }
     }
 
@@ -111,13 +129,16 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
         Spacer(Modifier.height(8.dp))
         MacroSplitBar(diet.proteinPct, diet.carbsPct, diet.fatPct)
     } else {
+        // Two per row, so each label ("Carbs (g)" and its translations) stays readable.
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             GoalField(stringResource(R.string.protein_g), protein, Modifier.weight(1f)) { protein = it; saved = false }
             GoalField(stringResource(R.string.carbs_g), carbs, Modifier.weight(1f)) { carbs = it; saved = false }
-            GoalField(stringResource(R.string.fat_g), fat, Modifier.weight(1f)) { fat = it; saved = false }
         }
         Spacer(Modifier.height(8.dp))
-        GoalField(stringResource(R.string.fiber_g), fiber, Modifier.fillMaxWidth()) { fiber = it; saved = false }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            GoalField(stringResource(R.string.fat_g), fat, Modifier.weight(1f)) { fat = it; saved = false }
+            GoalField(stringResource(R.string.fiber_g), fiber, Modifier.weight(1f)) { fiber = it; saved = false }
+        }
         val p = protein.toDecimal() ?: 0.0
         val c = carbs.toDecimal() ?: 0.0
         val f = fat.toDecimal() ?: 0.0
@@ -192,7 +213,7 @@ private fun GoalField(label: String, value: String, modifier: Modifier, onChange
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        label = { Text(label, maxLines = 1) },
+        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         modifier = modifier
@@ -208,8 +229,9 @@ private fun ComputedMacro(label: String, grams: Double, color: androidx.compose.
             .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("${grams.roundToInt()} ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        // A quarter of the card: shrink to fit rather than clip "Fiber" in longer languages.
+        FitText("${grams.roundToInt()} ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
+        FitText(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 4.dp))
     }
 }
 
@@ -265,13 +287,19 @@ fun CalorieCalculatorDialog(
                                 onClick = { sex = s },
                                 shape = SegmentedButtonDefaults.itemShape(i, Sex.entries.size),
                                 colors = appSegmentedColors()
-                            ) { Text(stringResource(s.label)) }
+                            ) { FitText(stringResource(s.label)) }
                         }
+                    }
+                }
+                // Two per row: three across a dialog left each label a few letters wide.
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GoalField(stringResource(R.string.calc_birth_year), birthYear, Modifier.weight(1f)) { birthYear = it.filter(Char::isDigit).take(4) }
+                        Spacer(Modifier.weight(1f))
                     }
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        GoalField(stringResource(R.string.calc_birth_year), birthYear, Modifier.weight(1f)) { birthYear = it.filter(Char::isDigit).take(4) }
                         GoalField(stringResource(R.string.calc_height_cm), height, Modifier.weight(1f)) { height = it }
                         GoalField(stringResource(R.string.calc_weight_kg), weight, Modifier.weight(1f)) { weight = it }
                     }
@@ -298,7 +326,7 @@ fun CalorieCalculatorDialog(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         if (target != null) {
-                            Text("%,d %s".format(target, stringResource(R.string.unit_kcal)), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            FitText("%,d %s".format(target, stringResource(R.string.unit_kcal)), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                             Text(stringResource(R.string.calc_maintenance, maintenance!!), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             if (target == CalorieCalculator.MIN_KCAL) {
                                 Text(stringResource(R.string.calc_min_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)

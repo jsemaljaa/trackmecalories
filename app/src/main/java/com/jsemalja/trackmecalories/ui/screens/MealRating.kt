@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SentimentSatisfied
 import androidx.compose.material3.AlertDialog
@@ -26,7 +28,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
@@ -50,11 +54,14 @@ fun MealRatingChip(satiety: Int?, energy: Int?, onClick: () -> Unit) {
         label = {
             Text(
                 if (rated.isEmpty()) stringResource(R.string.rate_meal) else rated.joinToString(" · "),
-                style = MaterialTheme.typography.labelSmall
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
         leadingIcon = { Icon(Icons.Outlined.SentimentSatisfied, contentDescription = null, modifier = Modifier.size(14.dp)) },
-        modifier = Modifier.height(28.dp),
+        // Compact, but grows with the system font size instead of clipping the label.
+        modifier = Modifier.height(28.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)),
         colors = if (rated.isEmpty()) AssistChipDefaults.assistChipColors() else AssistChipDefaults.assistChipColors(
             containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
         )
@@ -80,7 +87,7 @@ fun RateMealDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.rate_meal_title, mealLabel(meal))) },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text(stringResource(R.string.rate_meal_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 RatingRow(R.string.fullness, fullness, FULLNESS_LABELS) { fullness = it }

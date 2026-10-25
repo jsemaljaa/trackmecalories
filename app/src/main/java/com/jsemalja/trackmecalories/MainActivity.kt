@@ -28,6 +28,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +38,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
@@ -63,6 +65,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jsemalja.trackmecalories.data.RestaurantMenu
@@ -219,25 +223,35 @@ private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) 
     val glass = isGlass
     val shape = CircleShape
 
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Surface(
-            shape = shape,
-            color = if (glass) colors.surfaceContainer else colors.surfaceContainerLow,
-            border = if (glass) glassBorder() else androidx.compose.foundation.BorderStroke(1.dp, colors.outlineVariant)
+    BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding()) {
+        // Tighter on narrow phones, and the selected label gets only the width that's left
+        // (ellipsized past that), so a long translation can't push the pill off screen.
+        val narrow = maxWidth < 400.dp
+        val sidePadding = if (narrow) 12.dp else 24.dp
+        val itemPadding = if (narrow) 12.dp else 16.dp
+        val count = AppDestinations.entries.size
+        val labelMaxWidth = (maxWidth - sidePadding * 2 - 12.dp - 4.dp * (count - 1) - (24.dp + itemPadding * 2) * count - 8.dp)
+            .coerceAtLeast(0.dp)
+
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = sidePadding, vertical = 10.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Row(
-                Modifier.padding(6.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                shape = shape,
+                color = if (glass) colors.surfaceContainer else colors.surfaceContainerLow,
+                border = if (glass) glassBorder() else androidx.compose.foundation.BorderStroke(1.dp, colors.outlineVariant)
             ) {
-                AppDestinations.entries.forEach { destination ->
-                    NavItem(destination, selected = destination == current) { onSelect(destination) }
+                Row(
+                    Modifier.padding(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AppDestinations.entries.forEach { destination ->
+                        NavItem(destination, selected = destination == current, itemPadding, labelMaxWidth) { onSelect(destination) }
+                    }
                 }
             }
         }
@@ -245,7 +259,7 @@ private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) 
 }
 
 @Composable
-private fun NavItem(destination: AppDestinations, selected: Boolean, onClick: () -> Unit) {
+private fun NavItem(destination: AppDestinations, selected: Boolean, horizontalPadding: Dp, labelMaxWidth: Dp, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val background by animateColorAsState(
         if (selected) colors.primary.copy(alpha = 0.16f) else Color.Transparent,
@@ -265,7 +279,7 @@ private fun NavItem(destination: AppDestinations, selected: Boolean, onClick: ()
         Row(
             Modifier
                 .height(48.dp)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = horizontalPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -280,7 +294,14 @@ private fun NavItem(destination: AppDestinations, selected: Boolean, onClick: ()
             ) {
                 Row {
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(destination.label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        stringResource(destination.label),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = labelMaxWidth)
+                    )
                 }
             }
         }

@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -95,7 +96,7 @@ fun TrendsScreen(
                     shape = SegmentedButtonDefaults.itemShape(i, tabs.size),
                     colors = appSegmentedColors(),
                     icon = {}
-                ) { Text(stringResource(label)) }
+                ) { FitText(stringResource(label)) }
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -219,10 +220,12 @@ private fun WeekSelector(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ChartLegend(goal: Int) {
     val colors = MaterialTheme.colorScheme
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    // Wraps onto a second line when the labels don't fit (narrow phone, longer language).
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         LegendSwatch(colors.primary, stringResource(R.string.within_goal))
         LegendSwatch(colors.error, stringResource(R.string.over_goal))
         LegendSwatch(colors.onSurfaceVariant.copy(alpha = 0.3f), stringResource(R.string.incomplete_short))
@@ -249,8 +252,6 @@ private fun LegendSwatch(color: Color, label: String) {
 }
 
 private val BAR_AREA: Dp = 160.dp
-private val VALUE_LABEL: Dp = 18.dp
-private val DAY_LABEL: Dp = 38.dp
 
 @Composable
 private fun WeeklyBarChart(
@@ -268,14 +269,18 @@ private fun WeeklyBarChart(
     // Headroom above the tallest bar (or the goal line) for its value label.
     val maxValue = maxOf(values.indices.maxOf { (values[it] ?: 0) + (uncertainties.getOrNull(it) ?: 0.0).toInt() }, goal) * 1.08f
     val goalFraction = goal / maxValue
+    // Label rows sized from the actual text, so a large system font isn't clipped.
+    val labelLine = with(LocalDensity.current) { MaterialTheme.typography.labelSmall.lineHeight.toDp() }
+    val valueLabelHeight = labelLine + 2.dp
+    val dayLabelHeight = labelLine * 2 + 6.dp
 
-    Box(Modifier.fillMaxWidth().height(VALUE_LABEL + BAR_AREA + DAY_LABEL)) {
+    Box(Modifier.fillMaxWidth().height(valueLabelHeight + BAR_AREA + dayLabelHeight)) {
         Canvas(
             Modifier
                 .fillMaxWidth()
                 .height(BAR_AREA)
                 .align(Alignment.BottomCenter)
-                .offset(y = -DAY_LABEL)
+                .offset(y = -dayLabelHeight)
         ) {
             val y = size.height * (1f - goalFraction)
             drawLine(
@@ -299,12 +304,11 @@ private fun WeeklyBarChart(
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     if (value != null && value > 0) {
-                        Text(
+                        FitText(
                             compactKcal(value),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (value > goal) colors.error else colors.onSurface,
-                            maxLines = 1,
                             // Backed by the card colour so the dashed goal line doesn't strike through it.
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
@@ -331,7 +335,7 @@ private fun WeeklyBarChart(
                     }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(colors.outlineVariant))
                     Column(
-                        Modifier.height(DAY_LABEL).padding(top = 4.dp),
+                        Modifier.height(dayLabelHeight).padding(top = 4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         val labelColor = when {
@@ -339,13 +343,13 @@ private fun WeeklyBarChart(
                             isFuture -> colors.onSurfaceVariant.copy(alpha = 0.5f)
                             else -> colors.onSurfaceVariant
                         }
-                        Text(
+                        FitText(
                             day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).replaceFirstChar { it.titlecase(locale) },
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
                             color = labelColor
                         )
-                        Text(
+                        FitText(
                             "${day.dayOfMonth}",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
@@ -361,7 +365,7 @@ private fun WeeklyBarChart(
                 .fillMaxWidth()
                 .height(BAR_AREA)
                 .align(Alignment.BottomCenter)
-                .offset(y = -DAY_LABEL)
+                .offset(y = -dayLabelHeight)
         ) {
             val slot = size.width / days.size
             values.forEachIndexed { i, v ->
@@ -460,17 +464,14 @@ private fun StatTile(
         Column(Modifier.padding(14.dp)) {
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = valueColor, maxLines = 1)
-                Spacer(Modifier.width(4.dp))
-                Text(unit, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 3.dp))
-            }
+            ValueWithUnit(value, unit, MaterialTheme.typography.headlineSmall, valueColor = valueColor)
             Spacer(Modifier.height(2.dp))
             Text(detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MacroAverages(logged: List<DailyTotal>, proteinGoal: Double, carbGoal: Double, fatGoal: Double) {
     val n = logged.size
@@ -503,7 +504,11 @@ private fun MacroAverages(logged: List<DailyTotal>, proteinGoal: Double, carbGoa
                         if (shares[i] > 0) Box(Modifier.weight(shares[i].toFloat()).fillMaxHeight().background(color))
                     }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     listOf(stringResource(R.string.protein) to MacroProtein, stringResource(R.string.carbs) to MacroCarbs, stringResource(R.string.fat) to MacroFat).forEachIndexed { i, (label, color) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(color))
