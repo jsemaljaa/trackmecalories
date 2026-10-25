@@ -124,6 +124,7 @@ fun PortionEntryDialog(
                     referenceAmount = food.referenceAmount,
                     unit = food.unit
                 )
+                RatingLine(food)
 
                 if (showMeal) {
                     Text(stringResource(R.string.meal), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
@@ -358,6 +359,8 @@ fun CustomFoodEntryDialog(
     var fat by remember { mutableStateOf("") }
     var fiber by remember { mutableStateOf("") }
     var salt by remember { mutableStateOf("") }
+    var sugar by remember { mutableStateOf("") }
+    var satFat by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf("g") }
     val refLabel = referenceLabel(unit)
 
@@ -389,6 +392,13 @@ fun CustomFoodEntryDialog(
                         NutrientField(stringResource(R.string.nutrient_salt_per, refLabel), salt) { salt = it }
                     }
                 }
+                // Optional: with these, the food gets a Nutri-Score.
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NutrientField(stringResource(R.string.nutrient_sugar_per, refLabel), sugar) { sugar = it }
+                        NutrientField(stringResource(R.string.nutrient_satfat_per, refLabel), satFat) { satFat = it }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -402,6 +412,8 @@ fun CustomFoodEntryDialog(
                     fatPer100 = fat.toDecimal() ?: 0.0,
                     fiberPer100 = fiber.toDecimal() ?: 0.0,
                     saltPer100 = salt.toDecimal() ?: 0.0,
+                    sugarPer100 = sugar.toDecimal(),
+                    saturatedFatPer100 = satFat.toDecimal(),
                     unit = unit,
                     referenceAmount = referenceAmountFor(unit)
                 )
@@ -434,6 +446,8 @@ fun EditCustomFoodDialog(
     var fat by remember { mutableStateOf(food.fatPer100.clean()) }
     var fiber by remember { mutableStateOf(food.fiberPer100.clean()) }
     var salt by remember { mutableStateOf(food.saltPer100.clean()) }
+    var sugar by remember { mutableStateOf(food.sugarPer100?.clean() ?: "") }
+    var satFat by remember { mutableStateOf(food.saturatedFatPer100?.clean() ?: "") }
     var unit by remember { mutableStateOf(food.unit) }
     var updateLogged by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -464,6 +478,13 @@ fun EditCustomFoodDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         NutrientField(stringResource(R.string.nutrient_fib_per, refLabel), fiber) { fiber = it }
                         NutrientField(stringResource(R.string.nutrient_salt_per, refLabel), salt) { salt = it }
+                    }
+                }
+                // Optional: with these, the food gets a Nutri-Score.
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NutrientField(stringResource(R.string.nutrient_sugar_per, refLabel), sugar) { sugar = it }
+                        NutrientField(stringResource(R.string.nutrient_satfat_per, refLabel), satFat) { satFat = it }
                     }
                 }
                 if (loggedEntryCount > 0) {
@@ -510,6 +531,8 @@ fun EditCustomFoodDialog(
                         fatPer100 = fat.toDecimal() ?: food.fatPer100,
                         fiberPer100 = fiber.toDecimal() ?: food.fiberPer100,
                         saltPer100 = salt.toDecimal() ?: food.saltPer100,
+                        sugarPer100 = sugar.toDecimal(),
+                        saturatedFatPer100 = satFat.toDecimal(),
                         unit = unit,
                         referenceAmount = referenceAmountFor(unit)
                     ),

@@ -30,7 +30,12 @@ data class FoodInfo(
     val brand: String? = null,
     val quantity: String? = null,
     // Sold in Czechia per Open Food Facts; ranked higher, but nothing else is hidden.
-    val isCzech: Boolean = false
+    val isCzech: Boolean = false,
+    // For the nutrition rating; null when the source doesn't say.
+    val sugarPer100: Double? = null,
+    val saturatedFatPer100: Double? = null,
+    // Official Nutri-Score grade (a-e) from Open Food Facts.
+    val nutriScore: String? = null
 )
 
 /**
@@ -133,7 +138,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
             parameter("langs", langs.joinToString(","))
             parameter(
                 "fields",
-                (listOf("code", "product_name", "generic_name", "brands", "quantity", "nutriments", "countries_tags") +
+                (listOf("code", "product_name", "generic_name", "brands", "quantity", "nutriments", "countries_tags", "nutriscore_grade") +
                     langs.flatMap { listOf("product_name_$it", "generic_name_$it") }).joinToString(",")
             )
         }.body()
@@ -182,6 +187,9 @@ class FoodRepository(private val dao: FoodDao? = null) {
             barcode = barcode,
             brand = product.brands(),
             quantity = product.string("quantity"),
+            sugarPer100 = nutrients?.number("sugars_100g"),
+            saturatedFatPer100 = nutrients?.number("saturated-fat_100g"),
+            nutriScore = product.string("nutriscore_grade")?.lowercase()?.takeIf { it.length == 1 && it[0] in 'a'..'e' },
             isCzech = (product["countries_tags"] as? JsonArray)
                 ?.any { (it as? JsonPrimitive)?.contentOrNull == "en:czech-republic" } == true
         )

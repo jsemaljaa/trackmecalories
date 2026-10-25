@@ -1,5 +1,7 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import androidx.compose.foundation.lazy.LazyRow
+import com.jsemalja.trackmecalories.data.rating
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -49,7 +51,9 @@ fun LazyListScope.savedFoodsSection(
     recipes: List<RecipeListItem> = emptyList(),
     onNewRecipe: () -> Unit = {},
     onOpenRecipe: (Int) -> Unit = {},
-    showRecipesTab: Boolean = true
+    showRecipesTab: Boolean = true,
+    sort: FoodSort = FoodSort.NAME,
+    onSortChange: (FoodSort) -> Unit = {}
 ) {
     val tabs = SavedFoodsTab.entries.filter { showRecipesTab || it != SavedFoodsTab.RECIPES }
     item(key = "saved_tabs") {
@@ -71,6 +75,16 @@ fun LazyListScope.savedFoodsSection(
         return
     }
 
+    if (tab == SavedFoodsTab.ALL && foods.isNotEmpty()) {
+        item(key = "saved_sort") {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(FoodSort.entries) { s ->
+                    FilterChip(selected = sort == s, onClick = { onSortChange(s) }, label = { Text(stringResource(s.label)) })
+                }
+            }
+        }
+    }
+
     if (foods.isEmpty()) {
         item(key = "saved_empty") {
             Text(
@@ -85,7 +99,7 @@ fun LazyListScope.savedFoodsSection(
             )
         }
     } else {
-        items(foods, key = { "saved_list_${it.id}" }) { food ->
+        items(if (tab == SavedFoodsTab.ALL) sort.sort(foods) else foods, key = { "saved_list_${it.id}" }) { food ->
             SavedFoodRow(
                 food = food,
                 onClick = { onLog(food) },
@@ -121,6 +135,9 @@ fun SavedFoodRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            food.rating().let { r ->
+                r.grade?.let { NutriScoreBadge(it, r.estimated) }
             }
             IconButton(onClick = onToggleFavorite) {
                 Icon(

@@ -1,5 +1,6 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.data.rating
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -77,6 +78,7 @@ fun SearchScreen(
     val favoriteFoods by viewModel.favoriteFoods.collectAsState()
     val allFoods by viewModel.allCustomFoods.collectAsState()
     var savedTab by rememberSaveable { mutableStateOf(SavedFoodsTab.RECENT) }
+    var allSort by rememberSaveable { mutableStateOf(FoodSort.NAME) }
     val query by viewModel.searchQuery.collectAsState()
     val results by viewModel.searchResults.collectAsState()
     val savedMatches by viewModel.savedFoodMatches.collectAsState()
@@ -200,7 +202,9 @@ fun SearchScreen(
                     recipes = recipes,
                     onNewRecipe = { recipeEditorId = null; recipeEditorOpen = true },
                     onOpenRecipe = { recipeEditorId = it; recipeEditorOpen = true },
-                    showRecipesTab = pick == null
+                    showRecipesTab = pick == null,
+                    sort = allSort,
+                    onSortChange = { allSort = it }
                 )
             }
         } else {
@@ -359,6 +363,7 @@ private fun SavedFoodResultRow(food: CustomFood, onClick: () -> Unit, onEdit: ()
         source = null,
         leading = Icons.Default.Bookmark,
         onClick = onClick,
+        rated = food,
         trailing = {
             IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_food)) }
         }
@@ -384,6 +389,7 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
         },
         leading = if (hit.source == SearchSource.MENU) Icons.Default.Restaurant else null,
         onClick = onClick,
+        rated = hit.food,
         trailing = if (isLoading) {
             { CircularProgressIndicator(Modifier.padding(start = 8.dp).size(20.dp), strokeWidth = 2.dp) }
         } else null
@@ -406,7 +412,8 @@ private fun ResultCard(
     source: String?,
     leading: ImageVector?,
     onClick: () -> Unit,
-    trailing: (@Composable () -> Unit)? = null
+    trailing: (@Composable () -> Unit)? = null,
+    rated: CustomFood? = null
 ) {
     AppCard(
         modifier = Modifier.fillMaxWidth(),
@@ -445,6 +452,12 @@ private fun ResultCard(
                 }
             }
             Spacer(Modifier.width(12.dp))
+            rated?.rating()?.let { r ->
+                r.grade?.let {
+                    NutriScoreBadge(it, r.estimated)
+                    Spacer(Modifier.width(10.dp))
+                }
+            }
             Column(horizontalAlignment = Alignment.End) {
                 Text("${kcal.roundToInt()}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.kcal_per, per), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

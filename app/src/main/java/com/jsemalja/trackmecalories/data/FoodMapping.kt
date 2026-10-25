@@ -46,7 +46,10 @@ fun FoodInfo.toCustomFood(): CustomFood = CustomFood(
     unit = unit,
     referenceAmount = referenceAmount,
     // People usually eat the whole package, not "100 g".
-    defaultAmount = packageAmount(quantity, unit)
+    defaultAmount = packageAmount(quantity, unit),
+    sugarPer100 = sugarPer100,
+    saturatedFatPer100 = saturatedFatPer100,
+    nutriScore = nutriScore
 )
 
 /**
@@ -81,7 +84,10 @@ fun FoodCache.toFoodInfo(): FoodInfo = FoodInfo(
     barcode = barcode,
     unit = unit,
     referenceAmount = referenceAmount,
-    quantity = quantity
+    quantity = quantity,
+    sugarPer100 = sugarPer100,
+    saturatedFatPer100 = saturatedFatPer100,
+    nutriScore = nutriScore
 )
 
 /** Only barcoded products are worth caching — search results without a barcode can't be re-looked-up. */
@@ -99,6 +105,9 @@ fun FoodInfo.toCache(): FoodCache? {
         saltPer100 = saltPer100,
         unit = unit,
         referenceAmount = referenceAmount,
-        quantity = quantity
+        quantity = quantity,
+        sugarPer100 = sugarPer100,
+        saturatedFatPer100 = saturatedFatPer100,
+        nutriScore = nutriScore
     )
 }

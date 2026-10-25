@@ -117,7 +117,9 @@ data class KtMacros(
     val carbs: Double,
     val fat: Double,
     val fiber: Double,
-    val salt: Double
+    val salt: Double,
+    val sugar: Double?,
+    val saturatedFat: Double?
 )
 
 /**
@@ -200,7 +202,9 @@ class KalorickeTabulkyRepository {
                 carbs = food.str("carbohydrate")?.czechNumber() ?: 0.0,
                 fat = food.str("fat")?.czechNumber() ?: 0.0,
                 fiber = food.str("fiber")?.czechNumber() ?: 0.0,
-                salt = food.str("salt")?.czechNumber() ?: 0.0
+                salt = food.str("salt")?.czechNumber() ?: 0.0,
+                sugar = food.str("sugar")?.czechNumber(),
+                saturatedFat = food.str("saturatedFattyAcid")?.czechNumber()
             )
             synchronized(macrosCache) { macrosCache[hit.id] = macros }
             macros
@@ -230,6 +234,8 @@ class KalorickeTabulkyRepository {
             fatPer100 = macros.fat * scale,
             fiberPer100 = macros.fiber * scale,
             saltPer100 = macros.salt * scale,
+            sugarPer100 = macros.sugar?.times(scale),
+            saturatedFatPer100 = macros.saturatedFat?.times(scale),
             barcode = "kt:${hit.id}",
             unit = if (portion != null) "pcs" else hit.unit,
             referenceAmount = if (portion != null) 1.0 else 100.0,

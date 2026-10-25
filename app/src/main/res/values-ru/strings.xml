@@ -424,4 +424,17 @@
     <string name="week_budget_capped">Цель на сегодня ограничена ±25% от обычной; остальное переносится.</string>
     <string name="weekly_budget">Недельный бюджет</string>
     <string name="weekly_budget_desc">Калории распределяются по неделе: сэкономленное или перебранное делится на оставшиеся дни (не более ±25% в день).</string>
+
+    <!-- Nutrition rating -->
+    <string name="nutriscore_estimated">Nutri-Score оценочный</string>
+    <string name="protein_per_100kcal">%1$s г белка/100 ккал</string>
+    <string name="fiber_per_100kcal">%1$s г клетчатки/100 ккал</string>
+    <string name="energy_density">%1$s ккал/г</string>
+    <string name="sort_name">А–Я</string>
+    <string name="sort_nutriscore">Nutri-Score</string>
+    <string name="sort_protein">Белок / ккал</string>
+    <string name="sort_fiber">Клетчатка / ккал</string>
+    <string name="sort_energy_density">Самое сытное</string>
+    <string name="nutrient_sugar_per">Сахар/%1$s</string>
+    <string name="nutrient_satfat_per">Нас. жиры/%1$s</string>
 </resources>

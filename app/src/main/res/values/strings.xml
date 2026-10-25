@@ -416,4 +416,17 @@
     <string name="week_budget_capped">Today\'s target is limited to ±25% of your goal; the rest carries over.</string>
     <string name="weekly_budget">Weekly budget</string>
     <string name="weekly_budget_desc">Let calories flex across the week: what you save or overspend is spread over the remaining days (within ±25% a day).</string>
+
+    <!-- Nutrition rating -->
+    <string name="nutriscore_estimated">Nutri-Score estimated</string>
+    <string name="protein_per_100kcal">%1$s g protein/100 kcal</string>
+    <string name="fiber_per_100kcal">%1$s g fiber/100 kcal</string>
+    <string name="energy_density">%1$s kcal/g</string>
+    <string name="sort_name">A–Z</string>
+    <string name="sort_nutriscore">Nutri-Score</string>
+    <string name="sort_protein">Protein / kcal</string>
+    <string name="sort_fiber">Fiber / kcal</string>
+    <string name="sort_energy_density">Most filling</string>
+    <string name="nutrient_sugar_per">Sugar/%1$s</string>
+    <string name="nutrient_satfat_per">Sat. fat/%1$s</string>
 </resources>
