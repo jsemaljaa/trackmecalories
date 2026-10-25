@@ -227,6 +227,13 @@ interface FoodDao {
     @Query("SELECT * FROM food_entries WHERE date = :date ORDER BY time ASC")
     fun getEntriesForDate(date: String): Flow<List<FoodEntry>>
 
+    // One-shot reads for the home-screen widget (no Flow outside the app's UI).
+    @Query("SELECT * FROM food_entries WHERE date = :date")
+    suspend fun getEntriesForDateOnce(date: String): List<FoodEntry>
+
+    @Query("SELECT * FROM user_goals WHERE id = 0")
+    suspend fun getUserGoalOnce(): UserGoal?
+
     @Query("SELECT * FROM food_entries ORDER BY date ASC, time ASC")
     suspend fun getAllEntriesForExport(): List<FoodEntry>
 

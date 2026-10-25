@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon: jump straight into the most common actions. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:icon="@drawable/ic_shortcut_add"
+        android:shortcutId="add_food"
+        android:shortcutLongLabel="@string/add_search"
+        android:shortcutShortLabel="@string/widget_add">
+        <intent
+            android:action="com.jsemalja.trackmecalories.action.ADD_FOOD"
+            android:targetClass="com.jsemalja.trackmecalories.MainActivity"
+            android:targetPackage="com.jsemalja.trackmecalories" />
+    </shortcut>
+    <shortcut
+        android:icon="@drawable/ic_shortcut_bolt"
+        android:shortcutId="quick_add"
+        android:shortcutLongLabel="@string/add_quick"
+        android:shortcutShortLabel="@string/widget_quick">
+        <intent
+            android:action="com.jsemalja.trackmecalories.action.QUICK_ADD"
+            android:targetClass="com.jsemalja.trackmecalories.MainActivity"
+            android:targetPackage="com.jsemalja.trackmecalories" />
+    </shortcut>
+    <shortcut
+        android:icon="@drawable/ic_shortcut_scan"
+        android:shortcutId="scan"
+        android:shortcutLongLabel="@string/add_scan"
+        android:shortcutShortLabel="@string/widget_scan">
+        <intent
+            android:action="com.jsemalja.trackmecalories.action.SCAN"
+            android:targetClass="com.jsemalja.trackmecalories.MainActivity"
+            android:targetPackage="com.jsemalja.trackmecalories" />
+    </shortcut>
+    <shortcut
+        android:icon="@drawable/ic_shortcut_weight"
+        android:shortcutId="log_weight"
+        android:shortcutLongLabel="@string/weight_log"
+        android:shortcutShortLabel="@string/widget_weight">
+        <intent
+            android:action="com.jsemalja.trackmecalories.action.LOG_WEIGHT"
+            android:targetClass="com.jsemalja.trackmecalories.MainActivity"
+            android:targetPackage="com.jsemalja.trackmecalories" />
+    </shortcut>
+</shortcuts>

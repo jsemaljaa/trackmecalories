@@ -408,4 +408,13 @@
     <string name="what_fits_left">Сегодня осталось %1$d ккал. Из продуктов, которые вы едите, в обычной порции — сначала самые белковые.</string>
     <string name="what_fits_empty">Из вашей истории ничего не подходит. Может, напиток или небольшой перекус?</string>
     <string name="what_fits_line">%1$s · %2$d ккал · %3$d г белка · %4$s г клетчатки</string>
+
+    <!-- Widget and shortcuts -->
+    <string name="widget_name">Калории сегодня</string>
+    <string name="widget_description">Съедено и осталось калорий сегодня, с быстрыми кнопками</string>
+    <string name="widget_eaten_of">Съедено %1$s из %2$s ккал</string>
+    <string name="widget_add">+ Еда</string>
+    <string name="widget_quick">⚡ Быстро</string>
+    <string name="widget_scan">Скан</string>
+    <string name="widget_weight">Вес</string>
 </resources>

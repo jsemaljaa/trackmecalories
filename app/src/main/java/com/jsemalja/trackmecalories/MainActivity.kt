@@ -1,5 +1,16 @@
 package com.jsemalja.trackmecalories
 
+import java.time.LocalDate
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.jsemalja.trackmecalories.widget.TodayWidget
+import com.jsemalja.trackmecalories.data.Database
+import androidx.lifecycle.lifecycleScope
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import android.content.Intent
 import androidx.compose.ui.res.stringResource
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -51,11 +62,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.room.Room
-import com.jsemalja.trackmecalories.data.AppDatabase
-import com.jsemalja.trackmecalories.data.MIGRATION_5_6
-import com.jsemalja.trackmecalories.data.MIGRATION_6_7
-import com.jsemalja.trackmecalories.data.MIGRATION_7_8
 import com.jsemalja.trackmecalories.data.RestaurantMenu
 import com.jsemalja.trackmecalories.ui.screens.HomeScreen
 import com.jsemalja.trackmecalories.ui.screens.OnboardingDialog
@@ -71,19 +77,21 @@ import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModelFactory
 
 class MainActivity : ComponentActivity() {
+    // Set by a launcher shortcut or widget button; consumed once by the UI.
+    private val pendingAction = MutableStateFlow<QuickAction?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) pendingAction.value = QuickAction.from(intent)
 
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java, "track-me-calories-db"
-        )
-            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
-            // Only destructive on downgrade (e.g. reinstalling an older debug build).
-            // Upgrades must ship a real Migration so user data is never silently wiped.
-            .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
-            .build()
-        val dao = db.foodDao()
+        val dao = Database.get(applicationContext).foodDao()
+
+        // Keep the home-screen widget in step with today's log while the app is open.
+        lifecycleScope.launch {
+            combine(dao.getEntriesForDate(LocalDate.now().toString()), dao.getUserGoal()) { e, g -> e.sumOf { it.kcal } to g?.calorieGoal }
+                .distinctUntilChanged()
+                .collect { TodayWidget.refresh(applicationContext) }
+        }
         val restaurantMenu = RestaurantMenu(applicationContext.assets)
         val appearancePrefs = AppearancePrefs(applicationContext)
 
@@ -92,16 +100,48 @@ class MainActivity : ComponentActivity() {
             val appearance by appearancePrefs.appearance.collectAsState()
             TrackmecaloriesTheme(appearance = appearance) {
                 val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(dao, restaurantMenu))
-                TrackmecaloriesApp(mainViewModel, appearancePrefs)
+                val action by pendingAction.collectAsState()
+                TrackmecaloriesApp(mainViewModel, appearancePrefs, action, onActionHandled = { pendingAction.value = null })
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        QuickAction.from(intent)?.let { pendingAction.value = it }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        TodayWidget.refresh(applicationContext)
     }
 }
 
 @Composable
-fun TrackmecaloriesApp(viewModel: MainViewModel, appearancePrefs: AppearancePrefs) {
+fun TrackmecaloriesApp(
+    viewModel: MainViewModel,
+    appearancePrefs: AppearancePrefs,
+    pendingAction: QuickAction? = null,
+    onActionHandled: () -> Unit = {}
+) {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
     var showScanner by rememberSaveable { mutableStateOf(false) }
+    // Quick add / log weight open as dialogs on Home.
+    var homeRequest by remember { mutableStateOf<QuickAction?>(null) }
+
+    LaunchedEffect(pendingAction) {
+        when (pendingAction ?: return@LaunchedEffect) {
+            QuickAction.ADD_FOOD -> currentDestination = AppDestinations.FOOD
+            QuickAction.SCAN -> showScanner = true
+            QuickAction.QUICK_ADD, QuickAction.LOG_WEIGHT -> {
+                // Shortcuts act on today, whatever day was being browsed.
+                viewModel.changeDate(LocalDate.now())
+                currentDestination = AppDestinations.HOME
+                homeRequest = pendingAction
+            }
+        }
+        onActionHandled()
+    }
     val hasSetGoals by viewModel.hasSetGoals.collectAsState()
     val appearance by appearancePrefs.appearance.collectAsState()
 
@@ -120,7 +160,9 @@ fun TrackmecaloriesApp(viewModel: MainViewModel, appearancePrefs: AppearancePref
                 viewModel,
                 modifier,
                 onOpenSearch = { currentDestination = AppDestinations.FOOD },
-                onOpenScanner = { showScanner = true }
+                onOpenScanner = { showScanner = true },
+                request = homeRequest,
+                onRequestHandled = { homeRequest = null }
             )
             AppDestinations.FOOD -> SearchScreen(viewModel, modifier, onOpenScanner = { showScanner = true })
             AppDestinations.TRENDS -> TrendsScreen(

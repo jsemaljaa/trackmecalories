@@ -1,5 +1,6 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.QuickAction
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.foundation.lazy.items
@@ -82,7 +83,10 @@ fun HomeScreen(
     viewModel: MainViewModel,
     modifier: Modifier = Modifier,
     onOpenSearch: () -> Unit,
-    onOpenScanner: () -> Unit
+    onOpenScanner: () -> Unit,
+    // From a launcher shortcut or the widget.
+    request: QuickAction? = null,
+    onRequestHandled: () -> Unit = {}
 ) {
     val entries by viewModel.foodEntries.collectAsState()
     val goals by viewModel.userGoal.collectAsState()
@@ -102,6 +106,14 @@ fun HomeScreen(
     var showQuickAddDialog by remember { mutableStateOf(false) }
     var showAddMenu by remember { mutableStateOf(false) }
     var showLogWeight by remember { mutableStateOf(false) }
+    LaunchedEffect(request) {
+        when (request) {
+            QuickAction.QUICK_ADD -> showQuickAddDialog = true
+            QuickAction.LOG_WEIGHT -> showLogWeight = true
+            else -> return@LaunchedEffect
+        }
+        onRequestHandled()
+    }
     val weightEntries by viewModel.weightEntries.collectAsState()
     var editingEntry by remember { mutableStateOf<FoodEntry?>(null) }
 
