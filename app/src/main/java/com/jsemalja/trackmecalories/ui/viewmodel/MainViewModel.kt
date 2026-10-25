@@ -175,7 +175,7 @@ class MainViewModel(
             publish(
                 repository.searchProducts(q).withIndex().mapNotNull { (i, info) ->
                     val score = SearchMatcher.score(tokens, info.name, info.brand) ?: return@mapNotNull null
-                    info.toSearchHit(score + (if (info.isCzech) 0.3 else 0.0) - 0.005 * i)
+                    info.toSearchHit(score + (if (info.isCzech) CZECH_BOOST else 0.0) - 0.005 * i)
                 }
             )
         }
@@ -183,8 +183,8 @@ class MainViewModel(
             val tokens = SearchMatcher.tokens(q)
             val hits = kaloricke.search(q).withIndex().mapNotNull { (i, hit) ->
                 val score = SearchMatcher.score(tokens, hit.title, hit.brand) ?: return@mapNotNull null
-                // KT orders by popularity; keep that as a tie-breaker. Czech database bonus.
-                hit.toSearchHit(score + 0.3 - 0.01 * i)
+                // KT orders by popularity; keep that as a tie-breaker. It is a Czech database.
+                hit.toSearchHit(score + CZECH_BOOST - 0.01 * i)
             }.sortedByDescending { it.score }.take(30)
             publish(hits)
 
@@ -531,6 +531,9 @@ class MainViewModel(
 private const val SEARCH_DEBOUNCE_MS = 350L
 private const val MAX_RESULTS = 150 // a chain shortcut lists its whole menu
 private const val KT_MACRO_PREFETCH = 8
+// Czech products (Kalorické tabulky, OFF items sold in CZ) outrank equally relevant
+// foreign ones; a clearly better name match still wins.
+private const val CZECH_BOOST = 0.7
 
 /** First day of [date]'s week, by the device locale (Monday in Czechia). */
 fun weekStartOf(date: LocalDate): LocalDate =

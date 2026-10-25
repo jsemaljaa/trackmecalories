@@ -43,7 +43,7 @@ class RestaurantMenu(private val assets: AssetManager) {
                 unit = item.food.unit,
                 source = SearchSource.MENU,
                 // Curated menus are what people searching a chain want first.
-                score = score + 0.6,
+                score = score + 0.9,
                 food = item.food,
                 isCzech = true
             )

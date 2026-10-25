@@ -216,7 +216,7 @@ fun MacroSummary(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

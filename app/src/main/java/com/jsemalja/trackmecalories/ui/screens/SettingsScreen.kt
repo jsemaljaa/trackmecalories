@@ -30,12 +30,12 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val currentGoals by viewModel.userGoal.collectAsState()
     
     var calorieGoal by remember(currentGoals) { mutableStateOf(currentGoals.calorieGoal.toString()) }
-    var proteinGoal by remember(currentGoals) { mutableStateOf(currentGoals.proteinGoal.toString()) }
-    var carbGoal by remember(currentGoals) { mutableStateOf(currentGoals.carbGoal.toString()) }
-    var fatGoal by remember(currentGoals) { mutableStateOf(currentGoals.fatGoal.toString()) }
-    var fiberGoal by remember(currentGoals) { mutableStateOf(currentGoals.fiberGoal.toString()) }
-    var saltGoal by remember(currentGoals) { mutableStateOf(currentGoals.saltGoal.toString()) }
-    var waterGoal by remember(currentGoals) { mutableStateOf(currentGoals.waterGoalMl.toString()) }
+    var proteinGoal by remember(currentGoals) { mutableStateOf(currentGoals.proteinGoal.clean()) }
+    var carbGoal by remember(currentGoals) { mutableStateOf(currentGoals.carbGoal.clean()) }
+    var fatGoal by remember(currentGoals) { mutableStateOf(currentGoals.fatGoal.clean()) }
+    var fiberGoal by remember(currentGoals) { mutableStateOf(currentGoals.fiberGoal.clean()) }
+    var saltGoal by remember(currentGoals) { mutableStateOf(currentGoals.saltGoal.clean()) }
+    var waterGoal by remember(currentGoals) { mutableStateOf(currentGoals.waterGoalMl.clean()) }
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var exportError by remember { mutableStateOf<String?>(null) }
@@ -119,12 +119,12 @@ fun SettingsScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                     viewModel.updateGoals(
                         currentGoals.copy(
                             calorieGoal = calorieGoal.toIntOrNull() ?: currentGoals.calorieGoal,
-                            proteinGoal = proteinGoal.toDoubleOrNull() ?: currentGoals.proteinGoal,
-                            carbGoal = carbGoal.toDoubleOrNull() ?: currentGoals.carbGoal,
-                            fatGoal = fatGoal.toDoubleOrNull() ?: currentGoals.fatGoal,
-                            fiberGoal = fiberGoal.toDoubleOrNull() ?: currentGoals.fiberGoal,
-                            saltGoal = saltGoal.toDoubleOrNull() ?: currentGoals.saltGoal,
-                            waterGoalMl = waterGoal.toDoubleOrNull() ?: currentGoals.waterGoalMl
+                            proteinGoal = proteinGoal.toDecimal() ?: currentGoals.proteinGoal,
+                            carbGoal = carbGoal.toDecimal() ?: currentGoals.carbGoal,
+                            fatGoal = fatGoal.toDecimal() ?: currentGoals.fatGoal,
+                            fiberGoal = fiberGoal.toDecimal() ?: currentGoals.fiberGoal,
+                            saltGoal = saltGoal.toDecimal() ?: currentGoals.saltGoal,
+                            waterGoalMl = waterGoal.toDecimal() ?: currentGoals.waterGoalMl
                         )
                     )
                 },
@@ -212,7 +212,11 @@ private fun SettingsSectionCard(
     titleColor: androidx.compose.ui.graphics.Color,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
         Column(Modifier.padding(16.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = titleColor)
             Spacer(Modifier.height(12.dp))

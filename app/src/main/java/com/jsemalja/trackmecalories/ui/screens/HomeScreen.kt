@@ -8,7 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -25,10 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodEntry
@@ -121,7 +123,7 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
             // Summary cards scroll with the log, so a long day doesn't get squeezed into
             // the bottom third of the screen.
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 136.dp), // clear the FABs
                 modifier = Modifier.weight(1f)
             ) {
@@ -145,7 +147,7 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                         Text(
                             "No entries for this day",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp)
                         )
@@ -156,12 +158,16 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                         item(key = "header_$meal") {
                             MealSectionHeader(meal, mealEntries.sumOf { it.kcal })
                         }
-                        items(mealEntries, key = { it.id }) { entry ->
+                        itemsIndexed(mealEntries, key = { _, entry -> entry.id }) { index, entry ->
+                            // One rounded block per meal: outer corners round, inner ones tight.
+                            val shape = groupedShape(index, mealEntries.size)
                             SwipeToDeleteContainer(
+                                shape = shape,
                                 onDelete = { deleteWithUndo(entry) }
                             ) {
                                 FoodItemRow(
                                     entry = entry,
+                                    shape = shape,
                                     onClick = { editingEntry = entry }
                                 )
                             }
@@ -218,12 +224,12 @@ fun HomeScreen(viewModel: MainViewModel, modifier: Modifier = Modifier) {
 @Composable
 fun MealSectionHeader(meal: String, totalKcal: Int) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(meal, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Text("$totalKcal kcal", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+        Text("$totalKcal kcal", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -422,31 +428,67 @@ private fun NutrientProgress(
 }
 
 @Composable
-fun FoodItemRow(entry: FoodEntry, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
+    val amount = if (entry.unit == "pcs") {
+        "${entry.amount.clean()} ${if (entry.amount == 1.0) "piece" else "pieces"}"
+    } else {
+        "${entry.amount.clean()} ${entry.unit}"
+    }
+    Surface(
+        onClick = onClick,
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(entry.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                Text("${entry.amount.toInt()}${entry.unit}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(
+                    entry.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    "$amount · P ${entry.protein.toInt()} · C ${entry.carbs.toInt()} · F ${entry.fat.toInt()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("${entry.kcal} kcal", fontWeight = FontWeight.Bold)
-                Text("P: ${entry.protein.toInt()}g · C: ${entry.carbs.toInt()}g · F: ${entry.fat.toInt()}g", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            Spacer(Modifier.width(12.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("${entry.kcal}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    " kcal",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
             }
         }
     }
+}
+
+/** Corner shape for row [index] of [count] in a grouped list: rounded only at the block's ends. */
+private fun groupedShape(index: Int, count: Int): Shape {
+    val outer = 18.dp
+    val inner = 4.dp
+    return RoundedCornerShape(
+        topStart = if (index == 0) outer else inner,
+        topEnd = if (index == 0) outer else inner,
+        bottomStart = if (index == count - 1) outer else inner,
+        bottomEnd = if (index == count - 1) outer else inner
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwipeToDeleteContainer(
     onDelete: () -> Unit,
+    shape: Shape = MaterialTheme.shapes.medium,
     content: @Composable () -> Unit
 ) {
     val state = rememberSwipeToDismissBoxState()
@@ -463,15 +505,15 @@ fun SwipeToDeleteContainer(
         backgroundContent = {
             val color by animateColorAsState(
                 when (state.targetValue) {
-                    SwipeToDismissBoxValue.EndToStart -> Color.Red.copy(alpha = 0.8f)
+                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
                     else -> Color.Transparent
                 }, label = ""
             )
             Box(
-                modifier = Modifier.fillMaxSize().clip(MaterialTheme.shapes.medium).background(color).padding(horizontal = 20.dp),
+                modifier = Modifier.fillMaxSize().clip(shape).background(color).padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onErrorContainer)
             }
         },
         content = { content() }

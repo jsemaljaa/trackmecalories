@@ -60,7 +60,8 @@ class FoodRepository(private val dao: FoodDao? = null) {
 
     /**
      * Fetches product information from the Open Food Facts API v2, preferring a local
-     * cache hit over the network.
+     * cache hit over the network. Asks the Czech instance first (same database, but names
+     * come back in Czech where the product has them), then the world one if that fails.
      * @param barcode The UPC/EAN code of the product.
      * @return FoodInfo if found, null otherwise.
      */
@@ -70,23 +71,26 @@ class FoodRepository(private val dao: FoodDao? = null) {
             return it.toFoodInfo()
         }
         Log.d(TAG, "Fetching product info for barcode: $barcode")
-        return try {
-            val response: String = client.get("https://world.openfoodfacts.org/api/v2/product/$barcode.json").body()
-            val json = Json.parseToJsonElement(response).jsonObject
+        for (host in OFF_PRODUCT_HOSTS) {
+            try {
+                val response: String = client.get("https://$host/api/v2/product/$barcode.json").body()
+                val json = Json.parseToJsonElement(response).jsonObject
 
-            if (json["status"]?.jsonPrimitive?.intOrNull != 1) {
-                Log.w(TAG, "Product not found for barcode: $barcode")
-                return null
+                if (json["status"]?.jsonPrimitive?.intOrNull != 1) {
+                    // Both instances share one database: "not found" on one is final.
+                    Log.w(TAG, "Product not found for barcode: $barcode")
+                    return null
+                }
+
+                val product = json["product"]?.jsonObject ?: return null
+                val info = parseProduct(product, barcode, requireNutrition = false, langs = PREFERRED_LANGS) ?: return null
+                info.toCache()?.let { dao?.upsertCachedProduct(it) }
+                return info
+            } catch (e: Exception) {
+                Log.e(TAG, "Error fetching product info from $host: ${e.message}", e)
             }
-
-            val product = json["product"]?.jsonObject ?: return null
-            val info = parseProduct(product, barcode, requireNutrition = false) ?: return null
-            info.toCache()?.let { dao?.upsertCachedProduct(it) }
-            info
-        } catch (e: Exception) {
-            Log.e(TAG, "Error fetching product info: ${e.message}", e)
-            null
         }
+        return null
     }
 
     /**
@@ -122,11 +126,10 @@ class FoodRepository(private val dao: FoodDao? = null) {
         val key = "${if (czechOnly) "cz" else "all"}|${query.lowercase()}"
         synchronized(searchCache) { searchCache[key] }?.let { return it }
 
-        // Czech names first so "Jogurt bílý" isn't shown as its English/German label.
-        val langs = listOf("cs", Locale.getDefault().language.ifBlank { "en" }, "en").distinct()
+        val langs = PREFERRED_LANGS
         val response: String = client.get("https://search.openfoodfacts.org/search") {
             parameter("q", if (czechOnly) "$query countries_tags:\"en:czech-republic\"" else query)
-            parameter("page_size", if (czechOnly) 30 else 40)
+            parameter("page_size", if (czechOnly) 40 else 30)
             parameter("langs", langs.joinToString(","))
             parameter(
                 "fields",
@@ -154,7 +157,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
         product: JsonObject,
         barcode: String?,
         requireNutrition: Boolean,
-        langs: List<String> = listOf(Locale.getDefault().language, "en")
+        langs: List<String> = PREFERRED_LANGS
     ): FoodInfo? {
         val name = (langs.map { "product_name_$it" } + "product_name" +
             langs.map { "generic_name_$it" } + "generic_name")
@@ -198,5 +201,13 @@ class FoodRepository(private val dao: FoodDao? = null) {
             else -> null
         }
         return first?.trim()?.takeIf { it.isNotEmpty() }
+    }
+
+    private companion object {
+        // Czech instance first; world as a fallback if it's unreachable.
+        val OFF_PRODUCT_HOSTS = listOf("cz.openfoodfacts.org", "world.openfoodfacts.org")
+
+        // Czech names first so "Jogurt bílý" isn't shown as its English/German label.
+        val PREFERRED_LANGS = listOf("cs", Locale.getDefault().language.ifBlank { "en" }, "en").distinct()
     }
 }

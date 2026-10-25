@@ -239,7 +239,12 @@ private fun WeeklyBarChart(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (value > goal) colors.error else colors.onSurface,
-                            maxLines = 1
+                            maxLines = 1,
+                            // Backed by the card colour so the dashed goal line doesn't strike through it.
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(colors.surfaceContainerLow)
+                                .padding(horizontal = 3.dp)
                         )
                         Spacer(Modifier.height(2.dp))
                         Box(
