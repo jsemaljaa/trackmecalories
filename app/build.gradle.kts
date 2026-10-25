@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -18,9 +20,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing comes from keystore.properties in the repo root (gitignored, see releaseApk).
+    val keystoreFile = rootProject.file("keystore.properties")
+    if (keystoreFile.exists()) {
+        val keystore = Properties().apply { keystoreFile.inputStream().use { load(it) } }
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file(keystore.getProperty("storeFile"))
+                storePassword = keystore.getProperty("storePassword")
+                keyAlias = keystore.getProperty("keyAlias")
+                keyPassword = keystore.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -34,6 +51,19 @@ android {
     buildFeatures {
         compose = true
     }
+}
+
+// ./gradlew :app:releaseApk -> signed release APK in dist/TrackMeCalories-<versionName>.apk
+tasks.register<Copy>("releaseApk") {
+    val signed = rootProject.file("keystore.properties").exists()
+    val apkName = "TrackMeCalories-${android.defaultConfig.versionName}.apk"
+    dependsOn("assembleRelease")
+    doFirst {
+        if (!signed) throw GradleException("keystore.properties is missing, so the release APK can't be signed")
+    }
+    from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
+    into(rootProject.layout.projectDirectory.dir("dist"))
+    rename { apkName }
 }
 
 configurations.all {
