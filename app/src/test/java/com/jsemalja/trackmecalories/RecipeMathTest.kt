@@ -4,10 +4,14 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.Recipe
 import com.jsemalja.trackmecalories.data.dishWeightG
 import com.jsemalja.trackmecalories.data.estimatedCookedWeightG
+import com.jsemalja.trackmecalories.data.hasCookFactors
+import com.jsemalja.trackmecalories.data.missingWeights
+import com.jsemalja.trackmecalories.data.per100g
 import com.jsemalja.trackmecalories.data.toCustomFood
 import com.jsemalja.trackmecalories.data.toIngredient
 import com.jsemalja.trackmecalories.data.totals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RecipeMathTest {
@@ -60,6 +64,24 @@ class RecipeMathTest {
         assertEquals(0.0, listOf(egg).estimatedCookedWeightG(), 0.0)
         assertEquals(110.0, listOf(egg.copy(gramsPerUnit = 55.0)).estimatedCookedWeightG(), 0.01)
         assertEquals(150.0, listOf(egg).totals().kcal, 0.01)
+    }
+
+    @Test
+    fun `per 100 g of the raw ingredients when the dish isn't weighed`() {
+        // 200 g rice + 300 g chicken, no cooking factors: 1030 kcal in 500 g.
+        val raw = listOf(rice.copy(cookFactor = 1.0), chicken.copy(cookFactor = 1.0))
+        assertEquals(false, raw.hasCookFactors())
+        val per100 = raw.totals().per100g(raw.estimatedCookedWeightG())!!
+        assertEquals(206.0, per100.kcal, 0.01)
+        assertEquals(16.6, per100.protein, 0.01)
+    }
+
+    @Test
+    fun `no per 100 g values without a weight`() {
+        val egg = food("Egg", 75.0, 6.5, unit = "pcs").toIngredient(2.0)
+        assertNull(listOf(egg).totals().per100g(listOf(egg).estimatedCookedWeightG()))
+        assertEquals(listOf(egg), listOf(egg, rice).missingWeights())
+        assertEquals(true, listOf(rice).hasCookFactors())
     }
 
     @Test

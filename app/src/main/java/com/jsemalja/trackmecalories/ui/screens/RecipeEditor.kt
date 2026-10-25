@@ -1,6 +1,5 @@
 package com.jsemalja.trackmecalories.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -8,13 +7,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,6 +28,9 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.Recipe
 import com.jsemalja.trackmecalories.data.RecipeIngredient
 import com.jsemalja.trackmecalories.data.estimatedCookedWeightG
+import com.jsemalja.trackmecalories.data.hasCookFactors
+import com.jsemalja.trackmecalories.data.missingWeights
+import com.jsemalja.trackmecalories.data.per100g
 import com.jsemalja.trackmecalories.data.rawWeightG
 import com.jsemalja.trackmecalories.data.toIngredient
 import com.jsemalja.trackmecalories.data.totals
@@ -39,21 +42,21 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Create or edit a recipe from foods (search, barcode, saved). Each ingredient keeps its own
- * amount and an optional raw -> cooked factor; the dish is logged per serving or per 100 g
- * of the finished pot — weigh the pot, then log your portion by the weight on your plate.
+ * Create or edit a recipe the way you cook it: add the ingredients as weighed raw, optionally
+ * weigh the finished dish, and the app shows calories and macros per 100 g. The dish is then
+ * logged by the weight on your plate (default) or per serving.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     var loaded by remember { mutableStateOf(recipeId == null) }
-    var recipe by remember { mutableStateOf(Recipe(name = "")) }
+    var recipe by remember { mutableStateOf(Recipe(name = "", logBy = "g")) }
     val ingredients = remember { mutableStateListOf<RecipeIngredient>() }
     var name by remember { mutableStateOf("") }
     var servings by remember { mutableStateOf("1") }
     var potWeight by remember { mutableStateOf("") }
-    var logBy by remember { mutableStateOf("pcs") }
+    var logBy by remember { mutableStateOf("g") }
     var editing by remember { mutableStateOf<Int?>(null) }
     var picking by remember { mutableStateOf(false) }
     var scanning by remember { mutableStateOf(false) }
@@ -74,18 +77,28 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
         }
     }
 
-    val totals = ingredients.toList().totals()
+    // A food counted in pieces needs its piece weight to count toward the dish, so ask right away.
+    fun addIngredient(food: CustomFood, amount: Double) {
+        ingredients.add(food.toIngredient(amount))
+        if (food.unit == "pcs") editing = ingredients.lastIndex
+    }
+
+    val list = ingredients.toList()
+    val totals = list.totals()
     val servingsValue = servings.toDecimal()?.takeIf { it > 0 } ?: 1.0
-    val estimated = ingredients.toList().estimatedCookedWeightG()
-    val dishWeight = potWeight.toDecimal()?.takeIf { it > 0 } ?: estimated
-    val missingWeights = ingredients.any { it.gramsPerUnit == 0.0 }
+    val rawWeight = list.rawWeightG()
+    val estimated = list.estimatedCookedWeightG()
+    val weighed = potWeight.toDecimal()?.takeIf { it > 0 }
+    val dishWeight = weighed ?: estimated
+    val per100 = totals.per100g(dishWeight)
+    val missingWeights = list.missingWeights().isNotEmpty()
     val canSave = name.isNotBlank() && ingredients.isNotEmpty() && (logBy == "pcs" || dishWeight > 0)
 
     fun save() {
         val updated = recipe.copy(
             name = name.trim(),
             servings = servingsValue,
-            cookedWeightG = potWeight.toDecimal()?.takeIf { it > 0 },
+            cookedWeightG = weighed,
             logBy = logBy
         )
         scope.launch {
@@ -122,13 +135,9 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                         )
                     }
 
+                    // Step 1: what went into the pot, weighed raw.
                     item {
-                        Text(stringResource(R.string.recipe_ingredients), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    }
-                    if (ingredients.isEmpty()) {
-                        item {
-                            Text(stringResource(R.string.recipe_no_ingredients), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        StepHeader(stringResource(R.string.recipe_step_ingredients), stringResource(R.string.recipe_ingredients_hint))
                     }
                     itemsIndexed(ingredients, key = { i, ing -> "$i-${ing.name}" }) { i, ing ->
                         IngredientRow(ing, onClick = { editing = i }, onRemove = { ingredients.removeAt(i) })
@@ -148,12 +157,72 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                         }
                     }
 
+                    // Step 2: optionally weigh the finished dish, since cooking adds or removes water.
                     item {
                         Spacer(Modifier.height(6.dp))
-                        Text(stringResource(R.string.recipe_how_to_log), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        StepHeader(stringResource(R.string.recipe_step_cooked), stringResource(R.string.recipe_pot_weight_hint))
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = potWeight,
+                            onValueChange = { potWeight = it },
+                            label = { Text(stringResource(R.string.recipe_pot_weight)) },
+                            suffix = { Text(stringResource(R.string.unit_g)) },
+                            placeholder = { if (estimated > 0) Text(estimated.roundToInt().toString()) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    // The result: per 100 g up front, the whole dish (and a serving) below.
+                    item {
+                        AppCard(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(stringResource(R.string.recipe_per_100g), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Row(verticalAlignment = Alignment.Bottom) {
+                                    Text(per100?.kcal?.roundToInt()?.toString() ?: "—", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(stringResource(R.string.unit_kcal), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 6.dp))
+                                }
+                                if (per100 != null) {
+                                    Text(
+                                        stringResource(R.string.macro_line, short(per100.protein), short(per100.carbs), short(per100.fat)),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                Text(
+                                    when {
+                                        weighed != null -> stringResource(R.string.recipe_basis_weighed, weighed.roundToInt(), rawWeight.roundToInt())
+                                        estimated <= 0 -> stringResource(R.string.recipe_basis_unknown)
+                                        list.hasCookFactors() -> stringResource(R.string.recipe_basis_estimated, estimated.roundToInt(), rawWeight.roundToInt())
+                                        else -> stringResource(R.string.recipe_basis_raw, rawWeight.roundToInt())
+                                    } + if (missingWeights && weighed == null) " " + stringResource(R.string.recipe_pot_pieces_note) else "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                HorizontalDivider(Modifier.padding(vertical = 4.dp))
+                                TotalsRow(stringResource(R.string.recipe_total), totals.kcal, totals.protein, totals.carbs, totals.fat)
+                                if (logBy == "pcs") {
+                                    TotalsRow(stringResource(R.string.recipe_per_serving), totals.kcal / servingsValue, totals.protein / servingsValue, totals.carbs / servingsValue, totals.fat / servingsValue)
+                                    if (dishWeight > 0) {
+                                        Text(
+                                            stringResource(R.string.recipe_serving_weighs, (dishWeight / servingsValue).roundToInt()),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Step 3: by weight (the per-100 g values above) or per serving.
+                    item {
+                        Spacer(Modifier.height(6.dp))
+                        StepHeader(stringResource(R.string.recipe_step_log), null)
                         Spacer(Modifier.height(6.dp))
                         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                            listOf("pcs" to R.string.recipe_log_serving, "g" to R.string.recipe_log_weight).forEachIndexed { i, (value, label) ->
+                            listOf("g" to R.string.recipe_log_weight, "pcs" to R.string.recipe_log_serving).forEachIndexed { i, (value, label) ->
                                 SegmentedButton(
                                     selected = logBy == value,
                                     onClick = { logBy = value },
@@ -169,57 +238,16 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    }
-
-                    item {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (logBy == "pcs") {
+                            Spacer(Modifier.height(8.dp))
                             OutlinedTextField(
                                 value = servings,
                                 onValueChange = { servings = it },
                                 label = { Text(stringResource(R.string.recipe_servings)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 singleLine = true,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            OutlinedTextField(
-                                value = potWeight,
-                                onValueChange = { potWeight = it },
-                                label = { Text(stringResource(R.string.recipe_pot_weight)) },
-                                suffix = { Text(stringResource(R.string.unit_g)) },
-                                placeholder = { if (estimated > 0) Text(estimated.roundToInt().toString()) },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                singleLine = true,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Text(
-                            when {
-                                potWeight.toDecimal() != null -> stringResource(R.string.recipe_pot_weighed)
-                                estimated > 0 -> stringResource(R.string.recipe_pot_estimated, estimated.roundToInt(), ingredients.toList().rawWeightG().roundToInt())
-                                else -> stringResource(R.string.recipe_pot_unknown)
-                            } + if (missingWeights && potWeight.toDecimal() == null) " " + stringResource(R.string.recipe_pot_pieces_note) else "",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    item {
-                        AppCard(Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                TotalsRow(stringResource(R.string.recipe_total), totals.kcal, totals.protein, totals.carbs, totals.fat)
-                                TotalsRow(stringResource(R.string.recipe_per_serving), totals.kcal / servingsValue, totals.protein / servingsValue, totals.carbs / servingsValue, totals.fat / servingsValue)
-                                if (dishWeight > 0) {
-                                    val f = 100 / dishWeight
-                                    TotalsRow(stringResource(R.string.recipe_per_100g), totals.kcal * f, totals.protein * f, totals.carbs * f, totals.fat * f)
-                                    if (servingsValue > 0) {
-                                        Text(
-                                            stringResource(R.string.recipe_serving_weighs, (dishWeight / servingsValue).roundToInt()),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
                         }
                     }
 
@@ -253,7 +281,7 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                     viewModel,
                     onOpenScanner = { picking = false; scanning = true },
                     pick = IngredientPick(
-                        onPick = { food, amount -> ingredients.add(food.toIngredient(amount)); picking = false },
+                        onPick = { food, amount -> picking = false; addIngredient(food, amount) },
                         onClose = { picking = false }
                     )
                 )
@@ -266,7 +294,7 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
             ScannerScreen(
                 viewModel,
                 onClose = { scanning = false },
-                onPick = { food, amount -> ingredients.add(food.toIngredient(amount)); scanning = false }
+                onPick = { food, amount -> scanning = false; addIngredient(food, amount) }
             )
         }
     }
@@ -291,14 +319,37 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
 class IngredientPick(val onPick: (CustomFood, Double) -> Unit, val onClose: () -> Unit)
 
 @Composable
+private fun StepHeader(title: String, hint: String?) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        if (hint != null) {
+            Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** Per-100 g macros are small numbers, so keep one decimal below 10 g. */
+private fun short(value: Double): String =
+    if (value >= 10) value.roundToInt().toString()
+    else "%.1f".format(value).removeSuffix(".0").removeSuffix(",0")
+
+@Composable
 private fun IngredientRow(ing: RecipeIngredient, onClick: () -> Unit, onRemove: () -> Unit) {
     AppCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, strong = true, onClick = onClick) {
         Row(Modifier.padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(ing.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                val amount = "${ing.amount.clean()} ${unitLabel(ing.unit)}"
-                val cook = if (abs(ing.cookFactor - 1.0) > 0.001) " · " + stringResource(R.string.recipe_cooks_to, (ing.amount * ing.gramsPerUnit * ing.cookFactor).roundToInt()) else ""
+                val grams = ing.amount * ing.gramsPerUnit
+                val amount = when {
+                    ing.unit != "pcs" -> stringResource(R.string.recipe_raw_amount, "${ing.amount.clean()} ${unitLabel(ing.unit)}")
+                    grams > 0 -> "${ing.amount.clean()} ${unitLabel(ing.unit)} · " + stringResource(R.string.recipe_raw_amount, "${grams.roundToInt()} ${stringResource(R.string.unit_g)}")
+                    else -> "${ing.amount.clean()} ${unitLabel(ing.unit)}"
+                }
+                val cook = if (abs(ing.cookFactor - 1.0) > 0.001 && grams > 0) " · " + stringResource(R.string.recipe_cooks_to, (grams * ing.cookFactor).roundToInt()) else ""
                 Text(amount + cook, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (ing.gramsPerUnit <= 0.0) {
+                    Text(stringResource(R.string.recipe_piece_weight_missing), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
             }
             Text("${ing.totals().kcal.roundToInt()} ${stringResource(R.string.unit_kcal)}", fontWeight = FontWeight.SemiBold)
             IconButton(onClick = onRemove) {
@@ -323,13 +374,17 @@ private fun TotalsRow(label: String, kcal: Double, protein: Double, carbs: Doubl
     }
 }
 
-/** Amount, piece weight (for "pcs" foods) and cooking factor of one ingredient. */
+/**
+ * Raw amount and piece weight (for "pcs" foods) of one ingredient. The cooking factor is
+ * tucked away: it only matters when the finished dish isn't weighed.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit, onSave: (RecipeIngredient) -> Unit) {
     var amount by remember { mutableStateOf(ingredient.amount.clean()) }
     var pieceGrams by remember { mutableStateOf(if (ingredient.unit == "pcs" && ingredient.gramsPerUnit > 0) ingredient.gramsPerUnit.clean() else "") }
     var factor by remember { mutableStateOf(ingredient.cookFactor.clean()) }
+    var showFactor by remember { mutableStateOf(abs(ingredient.cookFactor - 1.0) > 0.001) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -351,31 +406,38 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
                         onValueChange = { pieceGrams = it },
                         label = { Text(stringResource(R.string.recipe_piece_weight)) },
                         suffix = { Text(stringResource(R.string.unit_g)) },
+                        supportingText = { Text(stringResource(R.string.recipe_piece_weight_help)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                Text(stringResource(R.string.recipe_cook_factor), style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    CookFactor.entries.forEach { cf ->
-                        FilterChip(
-                            selected = factor.toDecimal() == cf.factor,
-                            onClick = { factor = cf.factor.clean() },
-                            label = { Text(stringResource(cf.label)) }
-                        )
-                    }
+                TextButton(onClick = { showFactor = !showFactor }, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                    Text(stringResource(R.string.recipe_cook_factor_toggle), modifier = Modifier.weight(1f, fill = false))
+                    Spacer(Modifier.width(4.dp))
+                    Icon(if (showFactor) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, contentDescription = null, modifier = Modifier.size(18.dp))
                 }
-                OutlinedTextField(
-                    value = factor,
-                    onValueChange = { factor = it },
-                    label = { Text(stringResource(R.string.recipe_cook_factor_custom)) },
-                    prefix = { Text("×") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(stringResource(R.string.recipe_cook_factor_help), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (showFactor) {
+                    Text(stringResource(R.string.recipe_cook_factor_help), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        CookFactor.entries.forEach { cf ->
+                            FilterChip(
+                                selected = factor.toDecimal() == cf.factor,
+                                onClick = { factor = cf.factor.clean() },
+                                label = { Text(stringResource(cf.label)) }
+                            )
+                        }
+                    }
+                    OutlinedTextField(
+                        value = factor,
+                        onValueChange = { factor = it },
+                        label = { Text(stringResource(R.string.recipe_cook_factor_custom)) },
+                        prefix = { Text("×") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         },
         confirmButton = {

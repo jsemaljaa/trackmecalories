@@ -36,6 +36,15 @@ fun List<RecipeIngredient>.estimatedCookedWeightG(): Double = sumOf { it.amount 
 fun Recipe.dishWeightG(ingredients: List<RecipeIngredient>): Double =
     cookedWeightG?.takeIf { it > 0 } ?: ingredients.estimatedCookedWeightG()
 
+/** Whether any ingredient changes weight when cooked, so the estimate differs from the raw weight. */
+fun List<RecipeIngredient>.hasCookFactors(): Boolean = any { kotlin.math.abs(it.cookFactor - 1.0) > 0.001 }
+
+/** Ingredients counted in pieces whose piece weight is unknown, so they're missing from the dish weight. */
+fun List<RecipeIngredient>.missingWeights(): List<RecipeIngredient> = filter { it.gramsPerUnit <= 0.0 }
+
+/** Nutrients per 100 g of a dish weighing [weightG]; null while the weight is unknown. */
+fun NutrientTotals.per100g(weightG: Double): NutrientTotals? = if (weightG > 0) this * (100.0 / weightG) else null
+
 /** Typical raw -> cooked weight factors (water absorbed or lost in cooking). */
 enum class CookFactor(@androidx.annotation.StringRes val label: Int, val factor: Double) {
     NONE(com.jsemalja.trackmecalories.R.string.cook_none, 1.0),
@@ -76,8 +85,7 @@ fun Recipe.toCustomFood(ingredients: List<RecipeIngredient>, existing: CustomFoo
     val per = if (perServing) {
         totals * (1.0 / servings.coerceAtLeast(0.01))
     } else {
-        val weight = dishWeightG(ingredients)
-        if (weight > 0) totals * (100.0 / weight) else NutrientTotals()
+        totals.per100g(dishWeightG(ingredients)) ?: NutrientTotals()
     }
     val base = existing ?: CustomFood(name = name, kcalPer100 = 0.0, proteinPer100 = 0.0, carbsPer100 = 0.0, fatPer100 = 0.0, fiberPer100 = 0.0, saltPer100 = 0.0)
     return base.copy(
