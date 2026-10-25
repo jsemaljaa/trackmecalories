@@ -1,3 +1,50 @@
 <resources>
     <string name="app_name">TrackMe Calories</string>
+
+    <!-- Diets -->
+    <string name="diet_balanced">Balanced</string>
+    <string name="diet_balanced_desc">25% protein · 50% carbs · 25% fat. An even, everyday mix.</string>
+    <string name="diet_high_protein">High protein</string>
+    <string name="diet_high_protein_desc">35% protein · 40% carbs · 25% fat. Keeps you full; good for training and fat loss.</string>
+    <string name="diet_low_carb">Low carb</string>
+    <string name="diet_low_carb_desc">30% protein · 20% carbs · 50% fat. Fewer starches and sugars.</string>
+    <string name="diet_keto">Keto</string>
+    <string name="diet_keto_desc">20% protein · 5% carbs · 75% fat. Very low carb.</string>
+    <string name="diet_mediterranean">Mediterranean</string>
+    <string name="diet_mediterranean_desc">20% protein · 45% carbs · 35% fat. Olive oil, fish, vegetables, whole grains.</string>
+    <string name="diet_zone">Zone</string>
+    <string name="diet_zone_desc">30% protein · 40% carbs · 30% fat.</string>
+    <string name="diet_custom">Custom</string>
+    <string name="diet_custom_desc">Set protein, carbs and fat yourself.</string>
+
+    <!-- Calorie calculator -->
+    <string name="sex_female">Female</string>
+    <string name="sex_male">Male</string>
+    <string name="activity_sedentary">Sedentary</string>
+    <string name="activity_sedentary_desc">Desk job, little exercise</string>
+    <string name="activity_light">Lightly active</string>
+    <string name="activity_light_desc">Exercise 1–3 days a week</string>
+    <string name="activity_moderate">Moderately active</string>
+    <string name="activity_moderate_desc">Exercise 3–5 days a week</string>
+    <string name="activity_active">Very active</string>
+    <string name="activity_active_desc">Hard exercise 6–7 days a week</string>
+    <string name="activity_very_active">Extra active</string>
+    <string name="activity_very_active_desc">Physical job plus training</string>
+    <string name="pace_lose_fast">Lose 0.75 kg/week</string>
+    <string name="pace_lose">Lose 0.5 kg/week</string>
+    <string name="pace_lose_slow">Lose 0.25 kg/week</string>
+    <string name="pace_maintain">Maintain weight</string>
+    <string name="pace_gain">Gain 0.25 kg/week</string>
+
+    <!-- BMI -->
+    <string name="bmi_under">Underweight</string>
+    <string name="bmi_normal">Healthy weight</string>
+    <string name="bmi_over">Overweight</string>
+    <string name="bmi_obese">Obese</string>
+
+    <!-- Confidence -->
+    <string name="confidence_weighed">Weighed</string>
+    <string name="confidence_estimated">Estimated</string>
+    <string name="confidence_guessed">Guessed</string>
+
 </resources>

@@ -11,6 +11,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Delete
 import androidx.room.Update
 import androidx.room.Index
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -32,7 +33,14 @@ data class FoodEntry(
     val mealType: String = "Snack", // Breakfast, Lunch, Dinner, Snack
     val time: Long = System.currentTimeMillis(),
     // The amount the per-100-style macros below are relative to (100 for g/ml, 1 for "pcs").
-    val referenceAmount: Double = 100.0
+    val referenceAmount: Double = 100.0,
+    // How sure the amount is: WEIGHED, ESTIMATED or GUESSED (see [Confidence]).
+    val confidence: String = Confidence.ESTIMATED.name,
+    // How full / energetic the user felt after this meal, 1-5; null = not rated.
+    val satiety: Int? = null,
+    val energyLevel: Int? = null,
+    // The saved food this came from, when known (older entries are matched by name).
+    val foodId: Int? = null
 )
 
 /**
@@ -57,7 +65,15 @@ data class CustomFood(
     // The amount the macros above are relative to: 100 for g/ml, 1 for "pcs".
     val referenceAmount: Double = 100.0,
     val isFavorite: Boolean = false,
-    val lastUsedAt: Long = 0L
+    val lastUsedAt: Long = 0L,
+    // Pre-filled amount when logging: the package size for a scanned product, then
+    // whatever was logged last time.
+    val defaultAmount: Double? = null,
+    // Extra nutrients for the nutrition rating; null when the source doesn't have them.
+    val sugarPer100: Double? = null,
+    val saturatedFatPer100: Double? = null,
+    // Official Nutri-Score grade (a-e) from Open Food Facts, if it has one.
+    val nutriScore: String? = null
 )
 
 /**
@@ -72,7 +88,74 @@ data class UserGoal(
     val fatGoal: Double = 70.0,
     val fiberGoal: Double = 30.0,
     val saltGoal: Double = 6.0,
-    val waterGoalMl: Double = 2000.0
+    val waterGoalMl: Double = 2000.0,
+    // [Diet] name; CUSTOM means the macro goals above are entered by hand.
+    val dietType: String = Diet.CUSTOM.name,
+    val targetWeightKg: Double? = null,
+    // Profile for the calorie calculator (all optional).
+    val heightCm: Double? = null,
+    val birthYear: Int? = null,
+    val sex: String? = null,
+    val activityLevel: String? = null
+)
+
+/** One weigh-in per day (logging again the same day replaces it). */
+@Entity(
+    tableName = "weight_entries",
+    indices = [Index(value = ["date"], unique = true)]
+)
+data class WeightEntry(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val date: String,
+    val weightKg: Double,
+    val time: Long = System.currentTimeMillis()
+)
+
+/**
+ * A recipe built from foods. It's logged through [customFoodId], a regular saved food whose
+ * values are recalculated from the ingredients whenever the recipe is saved.
+ */
+@Entity(tableName = "recipes")
+data class Recipe(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String,
+    val servings: Double = 1.0,
+    // Weight after cooking, if weighed; otherwise the raw ingredients' total is used.
+    val cookedWeightG: Double? = null,
+    // "pcs" = logged per serving, "g" = per 100 g of the finished dish.
+    val logBy: String = "pcs",
+    val customFoodId: Int? = null,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+/**
+ * An ingredient line. Nutrition is a snapshot of the food at the time it was added (per
+ * [referenceAmount] of [unit]), so a recipe survives its source food being edited/deleted.
+ */
+@Entity(
+    tableName = "recipe_ingredients",
+    indices = [Index(value = ["recipeId"])]
+)
+data class RecipeIngredient(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val recipeId: Int,
+    val position: Int,
+    val name: String,
+    val amount: Double,
+    val unit: String,
+    val referenceAmount: Double,
+    // Approximate grams per [unit] (1 for g/ml); lets "pcs" ingredients count toward the
+    // dish's weight. 0 when unknown.
+    val gramsPerUnit: Double,
+    val kcalPer100: Double,
+    val proteinPer100: Double,
+    val carbsPer100: Double,
+    val fatPer100: Double,
+    val fiberPer100: Double,
+    val saltPer100: Double,
+    // Cooked weight per raw weight (rice ≈ 2.5, chicken ≈ 0.75); 1 = unchanged. Used to
+    // estimate the dish's weight when the pot isn't weighed.
+    val cookFactor: Double = 1.0
 )
 
 /**
@@ -107,7 +190,21 @@ data class FoodCache(
     val saltPer100: Double,
     val unit: String = "g",
     val referenceAmount: Double = 100.0,
-    val cachedAt: Long = System.currentTimeMillis()
+    val cachedAt: Long = System.currentTimeMillis(),
+    val quantity: String? = null,
+    val sugarPer100: Double? = null,
+    val saturatedFatPer100: Double? = null,
+    val nutriScore: String? = null
+)
+
+/**
+ * Whether a day's log is finished. Days marked incomplete are left out of averages, so a
+ * forgotten dinner doesn't read as eating less. Days without a row count as complete.
+ */
+@Entity(tableName = "day_logs")
+data class DayLog(
+    @PrimaryKey val date: String,
+    val complete: Boolean
 )
 
 /**
@@ -240,6 +337,108 @@ interface FoodDao {
     @Query("SELECT * FROM water_entries WHERE date = :date ORDER BY time ASC")
     fun getWaterEntriesForDate(date: String): Flow<List<WaterEntry>>
 
+    // --- Day completeness ---
+
+    @Query("SELECT * FROM day_logs WHERE date BETWEEN :startDate AND :endDate")
+    fun getDayLogsBetween(startDate: String, endDate: String): Flow<List<DayLog>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun setDayLog(dayLog: DayLog)
+
+    @Query("DELETE FROM day_logs WHERE date = :date")
+    suspend fun clearDayLog(date: String)
+
+    // --- History for suggestions, "what fits" and satiety insights ---
+
+    @Query("SELECT * FROM food_entries WHERE date >= :sinceDate ORDER BY time DESC")
+    suspend fun getEntriesSince(sinceDate: String): List<FoodEntry>
+
+    @Query("SELECT * FROM food_entries WHERE date >= :sinceDate ORDER BY time DESC")
+    fun observeEntriesSince(sinceDate: String): Flow<List<FoodEntry>>
+
+    @Query("UPDATE custom_foods SET defaultAmount = :amount WHERE id = :id")
+    suspend fun setDefaultAmount(id: Int, amount: Double)
+
+    @Query("UPDATE food_entries SET satiety = :satiety, energyLevel = :energy WHERE date = :date AND mealType = :mealType")
+    suspend fun rateMeal(date: String, mealType: String, satiety: Int?, energy: Int?)
+
+    // --- Weight ---
+
+    @Query("SELECT * FROM weight_entries ORDER BY date ASC")
+    fun getWeightEntries(): Flow<List<WeightEntry>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertWeightEntry(entry: WeightEntry)
+
+    @Delete
+    suspend fun deleteWeightEntry(entry: WeightEntry)
+
+    @Query("SELECT * FROM weight_entries ORDER BY date DESC LIMIT 1")
+    suspend fun getLatestWeight(): WeightEntry?
+
+    // --- Recipes ---
+
+    @Query("SELECT * FROM recipes ORDER BY name COLLATE NOCASE ASC")
+    fun getRecipes(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes WHERE id = :id")
+    suspend fun getRecipe(id: Int): Recipe?
+
+    @Query("SELECT * FROM recipes WHERE customFoodId = :foodId LIMIT 1")
+    suspend fun getRecipeForFood(foodId: Int): Recipe?
+
+    @Query("SELECT * FROM recipe_ingredients WHERE recipeId = :recipeId ORDER BY position ASC")
+    suspend fun getIngredients(recipeId: Int): List<RecipeIngredient>
+
+    @Insert
+    suspend fun insertRecipe(recipe: Recipe): Long
+
+    @Update
+    suspend fun updateRecipe(recipe: Recipe)
+
+    @Query("DELETE FROM recipes WHERE id = :id")
+    suspend fun deleteRecipeRow(id: Int)
+
+    @Insert
+    suspend fun insertIngredients(ingredients: List<RecipeIngredient>)
+
+    @Query("DELETE FROM recipe_ingredients WHERE recipeId = :recipeId")
+    suspend fun deleteIngredients(recipeId: Int)
+
+    @Query("SELECT * FROM custom_foods WHERE id = :id")
+    suspend fun getCustomFood(id: Int): CustomFood?
+
+    /**
+     * Saves a recipe with its ingredients and its loggable food in one transaction, so a
+     * crash can't leave a recipe without ingredients or pointing at a missing food.
+     * Returns the recipe id.
+     */
+    @Transaction
+    suspend fun saveRecipe(recipe: Recipe, ingredients: List<RecipeIngredient>, food: CustomFood): Int {
+        val foodId = if (food.id != 0) {
+            updateCustomFood(food)
+            food.id
+        } else {
+            insertCustomFood(food).toInt()
+        }
+        val recipeId = if (recipe.id != 0) {
+            updateRecipe(recipe.copy(customFoodId = foodId))
+            recipe.id
+        } else {
+            insertRecipe(recipe.copy(customFoodId = foodId)).toInt()
+        }
+        deleteIngredients(recipeId)
+        insertIngredients(ingredients.mapIndexed { i, ing -> ing.copy(id = 0, recipeId = recipeId, position = i) })
+        return recipeId
+    }
+
+    /** Deletes a recipe and its ingredients. Its saved food (and anything logged) stays. */
+    @Transaction
+    suspend fun deleteRecipe(id: Int) {
+        deleteIngredients(id)
+        deleteRecipeRow(id)
+    }
+
     @Query("SELECT * FROM food_cache WHERE barcode = :barcode LIMIT 1")
     suspend fun getCachedProduct(barcode: String): FoodCache?
 
@@ -248,8 +447,11 @@ interface FoodDao {
 }
 
 @Database(
-    entities = [FoodEntry::class, CustomFood::class, UserGoal::class, WaterEntry::class, FoodCache::class],
-    version = 7,
+    entities = [
+        FoodEntry::class, CustomFood::class, UserGoal::class, WaterEntry::class, FoodCache::class,
+        WeightEntry::class, Recipe::class, RecipeIngredient::class, DayLog::class
+    ],
+    version = 8,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

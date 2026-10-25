@@ -60,3 +60,62 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL("DELETE FROM food_cache")
     }
 }
+
+/**
+ * v7 -> v8: weight tracking, recipes, diet/profile fields on the goals, day completeness,
+ * per-entry confidence and meal ratings, remembered portions, and extra nutrients for the
+ * nutrition rating. Additive only — every existing row is kept. Existing goals get the CUSTOM
+ * diet so the macro numbers already set stay exactly as they are; existing entries are
+ * marked ESTIMATED. The barcode cache is cleared so products are re-fetched with the new
+ * fields (it's only a cache; saved foods are untouched).
+ */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE user_goals ADD COLUMN dietType TEXT NOT NULL DEFAULT 'CUSTOM'")
+        db.execSQL("ALTER TABLE user_goals ADD COLUMN targetWeightKg REAL")
+        db.execSQL("ALTER TABLE user_goals ADD COLUMN heightCm REAL")
+        db.execSQL("ALTER TABLE user_goals ADD COLUMN birthYear INTEGER")
+        db.execSQL("ALTER TABLE user_goals ADD COLUMN sex TEXT")
+        db.execSQL("ALTER TABLE user_goals ADD COLUMN activityLevel TEXT")
+
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `weight_entries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`date` TEXT NOT NULL, `weightKg` REAL NOT NULL, `time` INTEGER NOT NULL)"
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_weight_entries_date` ON `weight_entries` (`date`)")
+
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recipes` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`name` TEXT NOT NULL, `servings` REAL NOT NULL, `cookedWeightG` REAL, `logBy` TEXT NOT NULL, " +
+                "`customFoodId` INTEGER, `createdAt` INTEGER NOT NULL)"
+        )
+
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recipe_ingredients` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`recipeId` INTEGER NOT NULL, `position` INTEGER NOT NULL, `name` TEXT NOT NULL, " +
+                "`amount` REAL NOT NULL, `unit` TEXT NOT NULL, `referenceAmount` REAL NOT NULL, " +
+                "`gramsPerUnit` REAL NOT NULL, `kcalPer100` REAL NOT NULL, `proteinPer100` REAL NOT NULL, " +
+                "`carbsPer100` REAL NOT NULL, `fatPer100` REAL NOT NULL, `fiberPer100` REAL NOT NULL, " +
+                "`saltPer100` REAL NOT NULL, `cookFactor` REAL NOT NULL)"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_recipe_ingredients_recipeId` ON `recipe_ingredients` (`recipeId`)")
+
+        db.execSQL("CREATE TABLE IF NOT EXISTS `day_logs` (`date` TEXT NOT NULL, `complete` INTEGER NOT NULL, PRIMARY KEY(`date`))")
+
+        db.execSQL("ALTER TABLE food_entries ADD COLUMN confidence TEXT NOT NULL DEFAULT 'ESTIMATED'")
+        db.execSQL("ALTER TABLE food_entries ADD COLUMN satiety INTEGER")
+        db.execSQL("ALTER TABLE food_entries ADD COLUMN energyLevel INTEGER")
+        db.execSQL("ALTER TABLE food_entries ADD COLUMN foodId INTEGER")
+
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN defaultAmount REAL")
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN sugarPer100 REAL")
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN saturatedFatPer100 REAL")
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN nutriScore TEXT")
+
+        db.execSQL("ALTER TABLE food_cache ADD COLUMN quantity TEXT")
+        db.execSQL("ALTER TABLE food_cache ADD COLUMN sugarPer100 REAL")
+        db.execSQL("ALTER TABLE food_cache ADD COLUMN saturatedFatPer100 REAL")
+        db.execSQL("ALTER TABLE food_cache ADD COLUMN nutriScore TEXT")
+        db.execSQL("DELETE FROM food_cache")
+    }
+}

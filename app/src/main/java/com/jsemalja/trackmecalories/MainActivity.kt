@@ -54,6 +54,7 @@ import androidx.room.Room
 import com.jsemalja.trackmecalories.data.AppDatabase
 import com.jsemalja.trackmecalories.data.MIGRATION_5_6
 import com.jsemalja.trackmecalories.data.MIGRATION_6_7
+import com.jsemalja.trackmecalories.data.MIGRATION_7_8
 import com.jsemalja.trackmecalories.data.RestaurantMenu
 import com.jsemalja.trackmecalories.ui.screens.HomeScreen
 import com.jsemalja.trackmecalories.ui.screens.OnboardingDialog
@@ -76,7 +77,7 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             AppDatabase::class.java, "track-me-calories-db"
         )
-            .addMigrations(MIGRATION_5_6, MIGRATION_6_7)
+            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
             // Only destructive on downgrade (e.g. reinstalling an older debug build).
             // Upgrades must ship a real Migration so user data is never silently wiped.
             .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
