@@ -379,4 +379,9 @@
 
     <!-- Log row -->
     <string name="entry_line">%1$s · Б %2$d · Ж %4$d · У %3$d</string>
+
+    <!-- Confidence UI -->
+    <string name="confidence_question">Насколько точно количество?</string>
+    <string name="confidence_hint">Погрешность этой записи около ±%1$d%%.</string>
+    <string name="plus_minus_kcal">± %1$s ккал из‑за оценки порций</string>
 </resources>

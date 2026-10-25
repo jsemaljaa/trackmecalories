@@ -269,11 +269,11 @@ fun SearchScreen(
         PortionEntryDialog(
             food = food,
             onDismiss = { foodToLog = null },
-            onConfirm = { amount, mealType ->
+            onConfirm = { amount, mealType, confidence ->
                 if (pick != null) {
                     pick.onPick(food, amount)
                 } else {
-                    viewModel.logCustomFood(food, amount, mealType, selectedDate.toString())
+                    viewModel.logCustomFood(food, amount, mealType, selectedDate.toString(), confidence)
                 }
                 foodToLog = null
             },

@@ -130,6 +130,7 @@ fun TrendsScreen(
                 WeeklyBarChart(
                     days = days,
                     values = weekTotals.map { it?.totalKcal },
+                    uncertainties = weekTotals.map { kotlin.math.sqrt(it?.kcalVariance ?: 0.0) },
                     goal = goal,
                     today = today,
                     onDayClick = onOpenDay
@@ -236,12 +237,14 @@ private fun WeeklyBarChart(
     values: List<Int?>,
     goal: Int,
     today: LocalDate,
-    onDayClick: (LocalDate) -> Unit
+    onDayClick: (LocalDate) -> Unit,
+    // ± kcal per day from entry confidence; drawn as error bars.
+    uncertainties: List<Double> = emptyList()
 ) {
     val colors = MaterialTheme.colorScheme
     val locale = Locale.getDefault()
     // Headroom above the tallest bar (or the goal line) for its value label.
-    val maxValue = maxOf(values.maxOf { it ?: 0 }, goal) * 1.08f
+    val maxValue = maxOf(values.indices.maxOf { (values[it] ?: 0) + (uncertainties.getOrNull(it) ?: 0.0).toInt() }, goal) * 1.08f
     val goalFraction = goal / maxValue
 
     Box(Modifier.fillMaxWidth().height(VALUE_LABEL + BAR_AREA + DAY_LABEL)) {
@@ -324,6 +327,29 @@ private fun WeeklyBarChart(
                 }
             }
         }
+        // Error bars: how far each day's total could be off, from entry confidence.
+        Canvas(
+            Modifier
+                .fillMaxWidth()
+                .height(BAR_AREA)
+                .align(Alignment.BottomCenter)
+                .offset(y = -DAY_LABEL)
+        ) {
+            val slot = size.width / days.size
+            values.forEachIndexed { i, v ->
+                val sigma = uncertainties.getOrNull(i) ?: 0.0
+                if (v == null || v <= 0 || sigma < 5) return@forEachIndexed
+                val x = slot * (i + 0.5f)
+                val top = size.height * (1f - ((v + sigma) / maxValue).toFloat())
+                val bottom = size.height * (1f - ((v - sigma).coerceAtLeast(0.0) / maxValue).toFloat())
+                val cap = slot * 0.12f
+                val stroke = 1.5.dp.toPx()
+                val c = colors.onSurface.copy(alpha = 0.55f)
+                drawLine(c, Offset(x, top), Offset(x, bottom), strokeWidth = stroke)
+                drawLine(c, Offset(x - cap, top), Offset(x + cap, top), strokeWidth = stroke)
+                drawLine(c, Offset(x - cap, bottom), Offset(x + cap, bottom), strokeWidth = stroke)
+            }
+        }
     }
 }
 
@@ -335,6 +361,9 @@ private fun compactKcal(kcal: Int): String =
 private fun WeekStats(logged: List<DailyTotal>, previousLogged: List<DailyTotal>, goal: Int, daysSoFar: Int) {
     val colors = MaterialTheme.colorScheme
     val avg = logged.sumOf { it.totalKcal } / logged.size
+    // Independent per-entry errors: the week's ± is the root of the summed variances.
+    val weekSigma = kotlin.math.sqrt(logged.sumOf { it.kcalVariance })
+    val avgSigma = weekSigma / logged.size
     val prevAvg = previousLogged.takeIf { it.isNotEmpty() }?.let { p -> p.sumOf { it.totalKcal } / p.size }
     val withinGoal = logged.count { it.totalKcal <= goal }
     val balance = logged.sumOf { it.totalKcal - goal }
@@ -346,7 +375,8 @@ private fun WeekStats(logged: List<DailyTotal>, previousLogged: List<DailyTotal>
                 label = stringResource(R.string.daily_average),
                 value = "%,d".format(avg),
                 unit = kcal,
-                detail = pluralStringResource(R.plurals.over_logged_days, logged.size, logged.size) + when {
+                detail = pluralStringResource(R.plurals.over_logged_days, logged.size, logged.size) +
+                    (if (avgSigma >= 5) "\n" + stringResource(R.string.plus_minus_kcal, "%,d".format(avgSigma.roundToInt())) else "") + when {
                     prevAvg == null -> ""
                     avg > prevAvg -> "\n" + stringResource(R.string.vs_last_week_up, "%,d".format(avg - prevAvg))
                     avg < prevAvg -> "\n" + stringResource(R.string.vs_last_week_down, "%,d".format(prevAvg - avg))
@@ -365,7 +395,7 @@ private fun WeekStats(logged: List<DailyTotal>, previousLogged: List<DailyTotal>
                         balance < 0 -> R.string.balance_under
                         else -> R.string.balance_exact
                     }
-                ),
+                ) + if (weekSigma >= 5) "\n" + stringResource(R.string.plus_minus_kcal, "%,d".format(weekSigma.roundToInt())) else "",
                 valueColor = if (balance > 0) colors.error else colors.primary,
                 modifier = Modifier.weight(1f)
             )

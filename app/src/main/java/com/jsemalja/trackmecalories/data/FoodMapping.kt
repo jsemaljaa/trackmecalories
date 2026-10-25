@@ -5,7 +5,12 @@ package com.jsemalja.trackmecalories.data
  * macros by how much was actually consumed. Centralizes the amount/referenceAmount ratio so
  * every add-flow (scan, search, recents, manual) handles "pcs" foods the same way grams/ml do.
  */
-fun CustomFood.toEntry(amount: Double, mealType: String, date: String): FoodEntry {
+fun CustomFood.toEntry(
+    amount: Double,
+    mealType: String,
+    date: String,
+    confidence: Confidence = Confidence.ESTIMATED
+): FoodEntry {
     val ratio = amount / referenceAmount
     return FoodEntry(
         name = name,
@@ -19,7 +24,9 @@ fun CustomFood.toEntry(amount: Double, mealType: String, date: String): FoodEntr
         unit = unit,
         referenceAmount = referenceAmount,
         mealType = mealType,
-        date = date
+        date = date,
+        confidence = confidence.name,
+        foodId = id.takeIf { it != 0 }
     )
 }
 

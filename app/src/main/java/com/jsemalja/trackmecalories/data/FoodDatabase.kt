@@ -216,7 +216,10 @@ data class DailyTotal(
     val totalKcal: Int,
     val totalProtein: Double,
     val totalCarbs: Double,
-    val totalFat: Double
+    val totalFat: Double,
+    // Sum of squared per-entry errors (kcal²), from each entry's confidence. Its square
+    // root is the day's ± band; see [Confidence].
+    val kcalVariance: Double = 0.0
 )
 
 @Dao
@@ -233,7 +236,12 @@ interface FoodDao {
                SUM(kcal) AS totalKcal,
                SUM(protein) AS totalProtein,
                SUM(carbs) AS totalCarbs,
-               SUM(fat) AS totalFat
+               SUM(fat) AS totalFat,
+               -- Relative errors must match Confidence: weighed 5%, estimated 15%, guessed 30%.
+               SUM(
+                   (kcal * CASE confidence WHEN 'WEIGHED' THEN 0.05 WHEN 'GUESSED' THEN 0.30 ELSE 0.15 END) *
+                   (kcal * CASE confidence WHEN 'WEIGHED' THEN 0.05 WHEN 'GUESSED' THEN 0.30 ELSE 0.15 END)
+               ) AS kcalVariance
         FROM food_entries
         WHERE date BETWEEN :startDate AND :endDate
         GROUP BY date

@@ -156,12 +156,12 @@ private fun ScannerContent(
             },
             showMeal = onPick == null,
             confirmLabel = if (onPick != null) stringResource(R.string.recipe_add) else null,
-            onConfirm = { amount, mealType ->
+            onConfirm = { amount, mealType, confidence ->
                 if (onPick != null) {
                     onPick(foundFood!!, amount)
                     return@PortionEntryDialog
                 }
-                viewModel.logCustomFood(foundFood!!, amount, mealType, viewModel.selectedDate.value.toString())
+                viewModel.logCustomFood(foundFood!!, amount, mealType, viewModel.selectedDate.value.toString(), confidence)
 
                 showPortionDialog = false
                 foundFood = null

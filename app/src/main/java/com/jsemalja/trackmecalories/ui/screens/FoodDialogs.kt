@@ -20,7 +20,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.jsemalja.trackmecalories.data.Confidence
 import com.jsemalja.trackmecalories.data.CustomFood
+import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Scale
+import androidx.compose.material.icons.outlined.Visibility
 import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.ui.theme.MacroCarbs
 import com.jsemalja.trackmecalories.ui.theme.MacroFat
@@ -84,7 +88,7 @@ fun String.toDecimal(): Double? = trim().replace(',', '.').toDoubleOrNull()
 fun PortionEntryDialog(
     food: CustomFood,
     onDismiss: () -> Unit,
-    onConfirm: (Double, String) -> Unit,
+    onConfirm: (Double, String, Confidence) -> Unit,
     // Shown for already-saved foods, so a wrong macro can be fixed right where it's noticed.
     onEdit: (() -> Unit)? = null,
     // Ingredient mode (recipes): no meal choice, and a different confirm label.
@@ -92,6 +96,7 @@ fun PortionEntryDialog(
     confirmLabel: String? = null
 ) {
     var amount by remember { mutableStateOf(food.referenceAmount.clean()) }
+    var confidence by remember { mutableStateOf(Confidence.ESTIMATED) }
     var mealType by remember { mutableStateOf(mealForNow()) }
 
     AlertDialog(
@@ -137,11 +142,13 @@ fun PortionEntryDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                if (showMeal) ConfidenceChips(confidence) { confidence = it }
             }
         },
         confirmButton = {
             Button(onClick = {
-                onConfirm(amount.toDecimal() ?: food.referenceAmount, mealType)
+                onConfirm(amount.toDecimal() ?: food.referenceAmount, mealType, confidence)
             }) { Text(confirmLabel ?: stringResource(R.string.log_food)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
@@ -157,6 +164,7 @@ fun EditEntryDialog(
     onDelete: () -> Unit
 ) {
     var amount by remember { mutableStateOf(entry.amount.clean()) }
+    var confidence by remember { mutableStateOf(Confidence.from(entry.confidence)) }
 
     // Back out the per-reference-amount values for the live summary preview.
     val ratio = entry.referenceAmount / entry.amount
@@ -190,6 +198,8 @@ fun EditEntryDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                ConfidenceChips(confidence) { confidence = it }
 
                 Text(stringResource(R.string.quick_copy), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -225,7 +235,8 @@ fun EditEntryDialog(
                     carbs = entry.carbs * updateRatio,
                     fat = entry.fat * updateRatio,
                     fiber = entry.fiber * updateRatio,
-                    salt = entry.salt * updateRatio
+                    salt = entry.salt * updateRatio,
+                    confidence = confidence.name
                 ))
                 onDismiss()
             }) { Text(stringResource(R.string.update)) }
@@ -537,4 +548,37 @@ fun EditSavedFoodDialog(viewModel: MainViewModel, food: CustomFood, onDismiss: (
             onDismiss()
         }
     )
+}
+
+/**
+ * How sure the amount is. Feeds the ± band on daily and weekly totals: a weighed portion
+ * is close to exact, a guessed restaurant plate can be a third off either way.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ConfidenceChips(selected: Confidence, onSelect: (Confidence) -> Unit) {
+    Column {
+        Text(stringResource(R.string.confidence_question), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Confidence.entries.forEach { c ->
+                FilterChip(
+                    selected = selected == c,
+                    onClick = { onSelect(c) },
+                    label = { Text(stringResource(c.label)) },
+                    leadingIcon = { Icon(confidenceIcon(c), contentDescription = null, modifier = Modifier.size(16.dp)) }
+                )
+            }
+        }
+        Text(
+            stringResource(R.string.confidence_hint, (selected.relativeError * 100).roundToInt()),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+fun confidenceIcon(c: Confidence) = when (c) {
+    Confidence.WEIGHED -> Icons.Outlined.Scale
+    Confidence.ESTIMATED -> Icons.Outlined.Visibility
+    Confidence.GUESSED -> Icons.Outlined.HelpOutline
 }

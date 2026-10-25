@@ -1,5 +1,8 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.data.kcalUncertainty
+import com.jsemalja.trackmecalories.data.Confidence
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.theme.isGlass
 import androidx.compose.animation.animateColorAsState
@@ -209,8 +212,8 @@ fun HomeScreen(
         PortionEntryDialog(
             food = showPortionDialogFor!!,
             onDismiss = { showPortionDialogFor = null },
-            onConfirm = { amount, mealType ->
-                viewModel.logCustomFood(showPortionDialogFor!!, amount, mealType, selectedDate.toString())
+            onConfirm = { amount, mealType, confidence ->
+                viewModel.logCustomFood(showPortionDialogFor!!, amount, mealType, selectedDate.toString(), confidence)
                 showPortionDialogFor = null
             }
         )
@@ -377,7 +380,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
                 Spacer(Modifier.width(20.dp))
 
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    CalorieStat(stringResource(R.string.eaten), eaten, onCard)
+                    CalorieStat(stringResource(R.string.eaten), eaten, onCard, uncertainty = entries.kcalUncertainty().roundToInt())
                     CalorieStat(stringResource(R.string.goal), goal, onCard)
                     HorizontalDivider(color = onCard.copy(alpha = 0.15f))
                     Text(
@@ -412,12 +415,21 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
 }
 
 @Composable
-private fun CalorieStat(label: String, kcal: Int, color: Color) {
+private fun CalorieStat(label: String, kcal: Int, color: Color, uncertainty: Int = 0) {
     Column {
         Text(label, style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f))
         Row(verticalAlignment = Alignment.Bottom) {
             Text("%,d".format(kcal), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
             Text(" " + stringResource(R.string.unit_kcal), style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 3.dp))
+            // How far off the total could be, given how each entry was measured.
+            if (uncertainty >= 5) {
+                Text(
+                    "  ± %,d".format(uncertainty),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = color.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
+            }
         }
     }
 }
@@ -529,6 +541,17 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
             }
             Spacer(Modifier.width(12.dp))
             Row(verticalAlignment = Alignment.Bottom) {
+                val confidence = Confidence.from(entry.confidence)
+                // Estimated is the default; only mark the outliers.
+                if (confidence != Confidence.ESTIMATED) {
+                    Icon(
+                        confidenceIcon(confidence),
+                        contentDescription = stringResource(confidence.label),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp).align(Alignment.CenterVertically)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                }
                 Text("${entry.kcal}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
                     " " + stringResource(R.string.unit_kcal),

@@ -18,6 +18,7 @@ import com.jsemalja.trackmecalories.data.Recipe
 import com.jsemalja.trackmecalories.data.RecipeIngredient
 import com.jsemalja.trackmecalories.data.RestaurantMenu
 import com.jsemalja.trackmecalories.data.AdaptiveMaintenance
+import com.jsemalja.trackmecalories.data.Confidence
 import com.jsemalja.trackmecalories.data.WeightEntry
 import com.jsemalja.trackmecalories.data.WeightPoint
 import com.jsemalja.trackmecalories.data.adaptiveMaintenance
@@ -413,17 +414,25 @@ class MainViewModel(
      * otherwise its recency is just bumped. This is the single path every add-flow
      * (scan, search, recents, favorites, manual) should go through.
      */
-    fun logCustomFood(food: CustomFood, amount: Double, mealType: String, date: String = selectedDate.value.toString()) {
+    fun logCustomFood(
+        food: CustomFood,
+        amount: Double,
+        mealType: String,
+        date: String = selectedDate.value.toString(),
+        confidence: Confidence = Confidence.ESTIMATED
+    ) {
         viewModelScope.launch {
-            dao.insertEntry(food.toEntry(amount, mealType, date))
             // A search result may already be saved (same barcode / restaurant item id). Bump
             // that one instead of REPLACE-inserting, which would drop its favorite flag and edits.
             val saved = if (food.id != 0) food else food.barcode?.let { dao.getCustomFoodByBarcode(it) }
-            if (saved != null) {
+            val foodId = if (saved != null) {
                 dao.touchLastUsed(saved.id)
+                saved.id
             } else {
-                dao.insertCustomFood(food.copy(lastUsedAt = System.currentTimeMillis()))
+                dao.insertCustomFood(food.copy(lastUsedAt = System.currentTimeMillis())).toInt()
             }
+            // Linked to its saved food, so suggestions and insights can find it again.
+            dao.insertEntry(food.copy(id = foodId).toEntry(amount, mealType, date, confidence))
         }
     }
 
@@ -471,7 +480,9 @@ class MainViewModel(
                     fiber = 0.0,
                     salt = 0.0,
                     date = selectedDate.value.toString(),
-                    mealType = "Quick Add"
+                    mealType = "Quick Add",
+                    // A bare number is the least certain kind of entry.
+                    confidence = Confidence.GUESSED.name
                 )
             )
         }

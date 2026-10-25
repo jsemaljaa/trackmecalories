@@ -373,4 +373,9 @@
 
     <!-- Log row -->
     <string name="entry_line">%1$s · P %2$d · C %3$d · F %4$d</string>
+
+    <!-- Confidence UI -->
+    <string name="confidence_question">How sure is the amount?</string>
+    <string name="confidence_hint">Totals carry about ±%1$d%% for this entry.</string>
+    <string name="plus_minus_kcal">± %1$s kcal from portion estimates</string>
 </resources>

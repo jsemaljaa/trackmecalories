@@ -116,3 +116,10 @@ enum class Confidence(@StringRes val label: Int, val relativeError: Double) {
         fun from(name: String?): Confidence = entries.firstOrNull { it.name == name } ?: ESTIMATED
     }
 }
+
+/**
+ * ± kcal for a set of entries. Errors of separate entries are treated as independent, so
+ * they partly cancel: the band is the square root of the summed squared errors, not their sum.
+ */
+fun List<FoodEntry>.kcalUncertainty(): Double =
+    kotlin.math.sqrt(sumOf { e -> (e.kcal * Confidence.from(e.confidence).relativeError).let { it * it } })
