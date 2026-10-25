@@ -4,6 +4,7 @@ package com.jsemalja.trackmecalories.ui.viewmodel
 
 import com.jsemalja.trackmecalories.data.weeklyBudget
 import com.jsemalja.trackmecalories.data.DayActivity
+import com.jsemalja.trackmecalories.data.EatBack
 import com.jsemalja.trackmecalories.data.HealthData
 import com.jsemalja.trackmecalories.data.HealthStatus
 import com.jsemalja.trackmecalories.data.WeeklyBudget
@@ -200,6 +201,10 @@ class MainViewModel(
             else health.activityFor(date)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val eatBack: StateFlow<EatBack> = userPrefs.eatBack
+
+    fun setEatBack(value: EatBack) = userPrefs.setEatBack(value)
 
     // --- Weight ---
 

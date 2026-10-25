@@ -472,4 +472,10 @@
     <string name="health_rationale_title">Зачем TrackMe Calories читает данные о здоровье</string>
     <string name="health_rationale_body">Приложение читает шаги, активные калории и тренировки из Health Connect, чтобы показать их рядом с тем, что вы съели, на экране «Сегодня», а если вы включите эту настройку, — добавить часть сожжённых калорий к цели на этот день.</string>
     <string name="health_rationale_privacy">Данные читаются только пока приложение открыто и только за выбранный день. Они не сохраняются, никуда не передаются, и приложение ничего не записывает в Health Connect. Отозвать доступ можно в любой момент в Health Connect.</string>
+    <string name="eat_back">Учитывать калории активности</string>
+    <string name="eat_back_desc">Добавлять часть сегодняшних активных калорий к цели на сегодня. Часы обычно завышают расход, поэтому 50% — более осторожный вариант.</string>
+    <string name="eat_back_off">Выкл.</string>
+    <string name="eat_back_half">50%</string>
+    <string name="eat_back_full">100%</string>
+    <string name="goal_activity_bonus">вкл. +%1$s за активность</string>
 </resources>

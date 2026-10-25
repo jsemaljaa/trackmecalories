@@ -18,7 +18,19 @@ class UserPrefs(context: Context) {
         _weeklyBudget.value = enabled
     }
 
+    private val _eatBack = MutableStateFlow(
+        EatBack.entries.firstOrNull { it.name == prefs.getString(KEY_EAT_BACK, null) } ?: EatBack.OFF
+    )
+    /** Share of today's active calories added to today's goal. */
+    val eatBack: StateFlow<EatBack> = _eatBack.asStateFlow()
+
+    fun setEatBack(value: EatBack) {
+        prefs.edit().putString(KEY_EAT_BACK, value.name).apply()
+        _eatBack.value = value
+    }
+
     private companion object {
         const val KEY_WEEKLY_BUDGET = "weekly_budget"
+        const val KEY_EAT_BACK = "eat_back"
     }
 }

@@ -98,10 +98,15 @@ fun HomeScreen(
     val weekly by viewModel.weeklyBudget.collectAsState()
     val healthStatus by viewModel.healthStatus.collectAsState()
     val activity by viewModel.dayActivity.collectAsState()
+    val eatBack by viewModel.eatBack.collectAsState()
     val history by viewModel.historyEntries.collectAsState()
     val savedFoods by viewModel.allCustomFoods.collectAsState()
     var showWhatFits by remember { mutableStateOf(false) }
     val isToday = selectedDate == LocalDate.now()
+    // Eaten-back activity counts for today only: past days keep the goal they were planned with.
+    val activityBonus = if (isToday && healthStatus == HealthStatus.CONNECTED) eatBack.bonus(activity?.activeKcal) else 0
+    // Today's real target: the weekly-budget share (if on) plus the activity bonus.
+    val todayGoal = ((if (isToday) weekly?.todayTarget else null) ?: goals.calorieGoal) + activityBonus
     // Recomputed when the history changes; the clock moving a few minutes doesn't matter.
     val suggestions = remember(history, savedFoods, isToday) {
         if (isToday) timeSuggestions(history, savedFoods, LocalDateTime.now()) else emptyList()
@@ -183,7 +188,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 // The flexible target only applies to today.
-                item(key = "progress") { DailyProgressCard(entries, goals, if (selectedDate == LocalDate.now()) weekly else null) }
+                item(key = "progress") { DailyProgressCard(entries, goals, if (isToday) weekly else null, activityBonus) }
                 item(key = "water") {
                     Column {
                         Spacer(Modifier.height(8.dp))
@@ -292,7 +297,7 @@ fun HomeScreen(
     }
 
     if (showWhatFits) {
-        val remainingKcal = (goals.calorieGoal - entries.sumOf { it.kcal }).toDouble()
+        val remainingKcal = (todayGoal - entries.sumOf { it.kcal }).toDouble()
         val remainingProtein = goals.proteinGoal - entries.sumOf { it.protein }
         WhatFitsDialog(
             fits = remember(history, savedFoods, remainingKcal, remainingProtein) {
@@ -417,11 +422,12 @@ fun WaterCard(
  * far over) in the middle, eaten/goal beside it, and each nutrient as "eaten / goal".
  */
 @Composable
-fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyBudget? = null) {
+fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyBudget? = null, activityBonus: Int = 0) {
     val colors = MaterialTheme.colorScheme
     val eaten = entries.sumOf { it.kcal }
     // With weekly budgeting, today's target flexes with the rest of the week.
-    val goal = (weekly?.todayTarget ?: goals.calorieGoal).coerceAtLeast(1)
+    // Eat-back adds part of today's active calories on top.
+    val goal = ((weekly?.todayTarget ?: goals.calorieGoal) + activityBonus).coerceAtLeast(1)
     val remaining = goal - eaten
     val isOver = remaining < 0
     val statusColor = if (isOver) colors.error else colors.primary
@@ -459,7 +465,16 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
 
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     CalorieStat(stringResource(R.string.eaten), eaten, onCard, uncertainty = entries.kcalUncertainty().roundToInt())
-                    CalorieStat(stringResource(if (weekly != null) R.string.goal_today_flex else R.string.goal), goal, onCard)
+                    Column {
+                        CalorieStat(stringResource(if (weekly != null) R.string.goal_today_flex else R.string.goal), goal, onCard)
+                        if (activityBonus > 0) {
+                            Text(
+                                stringResource(R.string.goal_activity_bonus, "%,d".format(activityBonus)),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = onCard.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
                     HorizontalDivider(color = onCard.copy(alpha = 0.15f))
                     Text(
                         when {

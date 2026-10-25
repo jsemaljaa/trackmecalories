@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import com.jsemalja.trackmecalories.data.HealthData
+import com.jsemalja.trackmecalories.data.EatBack
 import com.jsemalja.trackmecalories.data.HealthStatus
 import androidx.compose.ui.res.stringResource
 import com.jsemalja.trackmecalories.R
@@ -185,6 +186,7 @@ fun SettingsScreen(
  * Health Connect: connection status, the button to grant access (or fix why it can't be),
  * and how to get Zepp syncing into it.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HealthSettings(viewModel: MainViewModel) {
     val status by viewModel.healthStatus.collectAsState()
@@ -234,6 +236,23 @@ private fun HealthSettings(viewModel: MainViewModel) {
             modifier = Modifier.fillMaxWidth()
         ) { Text(stringResource(R.string.health_install)) }
         HealthStatus.UNAVAILABLE -> Unit
+    }
+    if (status == HealthStatus.CONNECTED) {
+        val eatBack by viewModel.eatBack.collectAsState()
+        Spacer(Modifier.height(20.dp))
+        Text(stringResource(R.string.eat_back), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.eat_back_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            EatBack.entries.forEachIndexed { i, option ->
+                SegmentedButton(
+                    selected = eatBack == option,
+                    onClick = { viewModel.setEatBack(option) },
+                    shape = SegmentedButtonDefaults.itemShape(i, EatBack.entries.size),
+                    colors = appSegmentedColors()
+                ) { Text(stringResource(option.label)) }
+            }
+        }
     }
     if (status != HealthStatus.UNAVAILABLE) {
         Spacer(Modifier.height(12.dp))
