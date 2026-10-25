@@ -487,10 +487,15 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
                         fontWeight = FontWeight.Bold,
                         color = if (isOver) colors.error else onCard
                     )
+                    // Narrower than the ring's inside, so longer translations wrap instead of
+                    // running over the stroke.
                     Text(
                         stringResource(if (isOver) R.string.kcal_over else R.string.kcal_left),
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (isOver) colors.error else onCard.copy(alpha = 0.75f)
+                        color = if (isOver) colors.error else onCard.copy(alpha = 0.75f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        modifier = Modifier.widthIn(max = 80.dp)
                     )
                 }
 

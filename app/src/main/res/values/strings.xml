@@ -303,11 +303,11 @@
     <string name="tab_favorites">Favorites</string>
     <string name="tab_all">All</string>
     <string name="tab_recipes">Recipes</string>
-    <string name="favorites_empty">Tap the star on a saved food to pin it here.</string>
+    <string name="tab_restaurants">Restaurants</string>
+    <string name="favorites_empty">Open a saved food and tap its star to pin it here.</string>
     <string name="saved_empty">Foods you log or create show up here.</string>
     <string name="pin_favorite">Pin to favorites</string>
     <string name="unpin_favorite">Unpin from favorites</string>
-    <string name="saved_food_line">%1$d kcal per %2$s · P %3$d · C %4$d · F %5$d</string>
 
     <!-- Trends -->
     <string name="calories_per_day">Calories per day</string>

@@ -654,11 +654,11 @@ class MainViewModel(
     }
 
     /**
-     * Toggles whether a saved food is pinned to the Favorites list.
+     * Pins a saved food to the Favorites list, or unpins it.
      */
-    fun toggleFavorite(food: CustomFood) {
+    fun setFavorite(food: CustomFood, favorite: Boolean) {
         viewModelScope.launch {
-            dao.setFavorite(food.id, !food.isFavorite)
+            dao.setFavorite(food.id, favorite)
         }
     }
 

@@ -11,6 +11,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -91,6 +93,9 @@ fun PortionEntryDialog(
     onConfirm: (Double, String, Confidence) -> Unit,
     // Shown for already-saved foods, so a wrong macro can be fixed right where it's noticed.
     onEdit: (() -> Unit)? = null,
+    // Whether the food is pinned to favorites; null hides the star (unsaved foods, recipes' ingredients).
+    favorite: Boolean? = null,
+    onFavoriteChange: (Boolean) -> Unit = {},
     // Ingredient mode (recipes): no meal choice, and a different confirm label.
     showMeal: Boolean = true,
     confirmLabel: String? = null
@@ -99,12 +104,22 @@ fun PortionEntryDialog(
     var amount by remember { mutableStateOf((food.defaultAmount ?: food.referenceAmount).clean()) }
     var confidence by remember { mutableStateOf(Confidence.ESTIMATED) }
     var mealType by remember { mutableStateOf(mealForNow()) }
+    var isFavorite by remember { mutableStateOf(favorite) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.Top) {
                 Text(if (showMeal) stringResource(R.string.log_food_title, food.name) else food.name, modifier = Modifier.weight(1f))
+                isFavorite?.let { pinned ->
+                    IconButton(onClick = { isFavorite = !pinned; onFavoriteChange(!pinned) }) {
+                        Icon(
+                            if (pinned) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                            contentDescription = stringResource(if (pinned) R.string.unpin_favorite else R.string.pin_favorite),
+                            tint = if (pinned) MaterialTheme.colorScheme.secondary else LocalContentColor.current
+                        )
+                    }
+                }
                 if (onEdit != null) {
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_food))

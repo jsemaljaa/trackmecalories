@@ -305,11 +305,11 @@
     <string name="tab_favorites">Избранное</string>
     <string name="tab_all">Все</string>
     <string name="tab_recipes">Рецепты</string>
-    <string name="favorites_empty">Нажмите на звёздочку у продукта, чтобы закрепить его здесь.</string>
+    <string name="tab_restaurants">Рестораны</string>
+    <string name="favorites_empty">Откройте продукт и нажмите на звёздочку, чтобы закрепить его здесь.</string>
     <string name="saved_empty">Здесь появятся продукты, которые вы записываете или создаёте.</string>
     <string name="pin_favorite">В избранное</string>
     <string name="unpin_favorite">Убрать из избранного</string>
-    <string name="saved_food_line">%1$d ккал на %2$s · Б %3$d · Ж %5$d · У %4$d</string>
 
     <!-- Trends -->
     <string name="calories_per_day">Калории по дням</string>

@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Restaurant
@@ -16,10 +15,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
@@ -44,17 +41,11 @@ import com.jsemalja.trackmecalories.R
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-// Shortcuts on the empty search screen; each lists that chain's bundled menu.
-private val POPULAR_SPOTS = listOf(
-    "Don Pačínko", "Bageterie Boulevard", "McDonald's", "KFC", "Burger King", "Subway",
-    "Starbucks", "Costa Coffee", "Paul", "Ugo", "Pizza Hut", "Albert Fresh Bistro"
-)
-
 /**
  * The Food tab. One search box over everything: your saved foods first, then a single list
  * ranked by relevance from bundled restaurant menus, Kalorické tabulky and Open Food Facts.
- * With nothing typed it lists your saved foods (recent / favorites / all), and the box has
- * a barcode button that opens the scanner.
+ * With nothing typed it lists your saved foods (recent / favorites / all), recipes and
+ * restaurant shortcuts, and the box has a barcode button that opens the scanner.
  */
 @Composable
 fun SearchScreen(
@@ -175,18 +166,6 @@ fun SearchScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                item(key = "spots") {
-                    // One scrollable line of chain shortcuts keeps the screen calm.
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(POPULAR_SPOTS) { spot ->
-                            AssistChip(
-                                onClick = { viewModel.searchFoods(spot) },
-                                label = { Text(spot) },
-                                leadingIcon = { Icon(Icons.Outlined.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                            )
-                        }
-                    }
-                }
                 savedFoodsSection(
                     tab = savedTab,
                     onTabChange = { savedTab = it },
@@ -194,14 +173,13 @@ fun SearchScreen(
                         SavedFoodsTab.RECENT -> recentFoods
                         SavedFoodsTab.FAVORITES -> favoriteFoods
                         SavedFoodsTab.ALL -> allFoods
-                        SavedFoodsTab.RECIPES -> emptyList()
+                        SavedFoodsTab.RECIPES, SavedFoodsTab.RESTAURANTS -> emptyList()
                     },
                     onLog = { foodToLog = it },
-                    onEdit = { editFood(it) },
-                    onToggleFavorite = { viewModel.toggleFavorite(it) },
                     recipes = recipes,
                     onNewRecipe = { recipeEditorId = null; recipeEditorOpen = true },
                     onOpenRecipe = { recipeEditorId = it; recipeEditorOpen = true },
+                    onOpenSpot = { viewModel.searchFoods(it) },
                     showRecipesTab = pick == null,
                     sort = allSort,
                     onSortChange = { allSort = it }
@@ -216,11 +194,7 @@ fun SearchScreen(
                 if (savedMatches.isNotEmpty()) {
                     item(key = "saved_header") { SectionLabel(stringResource(R.string.your_foods)) }
                     items(savedMatches, key = { "saved_${it.id}" }) { food ->
-                        SavedFoodResultRow(
-                            food = food,
-                            onClick = { foodToLog = food },
-                            onEdit = { editFood(food) }
-                        )
+                        SavedFoodRow(food, onClick = { foodToLog = food })
                     }
                 }
 
@@ -287,6 +261,8 @@ fun SearchScreen(
                     editFood(food)
                 }
             } else null,
+            favorite = if (food.id != 0 && pick == null) food.isFavorite else null,
+            onFavoriteChange = { viewModel.setFavorite(food, it) },
             showMeal = pick == null,
             confirmLabel = if (pick != null) stringResource(R.string.recipe_add) else null
         )
@@ -353,24 +329,6 @@ private fun SearchMessage(
 }
 
 @Composable
-private fun SavedFoodResultRow(food: CustomFood, onClick: () -> Unit, onEdit: () -> Unit) {
-    ResultCard(
-        title = food.name,
-        subtitle = null,
-        kcal = food.kcalPer100,
-        macros = macroLine(food.proteinPer100, food.carbsPer100, food.fatPer100),
-        per = perLabel(food.unit),
-        source = null,
-        leading = Icons.Default.Bookmark,
-        onClick = onClick,
-        rated = food,
-        trailing = {
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_food)) }
-        }
-    )
-}
-
-@Composable
 private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit) {
     val macros = when {
         isLoading -> stringResource(R.string.loading_serving)
@@ -397,13 +355,13 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
 }
 
 @Composable
-private fun perLabel(unit: String) = if (unit == "pcs") stringResource(R.string.per_piece_short) else "100 ${unitLabel(unit)}"
+internal fun perLabel(unit: String) = if (unit == "pcs") stringResource(R.string.per_piece_short) else "100 ${unitLabel(unit)}"
 
 @Composable
-private fun macroLine(protein: Double, carbs: Double, fat: Double) = stringResource(R.string.macro_line, fmt(protein), fmt(carbs), fmt(fat))
+internal fun macroLine(protein: Double, carbs: Double, fat: Double) = stringResource(R.string.macro_line, fmt(protein), fmt(carbs), fmt(fat))
 
 @Composable
-private fun ResultCard(
+internal fun ResultCard(
     title: String,
     subtitle: String?,
     kcal: Double,
