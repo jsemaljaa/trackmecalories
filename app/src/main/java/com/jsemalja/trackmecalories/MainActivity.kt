@@ -1,5 +1,6 @@
 package com.jsemalja.trackmecalories
 
+import com.jsemalja.trackmecalories.data.UserPrefs
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -94,12 +95,13 @@ class MainActivity : ComponentActivity() {
         }
         val restaurantMenu = RestaurantMenu(applicationContext.assets)
         val appearancePrefs = AppearancePrefs(applicationContext)
+        val userPrefs = UserPrefs(applicationContext)
 
         enableEdgeToEdge()
         setContent {
             val appearance by appearancePrefs.appearance.collectAsState()
             TrackmecaloriesTheme(appearance = appearance) {
-                val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(dao, restaurantMenu))
+                val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(dao, restaurantMenu, userPrefs))
                 val action by pendingAction.collectAsState()
                 TrackmecaloriesApp(mainViewModel, appearancePrefs, action, onActionHandled = { pendingAction.value = null })
             }

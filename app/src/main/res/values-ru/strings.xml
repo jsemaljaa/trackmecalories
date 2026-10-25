@@ -417,4 +417,11 @@
     <string name="widget_quick">⚡ Быстро</string>
     <string name="widget_scan">Скан</string>
     <string name="widget_weight">Вес</string>
+
+    <!-- Weekly budget -->
+    <string name="goal_today_flex">Сегодня (по неделе)</string>
+    <string name="week_budget_line">Неделя: осталось %1$s из %2$s ккал · дней с сегодняшним: %3$d</string>
+    <string name="week_budget_capped">Цель на сегодня ограничена ±25% от обычной; остальное переносится.</string>
+    <string name="weekly_budget">Недельный бюджет</string>
+    <string name="weekly_budget_desc">Калории распределяются по неделе: сэкономленное или перебранное делится на оставшиеся дни (не более ±25% в день).</string>
 </resources>

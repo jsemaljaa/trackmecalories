@@ -2,6 +2,9 @@
 
 package com.jsemalja.trackmecalories.ui.viewmodel
 
+import com.jsemalja.trackmecalories.data.weeklyBudget
+import com.jsemalja.trackmecalories.data.WeeklyBudget
+import com.jsemalja.trackmecalories.data.UserPrefs
 import com.jsemalja.trackmecalories.data.suggestionHistoryStart
 import com.jsemalja.trackmecalories.data.DayLog
 import com.jsemalja.trackmecalories.R
@@ -54,7 +57,8 @@ import kotlin.math.roundToInt
  */
 class MainViewModel(
     private val dao: FoodDao,
-    private val restaurantMenu: RestaurantMenu
+    private val restaurantMenu: RestaurantMenu,
+    private val userPrefs: UserPrefs
 ) : ViewModel() {
 
     private val repository = FoodRepository(dao)
@@ -140,6 +144,33 @@ class MainViewModel(
     /** The last 90 days of entries: the history suggestions and "What fits?" learn from. */
     val historyEntries: StateFlow<List<FoodEntry>> = dao.observeEntriesSince(suggestionHistoryStart().toString())
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // --- Weekly budgeting ---
+
+    val weeklyBudgetEnabled: StateFlow<Boolean> = userPrefs.weeklyBudget
+
+    fun setWeeklyBudget(enabled: Boolean) = userPrefs.setWeeklyBudget(enabled)
+
+    /** This week's budget and today's flexible target; null when weekly budgeting is off. */
+    val weeklyBudget: StateFlow<WeeklyBudget?> = run {
+        val today = LocalDate.now()
+        val start = weekStartOf(today)
+        combine(
+            userPrefs.weeklyBudget,
+            userGoal,
+            dao.getDailyTotalsBetween(start.toString(), today.toString()),
+            dao.getDayLogsBetween(start.toString(), today.toString())
+        ) { enabled, goal, totals, logs ->
+            if (!enabled) return@combine null
+            weeklyBudget(
+                dailyGoal = goal.calorieGoal,
+                weekStart = start,
+                today = today,
+                intakeByDate = totals.associate { LocalDate.parse(it.date) to it.totalKcal },
+                incompleteDays = logs.filter { !it.complete }.map { LocalDate.parse(it.date) }.toSet()
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // --- Weight ---
 
@@ -675,12 +706,13 @@ fun weekStartOf(date: LocalDate): LocalDate =
 
 class MainViewModelFactory(
     private val dao: FoodDao,
-    private val restaurantMenu: RestaurantMenu
+    private val restaurantMenu: RestaurantMenu,
+    private val userPrefs: UserPrefs
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(dao, restaurantMenu) as T
+            return MainViewModel(dao, restaurantMenu, userPrefs) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

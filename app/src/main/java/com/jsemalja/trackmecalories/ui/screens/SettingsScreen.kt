@@ -85,6 +85,16 @@ fun SettingsScreen(
                 measuredMaintenance = measured?.kcal,
                 onSave = viewModel::updateGoals
             )
+            val weeklyOn by viewModel.weeklyBudgetEnabled.collectAsState()
+            Spacer(Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.weekly_budget), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.weekly_budget_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = weeklyOn, onCheckedChange = viewModel::setWeeklyBudget)
+            }
         }
 
         Spacer(Modifier.height(16.dp))

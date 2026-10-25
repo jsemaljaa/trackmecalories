@@ -1,5 +1,6 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.data.WeeklyBudget
 import com.jsemalja.trackmecalories.QuickAction
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.AutoAwesome
@@ -93,6 +94,7 @@ fun HomeScreen(
     val selectedDate by viewModel.selectedDate.collectAsState()
     val waterEntries by viewModel.waterEntries.collectAsState()
     val dayComplete by viewModel.selectedDayComplete.collectAsState()
+    val weekly by viewModel.weeklyBudget.collectAsState()
     val history by viewModel.historyEntries.collectAsState()
     val savedFoods by viewModel.allCustomFoods.collectAsState()
     var showWhatFits by remember { mutableStateOf(false) }
@@ -177,7 +179,8 @@ fun HomeScreen(
                 contentPadding = PaddingValues(top = 8.dp, bottom = 88.dp), // clear the add button
                 modifier = Modifier.weight(1f)
             ) {
-                item(key = "progress") { DailyProgressCard(entries, goals) }
+                // The flexible target only applies to today.
+                item(key = "progress") { DailyProgressCard(entries, goals, if (selectedDate == LocalDate.now()) weekly else null) }
                 item(key = "water") {
                     Column {
                         Spacer(Modifier.height(8.dp))
@@ -405,10 +408,11 @@ fun WaterCard(
  * far over) in the middle, eaten/goal beside it, and each nutrient as "eaten / goal".
  */
 @Composable
-fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
+fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyBudget? = null) {
     val colors = MaterialTheme.colorScheme
     val eaten = entries.sumOf { it.kcal }
-    val goal = goals.calorieGoal.coerceAtLeast(1)
+    // With weekly budgeting, today's target flexes with the rest of the week.
+    val goal = (weekly?.todayTarget ?: goals.calorieGoal).coerceAtLeast(1)
     val remaining = goal - eaten
     val isOver = remaining < 0
     val statusColor = if (isOver) colors.error else colors.primary
@@ -446,7 +450,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
 
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     CalorieStat(stringResource(R.string.eaten), eaten, onCard, uncertainty = entries.kcalUncertainty().roundToInt())
-                    CalorieStat(stringResource(R.string.goal), goal, onCard)
+                    CalorieStat(stringResource(if (weekly != null) R.string.goal_today_flex else R.string.goal), goal, onCard)
                     HorizontalDivider(color = onCard.copy(alpha = 0.15f))
                     Text(
                         when {
@@ -474,6 +478,24 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal) {
                 // Salt is a limit, not a target — going over it is flagged.
                 NutrientProgress(stringResource(R.string.salt), entries.sumOf { it.salt }, goals.saltGoal, MacroSalt, Modifier.weight(1f), isLimit = true, decimals = true)
                 Spacer(Modifier.weight(1f))
+            }
+            if (weekly != null) {
+                Spacer(Modifier.height(14.dp))
+                HorizontalDivider(color = onCard.copy(alpha = 0.15f))
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    stringResource(
+                        R.string.week_budget_line,
+                        "%,d".format(weekly.weekLeft - eaten),
+                        "%,d".format(weekly.weekBudget),
+                        weekly.daysLeft
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = onCard.copy(alpha = 0.8f)
+                )
+                if (weekly.capped) {
+                    Text(stringResource(R.string.week_budget_capped), style = MaterialTheme.typography.labelSmall, color = onCard.copy(alpha = 0.65f))
+                }
             }
         }
     }
