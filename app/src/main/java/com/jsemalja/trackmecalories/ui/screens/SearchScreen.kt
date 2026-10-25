@@ -176,6 +176,8 @@ fun SearchScreen(
                         SavedFoodsTab.RECIPES, SavedFoodsTab.RESTAURANTS -> emptyList()
                     },
                     onLog = { foodToLog = it },
+                    onEdit = { editFood(it) },
+                    onToggleFavorite = { viewModel.setFavorite(it, !it.isFavorite) },
                     recipes = recipes,
                     onNewRecipe = { recipeEditorId = null; recipeEditorOpen = true },
                     onOpenRecipe = { recipeEditorId = it; recipeEditorOpen = true },
@@ -194,7 +196,12 @@ fun SearchScreen(
                 if (savedMatches.isNotEmpty()) {
                     item(key = "saved_header") { SectionLabel(stringResource(R.string.your_foods)) }
                     items(savedMatches, key = { "saved_${it.id}" }) { food ->
-                        SavedFoodRow(food, onClick = { foodToLog = food })
+                        SavedFoodRow(
+                            food = food,
+                            onClick = { foodToLog = food },
+                            onEdit = { editFood(food) },
+                            onToggleFavorite = { viewModel.setFavorite(food, !food.isFavorite) }
+                        )
                     }
                 }
 
@@ -379,7 +386,10 @@ internal fun ResultCard(
         strong = true,
         onClick = onClick
     ) {
-        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(start = 16.dp, end = if (trailing != null) 4.dp else 16.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             if (leading != null) {
                 Icon(leading, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(12.dp))

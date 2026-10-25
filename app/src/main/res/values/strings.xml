@@ -304,7 +304,7 @@
     <string name="tab_all">All</string>
     <string name="tab_recipes">Recipes</string>
     <string name="tab_restaurants">Restaurants</string>
-    <string name="favorites_empty">Open a saved food and tap its star to pin it here.</string>
+    <string name="favorites_empty">Tap the star on a saved food to pin it here.</string>
     <string name="saved_empty">Foods you log or create show up here.</string>
     <string name="pin_favorite">Pin to favorites</string>
     <string name="unpin_favorite">Unpin from favorites</string>

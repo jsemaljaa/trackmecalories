@@ -6,7 +6,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,14 +42,15 @@ enum class SavedFoodsTab(@androidx.annotation.StringRes val label: Int) {
 
 /**
  * Saved foods (recently used, pinned favorites, or everything), recipes and restaurant
- * shortcuts as a section of the Food tab's list — shown while nothing is typed. Rows only
- * log on tap; editing and pinning live in the portion dialog to keep the list quiet.
+ * shortcuts as a section of the Food tab's list — shown while nothing is typed.
  */
 fun LazyListScope.savedFoodsSection(
     tab: SavedFoodsTab,
     onTabChange: (SavedFoodsTab) -> Unit,
     foods: List<CustomFood>,
     onLog: (CustomFood) -> Unit,
+    onEdit: (CustomFood) -> Unit,
+    onToggleFavorite: (CustomFood) -> Unit,
     recipes: List<RecipeListItem> = emptyList(),
     onNewRecipe: () -> Unit = {},
     onOpenRecipe: (Int) -> Unit = {},
@@ -113,7 +117,12 @@ fun LazyListScope.savedFoodsSection(
         }
     } else {
         items(if (tab == SavedFoodsTab.ALL) sort.sort(foods) else foods, key = { "saved_list_${it.id}" }) { food ->
-            SavedFoodRow(food, onClick = { onLog(food) })
+            SavedFoodRow(
+                food = food,
+                onClick = { onLog(food) },
+                onEdit = { onEdit(food) },
+                onToggleFavorite = { onToggleFavorite(food) }
+            )
         }
     }
 }
@@ -142,7 +151,12 @@ private fun SortMenu(sort: FoodSort, onSortChange: (FoodSort) -> Unit) {
 }
 
 @Composable
-fun SavedFoodRow(food: CustomFood, onClick: () -> Unit) {
+fun SavedFoodRow(
+    food: CustomFood,
+    onClick: () -> Unit,
+    onEdit: () -> Unit,
+    onToggleFavorite: () -> Unit
+) {
     ResultCard(
         title = food.name,
         subtitle = null,
@@ -152,11 +166,29 @@ fun SavedFoodRow(food: CustomFood, onClick: () -> Unit) {
         source = null,
         leading = null,
         onClick = onClick,
-        rated = food
+        rated = food,
+        trailing = {
+            RowIconButton(onClick = onToggleFavorite) {
+                Icon(
+                    if (food.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    contentDescription = stringResource(if (food.isFavorite) R.string.unpin_favorite else R.string.pin_favorite),
+                    tint = if (food.isFavorite) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            RowIconButton(onClick = onEdit) {
+                Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit_food), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
     )
 }
 
-/** Recipes tab: create a recipe, or tap one to log it (the portion dialog's edit opens the editor). */
+/** A slightly smaller icon button, so two of them still leave the food name room on narrow phones. */
+@Composable
+private fun RowIconButton(onClick: () -> Unit, icon: @Composable () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(40.dp), content = icon)
+}
+
+/** Recipes tab: create a recipe, log one (per serving or by weight), or open it to edit. */
 private fun LazyListScope.recipesSection(
     recipes: List<RecipeListItem>,
     onLog: (CustomFood) -> Unit,
@@ -193,7 +225,12 @@ private fun LazyListScope.recipesSection(
                 source = null,
                 leading = Icons.Outlined.MenuBook,
                 onClick = { onLog(food) },
-                rated = food
+                rated = food,
+                trailing = {
+                    RowIconButton(onClick = { onOpenRecipe(item.recipe.id) }) {
+                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.recipe_edit), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             )
         } else {
             // A recipe without a saved food yet can only be opened and finished.
