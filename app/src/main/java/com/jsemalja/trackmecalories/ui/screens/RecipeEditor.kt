@@ -1,5 +1,8 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import android.os.Build
+import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -15,6 +18,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -22,6 +27,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.CookFactor
 import com.jsemalja.trackmecalories.data.CustomFood
@@ -107,10 +114,11 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    FullScreenDialog(onDismissRequest = onDismiss) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
-            Column(Modifier.fillMaxSize()) {
-                Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.fillMaxSize().safeDrawingPadding()) {
+                // Close icon and Save line up with the 16 dp content edges below.
+                Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close)) }
                     Text(
                         stringResource(if (recipeId == null) R.string.recipe_new else R.string.recipe_edit),
@@ -255,7 +263,8 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                         item {
                             TextButton(
                                 onClick = { confirmDelete = true },
-                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                contentPadding = PaddingValues(horizontal = 0.dp)
                             ) { Text(stringResource(R.string.recipe_delete)) }
                         }
                     }
@@ -275,8 +284,8 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
     }
 
     if (picking) {
-        Dialog(onDismissRequest = { picking = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
+        FullScreenDialog(onDismissRequest = { picking = false }) {
+            Surface(Modifier.fillMaxSize().safeDrawingPadding(), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
                 SearchScreen(
                     viewModel,
                     onOpenScanner = { picking = false; scanning = true },
@@ -290,7 +299,8 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
     }
 
     if (scanning) {
-        Dialog(onDismissRequest = { scanning = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        // The scanner pads itself for the status bar, like its overlay in MainActivity.
+        FullScreenDialog(onDismissRequest = { scanning = false }) {
             ScannerScreen(
                 viewModel,
                 onClose = { scanning = false },
@@ -315,6 +325,38 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
     }
 }
 
+/**
+ * A full-screen dialog drawn edge to edge. With the default decor fitting, a full-height dialog
+ * window is pushed below the status bar and its bottom ends up off screen; here the content
+ * pads itself for the system bars instead.
+ */
+@Composable
+private fun FullScreenDialog(onDismissRequest: () -> Unit, content: @Composable () -> Unit) {
+    Dialog(onDismissRequest, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        val view = LocalView.current
+        val window = (view.parent as? DialogWindowProvider)?.window
+        val lightBars = MaterialTheme.colorScheme.surfaceContainerLowest.luminance() > 0.5f
+        SideEffect {
+            window?.let {
+                // decorFitsSystemWindows alone leaves the window fitting the system bars.
+                it.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                WindowCompat.setDecorFitsSystemWindows(it, false)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    it.attributes = it.attributes.apply {
+                        fitInsetsTypes = 0
+                        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                    }
+                }
+                WindowCompat.getInsetsController(it, view).apply {
+                    isAppearanceLightStatusBars = lightBars
+                    isAppearanceLightNavigationBars = lightBars
+                }
+            }
+        }
+        content()
+    }
+}
+
 /** Search in "add ingredient" mode: picking a food asks for an amount, then hands it back. */
 class IngredientPick(val onPick: (CustomFood, Double) -> Unit, val onClose: () -> Unit)
 
@@ -336,7 +378,7 @@ private fun short(value: Double): String =
 @Composable
 private fun IngredientRow(ing: RecipeIngredient, onClick: () -> Unit, onRemove: () -> Unit) {
     AppCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, strong = true, onClick = onClick) {
-        Row(Modifier.padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(ing.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val grams = ing.amount * ing.gramsPerUnit
