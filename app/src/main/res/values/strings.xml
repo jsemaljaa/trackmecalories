@@ -357,6 +357,14 @@
     <string name="accent_rose">Rose</string>
     <string name="accent_orange">Orange</string>
     <string name="accent_wallpaper">Wallpaper</string>
+    <string name="font">Font</string>
+    <string name="font_system">System</string>
+    <!-- Font names are proper nouns: the same in every language. -->
+    <string name="font_roboto" translatable="false">Roboto</string>
+    <string name="font_public_sans" translatable="false">Public Sans</string>
+    <string name="font_space_grotesk" translatable="false">Space Grotesk</string>
+    <string name="font_mulish" translatable="false">Mulish</string>
+    <string name="font_oxygen" translatable="false">Oxygen</string>
     <string name="language">Language</string>
     <string name="language_system">System</string>
     <string name="language_english">English</string>

@@ -5,6 +5,9 @@ import androidx.annotation.StringRes
 import android.content.Context
 import android.os.Build
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -75,9 +78,31 @@ enum class AccentColor(
     }
 }
 
+/**
+ * Typeface choices: the phone's own font, or one of the bundled Google Fonts (static
+ * 400–700 weights in res/font, so they work offline and without Play services).
+ * Oxygen ships only regular and bold; Medium/SemiBold fall back to the nearest of those.
+ */
+enum class AppFont(@StringRes val label: Int, val family: FontFamily) {
+    SYSTEM(R.string.font_system, FontFamily.Default),
+    ROBOTO(R.string.font_roboto, weights(R.font.roboto_regular, R.font.roboto_medium, R.font.roboto_semibold, R.font.roboto_bold)),
+    PUBLIC_SANS(R.string.font_public_sans, weights(R.font.public_sans_regular, R.font.public_sans_medium, R.font.public_sans_semibold, R.font.public_sans_bold)),
+    SPACE_GROTESK(R.string.font_space_grotesk, weights(R.font.space_grotesk_regular, R.font.space_grotesk_medium, R.font.space_grotesk_semibold, R.font.space_grotesk_bold)),
+    MULISH(R.string.font_mulish, weights(R.font.mulish_regular, R.font.mulish_medium, R.font.mulish_semibold, R.font.mulish_bold)),
+    OXYGEN(R.string.font_oxygen, FontFamily(Font(R.font.oxygen_regular, FontWeight.Normal), Font(R.font.oxygen_bold, FontWeight.Bold)))
+}
+
+private fun weights(regular: Int, medium: Int, semiBold: Int, bold: Int) = FontFamily(
+    Font(regular, FontWeight.Normal),
+    Font(medium, FontWeight.Medium),
+    Font(semiBold, FontWeight.SemiBold),
+    Font(bold, FontWeight.Bold)
+)
+
 data class Appearance(
     val style: DesignStyle = DesignStyle.FLAT,
-    val accent: AccentColor = AccentColor.GREEN
+    val accent: AccentColor = AccentColor.GREEN,
+    val font: AppFont = AppFont.SYSTEM
 )
 
 /**
@@ -94,10 +119,13 @@ class AppearancePrefs(context: Context) {
 
     fun setAccent(accent: AccentColor) = update(_appearance.value.copy(accent = accent))
 
+    fun setFont(font: AppFont) = update(_appearance.value.copy(font = font))
+
     private fun update(value: Appearance) {
         prefs.edit()
             .putString(KEY_STYLE, value.style.name)
             .putString(KEY_ACCENT, value.accent.name)
+            .putString(KEY_FONT, value.font.name)
             .apply()
         _appearance.value = value
     }
@@ -106,11 +134,14 @@ class AppearancePrefs(context: Context) {
         style = prefs.getString(KEY_STYLE, null)
             ?.let { name -> DesignStyle.entries.firstOrNull { it.name == name } } ?: DesignStyle.FLAT,
         accent = prefs.getString(KEY_ACCENT, null)
-            ?.let { name -> AccentColor.entries.firstOrNull { it.name == name } } ?: AccentColor.GREEN
+            ?.let { name -> AccentColor.entries.firstOrNull { it.name == name } } ?: AccentColor.GREEN,
+        font = prefs.getString(KEY_FONT, null)
+            ?.let { name -> AppFont.entries.firstOrNull { it.name == name } } ?: AppFont.SYSTEM
     )
 
     private companion object {
         const val KEY_STYLE = "style"
         const val KEY_ACCENT = "accent"
+        const val KEY_FONT = "font"
     }
 }

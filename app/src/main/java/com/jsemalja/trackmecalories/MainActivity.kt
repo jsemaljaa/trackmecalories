@@ -192,7 +192,8 @@ fun TrackmecaloriesApp(
                 modifier,
                 appearance = appearance,
                 onStyleChange = appearancePrefs::setStyle,
-                onAccentChange = appearancePrefs::setAccent
+                onAccentChange = appearancePrefs::setAccent,
+                onFontChange = appearancePrefs::setFont
             )
         }
     }

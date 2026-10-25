@@ -38,11 +38,12 @@ fun TrackmecaloriesTheme(
         }
         if (glass) base.toGlass(darkTheme) else base
     }
+    val typography = remember(appearance.font) { appTypography(appearance.font.family) }
 
     CompositionLocalProvider(LocalDesignStyle provides appearance.style) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = Typography,
+            typography = typography,
             shapes = AppShapes,
         ) {
             // Same tree in both styles (only the backdrop layer differs), so switching style

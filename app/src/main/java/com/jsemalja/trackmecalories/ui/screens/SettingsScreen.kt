@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Color
 import com.jsemalja.trackmecalories.ui.theme.AccentColor
+import com.jsemalja.trackmecalories.ui.theme.AppFont
 import com.jsemalja.trackmecalories.ui.theme.Appearance
 import com.jsemalja.trackmecalories.ui.theme.DesignStyle
 import androidx.compose.foundation.layout.*
@@ -59,7 +60,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     appearance: Appearance,
     onStyleChange: (DesignStyle) -> Unit,
-    onAccentChange: (AccentColor) -> Unit
+    onAccentChange: (AccentColor) -> Unit,
+    onFontChange: (AppFont) -> Unit
 ) {
     val currentGoals by viewModel.userGoal.collectAsState()
     
@@ -77,7 +79,7 @@ fun SettingsScreen(
         Spacer(Modifier.height(24.dp))
 
         SettingsSectionCard(title = stringResource(R.string.appearance), titleColor = MaterialTheme.colorScheme.primary) {
-            AppearanceSettings(appearance, onStyleChange, onAccentChange)
+            AppearanceSettings(appearance, onStyleChange, onAccentChange, onFontChange)
             LanguageSettings()
         }
 
@@ -280,7 +282,8 @@ private fun SettingsSectionCard(
 private fun AppearanceSettings(
     appearance: Appearance,
     onStyleChange: (DesignStyle) -> Unit,
-    onAccentChange: (AccentColor) -> Unit
+    onAccentChange: (AccentColor) -> Unit,
+    onFontChange: (AppFont) -> Unit
 ) {
     Text(stringResource(R.string.style), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
@@ -309,6 +312,20 @@ private fun AppearanceSettings(
                 color = if (dark) accent.primaryDark else accent.primaryLight,
                 selected = appearance.accent == accent,
                 onClick = { onAccentChange(accent) }
+            )
+        }
+    }
+
+    Spacer(Modifier.height(20.dp))
+    Text(stringResource(R.string.font), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        AppFont.entries.forEach { font ->
+            FilterChip(
+                selected = appearance.font == font,
+                onClick = { onFontChange(font) },
+                // Each chip is set in its own font, so it doubles as a preview.
+                label = { Text(stringResource(font.label), fontFamily = font.family) }
             )
         }
     }

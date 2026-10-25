@@ -363,6 +363,8 @@
     <string name="accent_rose">Розовый</string>
     <string name="accent_orange">Оранжевый</string>
     <string name="accent_wallpaper">Обои</string>
+    <string name="font">Шрифт</string>
+    <string name="font_system">Системный</string>
     <string name="language">Язык</string>
     <string name="language_system">Системный</string>
     <string name="language_english">English</string>

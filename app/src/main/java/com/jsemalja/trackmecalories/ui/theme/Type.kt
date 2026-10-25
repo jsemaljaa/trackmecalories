@@ -14,28 +14,29 @@ private val base = Typography()
 
 /**
  * Material 3 scale with heavier, tighter headings (the app is number-heavy, and big
- * numbers read better bold) and tabular figures throughout.
+ * numbers read better bold) and tabular figures throughout, set in [fontFamily]
+ * (the user's [AppFont] choice).
  */
-val Typography = Typography(
-    displayLarge = base.displayLarge.tuned(FontWeight.Bold, (-0.5).sp),
-    displayMedium = base.displayMedium.tuned(FontWeight.Bold, (-0.5).sp),
-    displaySmall = base.displaySmall.tuned(FontWeight.Bold, (-0.25).sp),
-    headlineLarge = base.headlineLarge.tuned(FontWeight.Bold, (-0.5).sp),
-    headlineMedium = base.headlineMedium.tuned(FontWeight.Bold, (-0.25).sp),
-    headlineSmall = base.headlineSmall.tuned(FontWeight.Bold, 0.sp),
-    titleLarge = base.titleLarge.tuned(FontWeight.SemiBold, 0.sp),
-    titleMedium = base.titleMedium.tuned(FontWeight.SemiBold, 0.1.sp),
-    titleSmall = base.titleSmall.tuned(FontWeight.SemiBold, 0.1.sp),
-    bodyLarge = base.bodyLarge.tuned(FontWeight.Normal, 0.15.sp),
-    bodyMedium = base.bodyMedium.tuned(FontWeight.Normal, 0.15.sp),
-    bodySmall = base.bodySmall.tuned(FontWeight.Normal, 0.2.sp),
-    labelLarge = base.labelLarge.tuned(FontWeight.SemiBold, 0.1.sp),
-    labelMedium = base.labelMedium.tuned(FontWeight.Medium, 0.3.sp),
-    labelSmall = base.labelSmall.tuned(FontWeight.Medium, 0.3.sp)
+fun appTypography(fontFamily: FontFamily = FontFamily.Default) = Typography(
+    displayLarge = base.displayLarge.tuned(fontFamily, FontWeight.Bold, (-0.5).sp),
+    displayMedium = base.displayMedium.tuned(fontFamily, FontWeight.Bold, (-0.5).sp),
+    displaySmall = base.displaySmall.tuned(fontFamily, FontWeight.Bold, (-0.25).sp),
+    headlineLarge = base.headlineLarge.tuned(fontFamily, FontWeight.Bold, (-0.5).sp),
+    headlineMedium = base.headlineMedium.tuned(fontFamily, FontWeight.Bold, (-0.25).sp),
+    headlineSmall = base.headlineSmall.tuned(fontFamily, FontWeight.Bold, 0.sp),
+    titleLarge = base.titleLarge.tuned(fontFamily, FontWeight.SemiBold, 0.sp),
+    titleMedium = base.titleMedium.tuned(fontFamily, FontWeight.SemiBold, 0.1.sp),
+    titleSmall = base.titleSmall.tuned(fontFamily, FontWeight.SemiBold, 0.1.sp),
+    bodyLarge = base.bodyLarge.tuned(fontFamily, FontWeight.Normal, 0.15.sp),
+    bodyMedium = base.bodyMedium.tuned(fontFamily, FontWeight.Normal, 0.15.sp),
+    bodySmall = base.bodySmall.tuned(fontFamily, FontWeight.Normal, 0.2.sp),
+    labelLarge = base.labelLarge.tuned(fontFamily, FontWeight.SemiBold, 0.1.sp),
+    labelMedium = base.labelMedium.tuned(fontFamily, FontWeight.Medium, 0.3.sp),
+    labelSmall = base.labelSmall.tuned(fontFamily, FontWeight.Medium, 0.3.sp)
 )
 
-private fun TextStyle.tuned(weight: FontWeight, spacing: androidx.compose.ui.unit.TextUnit) = copy(
-    fontFamily = FontFamily.Default,
+private fun TextStyle.tuned(family: FontFamily, weight: FontWeight, spacing: androidx.compose.ui.unit.TextUnit) = copy(
+    fontFamily = family,
     fontWeight = weight,
     letterSpacing = spacing,
     fontFeatureSettings = TABULAR
