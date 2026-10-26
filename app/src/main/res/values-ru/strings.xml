@@ -134,6 +134,10 @@
 
     <!-- Recipes -->
     <string name="unit_pcs">шт</string>
+    <string name="unit_tsp">ч. л.</string>
+    <string name="unit_tbsp">ст. л.</string>
+    <string name="log_unit">Единица</string>
+    <string name="piece_weight_needed">Нужен для пересчёта штук в вес и обратно</string>
     <string name="macro_p">Б</string>
     <string name="macro_c">У</string>
     <string name="macro_f">Ж</string>

@@ -75,7 +75,9 @@ class RestaurantMenu(private val assets: AssetManager) {
                     fiberPer100 = obj.num("fiber"),
                     saltPer100 = obj.num("salt"),
                     unit = unit,
-                    referenceAmount = obj["referenceAmount"]?.jsonPrimitive?.doubleOrNull ?: if (unit == "pcs") 1.0 else 100.0
+                    referenceAmount = obj["referenceAmount"]?.jsonPrimitive?.doubleOrNull ?: if (unit == "pcs") 1.0 else 100.0,
+                    // McDonald's lists the weight; KT chains name the serving, "balení (400 g)".
+                    pieceGrams = if (unit == "pcs") grams ?: quantityGrams(portion) else null
                 )
                 Item(food, name, chain, aliases, portion ?: grams?.let { "portion ${it.toInt()} g" })
             }

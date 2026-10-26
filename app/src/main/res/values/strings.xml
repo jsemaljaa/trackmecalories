@@ -136,6 +136,10 @@
 
     <!-- Recipes -->
     <string name="unit_pcs">pcs</string>
+    <string name="unit_tsp">tsp</string>
+    <string name="unit_tbsp">tbsp</string>
+    <string name="log_unit">Unit</string>
+    <string name="piece_weight_needed">Needed to convert between pieces and weight</string>
     <string name="macro_p">P</string>
     <string name="macro_c">C</string>
     <string name="macro_f">F</string>

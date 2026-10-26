@@ -294,8 +294,8 @@ fun HomeScreen(
         PortionEntryDialog(
             food = showPortionDialogFor!!,
             onDismiss = { showPortionDialogFor = null },
-            onConfirm = { amount, mealType, confidence, portion ->
-                viewModel.logCustomFood(showPortionDialogFor!!, amount, mealType, selectedDate.toString(), confidence, portion)
+            onConfirm = { food, amount, mealType, confidence, portion ->
+                viewModel.logCustomFood(food, amount, mealType, selectedDate.toString(), confidence, portion)
                 showPortionDialogFor = null
             }
         )

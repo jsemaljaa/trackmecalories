@@ -34,6 +34,15 @@ import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.data.Portion
 import com.jsemalja.trackmecalories.data.initialPortion
 import com.jsemalja.trackmecalories.data.portionList
+import com.jsemalja.trackmecalories.data.LOG_UNITS
+import com.jsemalja.trackmecalories.data.WEIGHT_UNITS
+import com.jsemalja.trackmecalories.data.amountIn
+import com.jsemalja.trackmecalories.data.logUnit
+import com.jsemalja.trackmecalories.data.unitGrams
+import com.jsemalja.trackmecalories.data.unitPortion
+import com.jsemalja.trackmecalories.data.usesPieceWeight
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import com.jsemalja.trackmecalories.ui.theme.MacroCarbs
 import com.jsemalja.trackmecalories.ui.theme.MacroFat
 import com.jsemalja.trackmecalories.ui.theme.MacroFiber
@@ -75,6 +84,15 @@ fun unitLabel(unit: String): String = when (unit) {
     else -> unit
 }
 
+/** Short name of a [LOG_UNITS] key, for the log sheet's unit picker ("pcs", "g", "tsp"). */
+@Composable
+fun logUnitLabel(key: String): String = when (key) {
+    "piece" -> stringResource(R.string.unit_pcs)
+    "tsp" -> stringResource(R.string.unit_tsp)
+    "tbsp" -> stringResource(R.string.unit_tbsp)
+    else -> unitLabel(key)
+}
+
 /** "1 piece" / "2 pieces" (or the localized plural), "150 g" otherwise. */
 @Composable
 fun amountLabel(amount: Double, unit: String): String =
@@ -107,12 +125,14 @@ fun portionLabel(key: String): String = when (key) {
 fun portionWithWeight(portion: Portion, unit: String): String =
     stringResource(R.string.portion_with_weight, portionLabel(portion.key), amountLabel(portion.grams, unit))
 
-/** "2 × Medium (102 g)" for an entry logged in portions, else the plain amount. */
+/** "2 × Medium (102 g)" for an entry logged in portions, "150 g" of a burger, else the plain amount. */
 @Composable
 fun entryAmountLabel(entry: FoodEntry): String {
     val grams = entry.portionGrams
     val key = entry.portion
-    return if (key != null && grams != null && grams > 0) {
+    return if (key in WEIGHT_UNITS && grams != null && grams > 0) {
+        amountLabel(entry.amount / grams, key!!)
+    } else if (key != null && grams != null && grams > 0) {
         stringResource(R.string.portion_amount, (entry.amount / grams).clean(), portionLabel(key), amountLabel(entry.amount, entry.unit))
     } else {
         amountLabel(entry.amount, entry.unit)
@@ -144,9 +164,9 @@ fun String.toDecimal(): Double? = trim().replace(',', '.').toDoubleOrNull()
 fun PortionEntryDialog(
     food: CustomFood,
     onDismiss: () -> Unit,
-    // Amount in the food's unit (grams for a portion), meal, confidence, and the portion the
-    // amount was entered as (null when weighed/counted directly).
-    onConfirm: (Double, String, Confidence, Portion?) -> Unit,
+    // The food (with any piece weight entered here), amount in the food's unit, meal,
+    // confidence, and the portion or unit the amount was entered as (null for the food's own unit).
+    onConfirm: (CustomFood, Double, String, Confidence, Portion?) -> Unit,
     // Shown for already-saved foods, so a wrong macro can be fixed right where it's noticed.
     onEdit: (() -> Unit)? = null,
     // Whether the food is pinned to favorites; null hides the star (unsaved foods, recipes' ingredients).
@@ -156,16 +176,25 @@ fun PortionEntryDialog(
     showMeal: Boolean = true,
     confirmLabel: String? = null
 ) {
-    // Natural portions ("1 medium egg"); grams are derived. Starts from last time's portion,
-    // or the food's usual one; null = entering the amount in the food's unit.
-    val portions = remember(food) { food.portionList }
+    // Natural portions ("1 medium egg"); the unit picker covers pieces and spoons.
+    val sizes = remember(food) { food.portionList.filter { it.key !in LOG_UNITS } }
     val initial = remember(food) { initialPortion(food) }
-    var portion by remember { mutableStateOf(initial?.first) }
-    // A count of [portion], or else the package size for a scanned product, then whatever
+    // What the amount counts: one of [LOG_UNITS] or of [sizes]. Starts from last time's
+    // portion, or the food's usual one.
+    var measure by remember { mutableStateOf(initial?.first?.key ?: food.logUnit) }
+    // Typed here when the food doesn't know it yet; needed to turn pieces into weight.
+    var pieceWeight by remember(food) { mutableStateOf(food.pieceGrams?.clean().orEmpty()) }
+    val pieceGrams = pieceWeight.toDecimal()?.takeIf { it > 0 }
+    fun portionOf(key: String): Portion? =
+        if (key == food.logUnit) null else sizes.firstOrNull { it.key == key } ?: unitPortion(food, key, pieceGrams)
+    val portion = portionOf(measure)
+    val missingWeight = measure != food.logUnit && portion == null
+    val counting = measure !in WEIGHT_UNITS
+    // A count of [measure], or else the package size for a scanned product, then whatever
     // was logged last time.
     var amount by remember { mutableStateOf(initial?.second?.clean() ?: (food.defaultAmount ?: food.referenceAmount).clean()) }
     // What's in the field, in the food's unit.
-    val enteredAmount = amount.toDecimal()?.let { n -> portion?.let { n * it.grams } ?: n }
+    val enteredAmount = if (missingWeight) null else amount.toDecimal()?.let { n -> portion?.let { n * it.grams } ?: n }
     var confidence by remember { mutableStateOf(Confidence.ESTIMATED) }
     var mealType by remember { mutableStateOf(mealForNow()) }
     var isFavorite by remember { mutableStateOf(favorite) }
@@ -205,7 +234,7 @@ fun PortionEntryDialog(
                 amount = enteredAmount ?: portion?.grams ?: food.referenceAmount,
                 // Ingredients carry no confidence of their own.
                 relativeError = if (showMeal) confidence.relativeError else null,
-                // In portions the weight isn't on screen otherwise.
+                // In portions the amount in the food's unit isn't on screen otherwise.
                 showAmount = portion != null,
                 modifier = gutter
             )
@@ -213,15 +242,46 @@ fun PortionEntryDialog(
             AmountStepper(
                 value = amount,
                 onValueChange = { amount = it },
-                suffix = portion?.let { portionLabel(it.key) } ?: unitLabel(food.unit),
-                counting = portion != null || food.unit == "pcs",
+                counting = counting,
                 modifier = gutter
-            )
+            ) {
+                LogUnitPicker(
+                    food = food,
+                    selected = measure,
+                    label = if (measure in LOG_UNITS) logUnitLabel(measure) else portionLabel(measure),
+                    pieceGrams = pieceGrams,
+                    onSelect = { key ->
+                        // Same quantity in the new unit; without a piece weight yet, a typical amount.
+                        val next = portionOf(key)
+                        amount = when {
+                            enteredAmount != null && (next != null || key == food.logUnit) -> amountIn(enteredAmount, next, key !in WEIGHT_UNITS).clean()
+                            key in WEIGHT_UNITS -> "100"
+                            else -> "1"
+                        }
+                        measure = key
+                    }
+                )
+            }
+
+            if (usesPieceWeight(food, measure)) {
+                OutlinedTextField(
+                    value = pieceWeight,
+                    onValueChange = { pieceWeight = it },
+                    label = { Text(stringResource(R.string.recipe_piece_weight)) },
+                    suffix = { Text(unitLabel(if (food.unit == "ml") "ml" else "g")) },
+                    supportingText = if (pieceGrams == null) {
+                        { Text(stringResource(R.string.piece_weight_needed)) }
+                    } else null,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = gutter.fillMaxWidth()
+                )
+            }
 
             // Portions, then one-tap amounts (the usual one and the reference amount), in one
             // scrolling row rather than wrapped blocks under headings.
-            val usual = food.defaultAmount?.takeIf { portion == null && it != food.referenceAmount }
-            if (portions.isNotEmpty() || usual != null) {
+            val usual = food.defaultAmount?.takeIf { measure == food.logUnit && it != food.referenceAmount }
+            if (sizes.isNotEmpty() || usual != null) {
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -229,26 +289,15 @@ fun PortionEntryDialog(
                         .padding(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    portions.forEach { p ->
+                    sizes.forEach { p ->
                         FilterChip(
-                            selected = portion == p,
+                            selected = measure == p.key,
                             onClick = {
                                 // Switching from weighing: start at one; between portions: keep the count.
-                                if (portion == null) amount = "1"
-                                portion = p
+                                if (!counting || portion == null) amount = "1"
+                                measure = p.key
                             },
                             label = { Text(portionWithWeight(p, food.unit)) }
-                        )
-                    }
-                    if (portions.isNotEmpty()) {
-                        FilterChip(
-                            selected = portion == null,
-                            onClick = {
-                                // Keep the same quantity, now in grams.
-                                if (portion != null) enteredAmount?.let { amount = it.clean() }
-                                portion = null
-                            },
-                            label = { Text(unitLabel(food.unit)) }
                         )
                     }
                     if (usual != null) {
@@ -286,8 +335,14 @@ fun PortionEntryDialog(
 
             Button(
                 onClick = {
-                    onConfirm(enteredAmount ?: portion?.grams ?: food.defaultAmount ?: food.referenceAmount, mealType, confidence, portion)
+                    onConfirm(
+                        food.copy(pieceGrams = pieceGrams ?: food.pieceGrams),
+                        enteredAmount ?: portion?.grams ?: food.defaultAmount ?: food.referenceAmount,
+                        mealType, confidence, portion
+                    )
                 },
+                // Grams of a burger can't be logged until one burger's weight is known.
+                enabled = !missingWeight,
                 modifier = gutter.fillMaxWidth().height(52.dp)
             ) { Text(confirmLabel ?: stringResource(R.string.log_food)) }
         }
@@ -344,9 +399,9 @@ private fun LogMacro(label: String, value: Double, color: Color, modifier: Modif
     }
 }
 
-/** The amount between − and +, so the usual tweak needs no keyboard. */
+/** The amount between − and +, so the usual tweak needs no keyboard; [unit] sits at its end. */
 @Composable
-private fun AmountStepper(value: String, onValueChange: (String) -> Unit, suffix: String, counting: Boolean, modifier: Modifier = Modifier) {
+private fun AmountStepper(value: String, onValueChange: (String) -> Unit, counting: Boolean, modifier: Modifier = Modifier, unit: @Composable () -> Unit) {
     fun step(up: Boolean) = onValueChange(stepAmount(value.toDecimal() ?: 0.0, counting, up).clean())
 
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -358,13 +413,45 @@ private fun AmountStepper(value: String, onValueChange: (String) -> Unit, suffix
             onValueChange = onValueChange,
             modifier = Modifier.weight(1f),
             textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center),
-            suffix = { Text(suffix, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            trailingIcon = unit,
             singleLine = true,
             shape = MaterialTheme.shapes.large,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
         FilledTonalIconButton(onClick = { step(up = true) }, modifier = Modifier.size(52.dp)) {
             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.amount_more))
+        }
+    }
+}
+
+/**
+ * The amount's unit, at the end of the field: any food can be logged in pieces, grams, ml or
+ * spoons. Pieces and spoons show their weight when it's known.
+ */
+@Composable
+private fun LogUnitPicker(food: CustomFood, selected: String, label: String, pieceGrams: Double?, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        TextButton(onClick = { expanded = true }, contentPadding = PaddingValues(start = 8.dp, end = 2.dp)) {
+            Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 96.dp))
+            Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.log_unit))
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            LOG_UNITS.forEach { key ->
+                val grams = unitGrams(food, key, pieceGrams)?.takeIf { key !in WEIGHT_UNITS }
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            grams?.let { stringResource(R.string.portion_with_weight, logUnitLabel(key), amountLabel(it, if (food.unit == "ml") "ml" else "g")) }
+                                ?: logUnitLabel(key)
+                        )
+                    },
+                    onClick = { onSelect(key); expanded = false },
+                    trailingIcon = if (key == selected) {
+                        { Icon(Icons.Default.Check, contentDescription = null) }
+                    } else null
+                )
+            }
         }
     }
 }
@@ -413,6 +500,7 @@ fun EditEntryDialog(
                     label = {
                         Text(
                             when {
+                                portionGrams != null && entry.portion in WEIGHT_UNITS -> stringResource(R.string.how_many_unit, unitLabel(entry.portion!!))
                                 portionGrams != null -> stringResource(
                                     R.string.how_many_portions,
                                     portionWithWeight(Portion(entry.portion!!, portionGrams), entry.unit)

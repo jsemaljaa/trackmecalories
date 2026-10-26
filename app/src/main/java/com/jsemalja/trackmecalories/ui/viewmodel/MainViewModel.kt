@@ -559,7 +559,7 @@ class MainViewModel(
         mealType: String,
         date: String = selectedDate.value.toString(),
         confidence: Confidence = Confidence.ESTIMATED,
-        // Set when [amount] (grams/ml) was entered as a number of this portion.
+        // Set when [amount] (in the food's unit) was entered as a number of this portion or unit.
         portion: Portion? = null
     ) {
         viewModelScope.launch {
@@ -568,6 +568,8 @@ class MainViewModel(
             val saved = if (food.id != 0) food else food.barcode?.let { dao.getCustomFoodByBarcode(it) }
             val foodId = if (saved != null) {
                 dao.touchLastUsed(saved.id)
+                // Typed on the log sheet, or now known from the menu/recipe it came from.
+                food.pieceGrams?.let { dao.setPieceGrams(saved.id, it) }
                 saved.id
             } else {
                 dao.insertCustomFood(food.copy(lastUsedAt = System.currentTimeMillis())).toInt()

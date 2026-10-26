@@ -81,7 +81,10 @@ data class CustomFood(
     // Natural servings, encoded "small=42;medium=51" (see [parsePortions]); null if none.
     val portions: String? = null,
     // The portion to preselect when logging: the last one used, else the food's usual one.
-    val defaultPortion: String? = null
+    val defaultPortion: String? = null,
+    // Weight of one piece in g (ml for liquids), so a food counted in pieces can be logged
+    // by weight and one weighed by the piece (see [unitPortion]); null if unknown.
+    val pieceGrams: Double? = null
 )
 
 /**
@@ -385,6 +388,9 @@ interface FoodDao {
     @Query("UPDATE custom_foods SET defaultAmount = :amount, defaultPortion = :portion WHERE id = :id")
     suspend fun setDefaultAmount(id: Int, amount: Double, portion: String?)
 
+    @Query("UPDATE custom_foods SET pieceGrams = :grams WHERE id = :id")
+    suspend fun setPieceGrams(id: Int, grams: Double)
+
     @Query("UPDATE food_entries SET satiety = :satiety, energyLevel = :energy WHERE date = :date AND mealType = :mealType")
     suspend fun rateMeal(date: String, mealType: String, satiety: Int?, energy: Int?)
 
@@ -477,7 +483,7 @@ interface FoodDao {
         FoodEntry::class, CustomFood::class, UserGoal::class, WaterEntry::class, FoodCache::class,
         WeightEntry::class, Recipe::class, RecipeIngredient::class, DayLog::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

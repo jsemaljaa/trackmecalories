@@ -1,6 +1,7 @@
 package com.jsemalja.trackmecalories
 
 import com.jsemalja.trackmecalories.data.packageAmount
+import com.jsemalja.trackmecalories.data.quantityGrams
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -30,5 +31,12 @@ class PackageAmountTest {
         assertNull(packageAmount(null, "g"))
         assertNull(packageAmount("1 pack", "g"))
         assertNull(packageAmount("350 g", "pcs"))
+    }
+
+    @Test
+    fun `a serving's weight from its name`() {
+        assertEquals(215.0, quantityGrams("kus (215 g)"))
+        assertEquals(400.0, quantityGrams("balení (400 g)"))
+        assertNull(quantityGrams("kus"))
     }
 }

@@ -51,6 +51,8 @@ fun FoodInfo.toCustomFood(): CustomFood = CustomFood(
     referenceAmount = referenceAmount,
     // People usually eat the whole package, not "100 g".
     defaultAmount = packageAmount(quantity, unit),
+    // A per-piece food's quantity is its serving, e.g. "kus (215 g)" from Kalorické tabulky.
+    pieceGrams = if (unit == "pcs") quantityGrams(quantity) else null,
     sugarPer100 = sugarPer100,
     saturatedFatPer100 = saturatedFatPer100,
     nutriScore = nutriScore
@@ -61,8 +63,15 @@ fun FoodInfo.toCustomFood(): CustomFood = CustomFood(
  * "350 g" -> 350, "0,5 l" -> 500 (ml), "4 x 125 g" -> 125 (one pot of a multipack).
  * Null when there's nothing usable (or the food is counted in pieces).
  */
-fun packageAmount(quantity: String?, unit: String): Double? {
-    if (quantity.isNullOrBlank() || unit == "pcs") return null
+fun packageAmount(quantity: String?, unit: String): Double? =
+    if (unit == "pcs") null else quantityGrams(quantity)
+
+/**
+ * Grams (or ml) in a free-text quantity or serving: "350 g" -> 350, "0,5 l" -> 500,
+ * "4 x 125 g" -> 125, "kus (215 g)" -> 215. Null when there's no usable amount.
+ */
+fun quantityGrams(quantity: String?): Double? {
+    if (quantity.isNullOrBlank()) return null
     val m = PACKAGE_REGEX.find(quantity.lowercase()) ?: return null
     val value = m.groupValues[2].replace(',', '.').toDoubleOrNull() ?: return null
     val grams = when (m.groupValues[3]) {

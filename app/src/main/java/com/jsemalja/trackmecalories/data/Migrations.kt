@@ -133,3 +133,13 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         db.execSQL("ALTER TABLE food_entries ADD COLUMN portionGrams REAL")
     }
 }
+
+/**
+ * v9 -> v10: the weight of one piece, so any food can be logged in pieces, grams or spoons.
+ * Additive only; existing foods keep null (unknown) until a menu, recipe or the log sheet fills it.
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN pieceGrams REAL")
+    }
+}

@@ -65,8 +65,8 @@ fun CustomFood.toIngredient(amount: Double) = RecipeIngredient(
     amount = amount,
     unit = unit,
     referenceAmount = referenceAmount,
-    // ml counts as g (close enough for cooking); a piece's weight is unknown.
-    gramsPerUnit = if (unit == "pcs") 0.0 else 1.0,
+    // ml counts as g (close enough for cooking); 0 when a piece's weight is unknown.
+    gramsPerUnit = if (unit == "pcs") pieceGrams ?: 0.0 else 1.0,
     kcalPer100 = kcalPer100,
     proteinPer100 = proteinPer100,
     carbsPer100 = carbsPer100,
@@ -98,6 +98,8 @@ fun Recipe.toCustomFood(ingredients: List<RecipeIngredient>, existing: CustomFoo
         saltPer100 = per.salt,
         unit = if (perServing) "pcs" else "g",
         referenceAmount = if (perServing) 1.0 else 100.0,
+        // A serving's weight, when the dish's is known, so it can also be logged in grams.
+        pieceGrams = dishWeightG(ingredients).takeIf { perServing && it > 0 }?.div(servings.coerceAtLeast(0.01)) ?: base.pieceGrams,
         lastUsedAt = base.lastUsedAt.takeIf { it > 0 } ?: System.currentTimeMillis()
     )
 }
