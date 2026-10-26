@@ -42,6 +42,16 @@ import com.jsemalja.trackmecalories.ui.theme.MacroProtein
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import java.time.LocalDate
 import java.time.LocalTime
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.em
+import com.jsemalja.trackmecalories.data.stepAmount
+import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 
 private val MEAL_TYPES = listOf("Breakfast", "Lunch", "Dinner", "Snack")
 
@@ -125,7 +135,11 @@ fun Double.clean(): String =
 /** Accepts both "1.5" and the Czech-keyboard "1,5". */
 fun String.toDecimal(): Double? = trim().replace(',', '.').toDoubleOrNull()
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * The log sheet: how much, which meal, how sure. Everything is preselected (last time's
+ * portion, the meal for this time of day), so the common case is one tap on the button.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PortionEntryDialog(
     food: CustomFood,
@@ -155,12 +169,21 @@ fun PortionEntryDialog(
     var confidence by remember { mutableStateOf(Confidence.ESTIMATED) }
     var mealType by remember { mutableStateOf(mealForNow()) }
     var isFavorite by remember { mutableStateOf(favorite) }
+    val gutter = Modifier.padding(horizontal = 20.dp)
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Row(verticalAlignment = Alignment.Top) {
-                Text(if (showMeal) stringResource(R.string.log_food_title, food.name) else food.name, modifier = Modifier.weight(1f))
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        // Scrolls on short screens, with a large font, or above the keyboard.
+        Column(
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(gutter, verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f).padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(food.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    RatingLine(food)
+                }
                 isFavorite?.let { pinned ->
                     IconButton(onClick = { isFavorite = !pinned; onFavoriteChange(!pinned) }) {
                         Icon(
@@ -176,46 +199,48 @@ fun PortionEntryDialog(
                     }
                 }
             }
-        },
-        text = {
-            // Scrolls on short screens or with a large font instead of cutting off the bottom.
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                MacroSummary(
-                    kcal = food.kcalPer100,
-                    protein = food.proteinPer100,
-                    carbs = food.carbsPer100,
-                    fat = food.fatPer100,
-                    fiber = food.fiberPer100,
-                    amount = enteredAmount ?: portion?.grams ?: food.referenceAmount,
-                    referenceAmount = food.referenceAmount,
-                    unit = food.unit
-                )
-                RatingLine(food)
 
-                if (showMeal) {
-                    Text(stringResource(R.string.meal), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                    // Wraps instead of pushing "Snack" off the edge on narrow phones.
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        MEAL_TYPES.forEach { type ->
-                            FilterChip(selected = mealType == type, onClick = { mealType = type }, label = { Text(mealLabel(type)) })
-                        }
+            LogTotals(
+                food = food,
+                amount = enteredAmount ?: portion?.grams ?: food.referenceAmount,
+                // Ingredients carry no confidence of their own.
+                relativeError = if (showMeal) confidence.relativeError else null,
+                // In portions the weight isn't on screen otherwise.
+                showAmount = portion != null,
+                modifier = gutter
+            )
+
+            AmountStepper(
+                value = amount,
+                onValueChange = { amount = it },
+                suffix = portion?.let { portionLabel(it.key) } ?: unitLabel(food.unit),
+                counting = portion != null || food.unit == "pcs",
+                modifier = gutter
+            )
+
+            // Portions, then one-tap amounts (the usual one and the reference amount), in one
+            // scrolling row rather than wrapped blocks under headings.
+            val usual = food.defaultAmount?.takeIf { portion == null && it != food.referenceAmount }
+            if (portions.isNotEmpty() || usual != null) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    portions.forEach { p ->
+                        FilterChip(
+                            selected = portion == p,
+                            onClick = {
+                                // Switching from weighing: start at one; between portions: keep the count.
+                                if (portion == null) amount = "1"
+                                portion = p
+                            },
+                            label = { Text(portionWithWeight(p, food.unit)) }
+                        )
                     }
-                }
-
-                if (portions.isNotEmpty()) {
-                    Text(stringResource(R.string.portion_title), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        portions.forEach { p ->
-                            FilterChip(
-                                selected = portion == p,
-                                onClick = {
-                                    // Switching from weighing: start at one; between portions: keep the count.
-                                    if (portion == null) amount = "1"
-                                    portion = p
-                                },
-                                label = { Text(portionWithWeight(p, food.unit)) }
-                            )
-                        }
+                    if (portions.isNotEmpty()) {
                         FilterChip(
                             selected = portion == null,
                             onClick = {
@@ -226,44 +251,122 @@ fun PortionEntryDialog(
                             label = { Text(unitLabel(food.unit)) }
                         )
                     }
-                }
-
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = {
-                        Text(
-                            when {
-                                portion != null -> stringResource(R.string.how_many_portions, portionLabel(portion!!.key))
-                                food.unit == "pcs" -> stringResource(R.string.how_many_pieces)
-                                else -> stringResource(R.string.how_many_unit, unitLabel(food.unit))
-                            }
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // One-tap amounts: the usual portion and the reference amount.
-                val usual = food.defaultAmount
-                if (portion == null && usual != null && usual != food.referenceAmount) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        AssistChip(onClick = { amount = usual.clean() }, label = { Text(stringResource(R.string.amount_usual, amountLabel(usual, food.unit))) })
-                        AssistChip(onClick = { amount = food.referenceAmount.clean() }, label = { Text(amountLabel(food.referenceAmount, food.unit)) })
+                    if (usual != null) {
+                        SuggestionChip(onClick = { amount = usual.clean() }, label = { Text(stringResource(R.string.amount_usual, amountLabel(usual, food.unit))) })
+                        SuggestionChip(onClick = { amount = food.referenceAmount.clean() }, label = { Text(amountLabel(food.referenceAmount, food.unit)) })
                     }
                 }
-
-                if (showMeal) ConfidenceChips(confidence) { confidence = it }
             }
-        },
-        confirmButton = {
-            Button(onClick = {
-                onConfirm(enteredAmount ?: portion?.grams ?: food.defaultAmount ?: food.referenceAmount, mealType, confidence, portion)
-            }) { Text(confirmLabel ?: stringResource(R.string.log_food)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
-    )
+
+            if (showMeal) {
+                SingleChoiceSegmentedButtonRow(gutter.fillMaxWidth()) {
+                    MEAL_TYPES.forEachIndexed { i, type ->
+                        SegmentedButton(
+                            selected = mealType == type,
+                            onClick = { mealType = type },
+                            shape = SegmentedButtonDefaults.itemShape(i, MEAL_TYPES.size),
+                            colors = appSegmentedColors(),
+                            icon = {}
+                        ) { FitText(mealLabel(type)) }
+                    }
+                }
+                // How sure the amount is; its effect shows as the ± on the calories above.
+                SingleChoiceSegmentedButtonRow(gutter.fillMaxWidth()) {
+                    Confidence.entries.forEachIndexed { i, c ->
+                        SegmentedButton(
+                            selected = confidence == c,
+                            onClick = { confidence = c },
+                            shape = SegmentedButtonDefaults.itemShape(i, Confidence.entries.size),
+                            colors = appSegmentedColors(),
+                            icon = { Icon(confidenceIcon(c), contentDescription = null, modifier = Modifier.size(SegmentedButtonDefaults.IconSize)) }
+                        ) { FitText(stringResource(c.label)) }
+                    }
+                }
+            }
+
+            Button(
+                onClick = {
+                    onConfirm(enteredAmount ?: portion?.grams ?: food.defaultAmount ?: food.referenceAmount, mealType, confidence, portion)
+                },
+                modifier = gutter.fillMaxWidth().height(52.dp)
+            ) { Text(confirmLabel ?: stringResource(R.string.log_food)) }
+        }
+    }
+}
+
+/** The log sheet's headline: calories (± what [relativeError] allows) and macros for [amount]. */
+@Composable
+private fun LogTotals(food: CustomFood, amount: Double, relativeError: Double?, showAmount: Boolean, modifier: Modifier = Modifier) {
+    val ratio = amount / food.referenceAmount
+    val kcal = food.kcalPer100 * ratio
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val kcalUnit = stringResource(R.string.unit_kcal)
+    val plusMinus = relativeError?.let { stringResource(R.string.plus_minus_value, (kcal * it).roundToInt()) }
+
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(horizontal = 12.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            FitText(
+                buildAnnotatedString {
+                    append(kcal.roundToInt().toString())
+                    withStyle(SpanStyle(fontSize = 0.5.em, fontWeight = FontWeight.Medium)) { append(" $kcalUnit") }
+                    plusMinus?.let { withStyle(SpanStyle(fontSize = 0.45.em, fontWeight = FontWeight.Normal, color = muted)) { append("  $it") } }
+                },
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold
+            )
+            if (showAmount) {
+                Text(stringResource(R.string.for_amount, amountLabel(amount, food.unit)), style = MaterialTheme.typography.bodySmall, color = muted)
+            }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            LogMacro(stringResource(R.string.protein), food.proteinPer100 * ratio, MacroProtein, Modifier.weight(1f))
+            LogMacro(stringResource(R.string.carbs), food.carbsPer100 * ratio, MacroCarbs, Modifier.weight(1f))
+            LogMacro(stringResource(R.string.fat), food.fatPer100 * ratio, MacroFat, Modifier.weight(1f))
+            LogMacro(stringResource(R.string.fiber), food.fiberPer100 * ratio, MacroFiber, Modifier.weight(1f))
+        }
+    }
+}
+
+/** Value over name: the number is what's read at a glance. */
+@Composable
+private fun LogMacro(label: String, value: Double, color: Color, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        FitText("${value.macroGrams()} ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
+        FitText(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** The amount between − and +, so the usual tweak needs no keyboard. */
+@Composable
+private fun AmountStepper(value: String, onValueChange: (String) -> Unit, suffix: String, counting: Boolean, modifier: Modifier = Modifier) {
+    fun step(up: Boolean) = onValueChange(stepAmount(value.toDecimal() ?: 0.0, counting, up).clean())
+
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        FilledTonalIconButton(onClick = { step(up = false) }, modifier = Modifier.size(52.dp)) {
+            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.amount_less))
+        }
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.weight(1f),
+            textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center),
+            suffix = { Text(suffix, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            singleLine = true,
+            shape = MaterialTheme.shapes.large,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+        FilledTonalIconButton(onClick = { step(up = true) }, modifier = Modifier.size(52.dp)) {
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.amount_more))
+        }
+    }
 }
 
 @Composable
@@ -420,11 +523,13 @@ fun MacroSummary(
 fun MacroItem(label: String, value: Double, color: Color, modifier: Modifier = Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         FitText(label, style = MaterialTheme.typography.labelSmall)
-        // One decimal below 10 g, so 2.5 g of fiber doesn't show as "2 g".
-        val grams = if (value < 10) "%.1f".format(value).removeSuffix(".0").removeSuffix(",0") else value.roundToInt().toString()
-        FitText("$grams ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
+        FitText("${value.macroGrams()} ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
     }
 }
+
+/** One decimal below 10 g, so 2.5 g of fiber doesn't show as "2 g". */
+private fun Double.macroGrams(): String =
+    if (this < 10) "%.1f".format(this).removeSuffix(".0").removeSuffix(",0") else roundToInt().toString()
 
 /** "100 g"/"100 ml" for weight/volume units, or "1 piece" for piece-counted foods. */
 @Composable

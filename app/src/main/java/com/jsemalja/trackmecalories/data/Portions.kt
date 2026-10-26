@@ -1,6 +1,8 @@
 package com.jsemalja.trackmecalories.data
 
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.roundToLong
 
 /**
@@ -39,4 +41,16 @@ fun initialPortion(food: CustomFood): Pair<Portion, Double>? {
     val count = amount / portion.grams
     val halves = (count * 2).roundToLong() / 2.0
     return if (halves > 0 && abs(count - halves) < 0.05) portion to halves else null
+}
+
+/**
+ * The amount after one tap of the log sheet's − / +: portions and pieces ([counting]) step by
+ * one, grams and millilitres by 10, landing on round numbers (152 g → 160 g or 150 g).
+ * Never goes below one step; an amount already smaller than that stays put on −.
+ */
+fun stepAmount(current: Double, counting: Boolean, up: Boolean): Double {
+    val step = if (counting) 1.0 else 10.0
+    if (up) return floor(current / step) * step + step
+    val next = ceil(current / step) * step - step
+    return maxOf(next, minOf(current, step))
 }

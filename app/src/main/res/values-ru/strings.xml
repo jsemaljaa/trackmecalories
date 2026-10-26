@@ -428,6 +428,9 @@
 
     <!-- Amount shortcuts -->
     <string name="amount_usual">Обычно: %1$s</string>
+    <string name="plus_minus_value">± %1$d</string>
+    <string name="amount_less">Меньше</string>
+    <string name="amount_more">Больше</string>
 
     <!-- Suggestions -->
     <string name="suggestions_title">Обычно в это время</string>

@@ -426,6 +426,9 @@
 
     <!-- Amount shortcuts -->
     <string name="amount_usual">Usual: %1$s</string>
+    <string name="plus_minus_value">± %1$d</string>
+    <string name="amount_less">Less</string>
+    <string name="amount_more">More</string>
 
     <!-- Suggestions -->
     <string name="suggestions_title">Usually around now</string>

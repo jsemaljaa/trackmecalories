@@ -5,6 +5,7 @@ import com.jsemalja.trackmecalories.data.Portion
 import com.jsemalja.trackmecalories.data.encodePortions
 import com.jsemalja.trackmecalories.data.initialPortion
 import com.jsemalja.trackmecalories.data.parsePortions
+import com.jsemalja.trackmecalories.data.stepAmount
 import com.jsemalja.trackmecalories.data.toEntry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -55,5 +56,23 @@ class PortionsTest {
         assertEquals("medium", entry.portion)
         assertEquals(51.0, entry.portionGrams!!, 0.0)
         assertNull(egg.toEntry(100.0, "Breakfast", "2026-10-26").portion)
+    }
+
+    @Test
+    fun `minus and plus land on round amounts`() {
+        assertEquals(160.0, stepAmount(152.0, counting = false, up = true), 0.0)
+        assertEquals(150.0, stepAmount(152.0, counting = false, up = false), 0.0)
+        assertEquals(140.0, stepAmount(150.0, counting = false, up = false), 0.0)
+        assertEquals(2.0, stepAmount(1.5, counting = true, up = true), 0.0)
+        assertEquals(1.0, stepAmount(1.5, counting = true, up = false), 0.0)
+        assertEquals(1.0, stepAmount(0.0, counting = true, up = true), 0.0)
+    }
+
+    @Test
+    fun `minus never goes below one step`() {
+        assertEquals(10.0, stepAmount(10.0, counting = false, up = false), 0.0)
+        assertEquals(1.0, stepAmount(1.0, counting = true, up = false), 0.0)
+        assertEquals(0.5, stepAmount(0.5, counting = true, up = false), 0.0)
+        assertEquals(5.0, stepAmount(5.0, counting = false, up = false), 0.0)
     }
 }
