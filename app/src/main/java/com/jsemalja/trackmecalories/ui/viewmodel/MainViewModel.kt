@@ -28,6 +28,8 @@ import com.jsemalja.trackmecalories.data.KtHit
 import com.jsemalja.trackmecalories.data.Recipe
 import com.jsemalja.trackmecalories.data.RecipeIngredient
 import com.jsemalja.trackmecalories.data.RestaurantMenu
+import com.jsemalja.trackmecalories.data.BaseFoods
+import com.jsemalja.trackmecalories.data.Portion
 import com.jsemalja.trackmecalories.data.AdaptiveMaintenance
 import com.jsemalja.trackmecalories.data.Confidence
 import com.jsemalja.trackmecalories.data.WeightEntry
@@ -62,6 +64,7 @@ import kotlin.math.roundToInt
  */
 class MainViewModel(
     private val dao: FoodDao,
+    private val baseFoods: BaseFoods,
     private val restaurantMenu: RestaurantMenu,
     private val userPrefs: UserPrefs,
     private val health: HealthData
@@ -355,19 +358,21 @@ class MainViewModel(
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Bundled restaurant menus — instant and offline.
-    private val menuHits: Flow<List<SearchHit>> = _searchQuery
+    // Bundled base foods (raw ingredients, in English, Russian and Czech) and restaurant
+    // menus — instant and offline.
+    private val bundledHits: Flow<List<SearchHit>> = _searchQuery
         .map { it.trim() }
         .distinctUntilChanged()
-        .map { q -> if (q.length < 2) emptyList() else restaurantMenu.search(q) }
+        .map { q -> if (q.length < 2) emptyList() else baseFoods.search(q) + restaurantMenu.search(q) }
         .flowOn(Dispatchers.Default)
 
     /**
-     * Every source merged into one list, best match first. Bundled menu items win over the
-     * same item from live Kalorické tabulky (they already have macros and serving sizes).
+     * Every source merged into one list, best match first; base foods are boosted to the top
+     * (see [searchBaseFoods]). Bundled menu items win over the same item from live Kalorické
+     * tabulky (they already have macros and serving sizes).
      */
-    val searchResults: StateFlow<List<SearchHit>> = combine(menuHits, _ktHits, _offHits) { menu, kt, off ->
-        (menu + kt + off)
+    val searchResults: StateFlow<List<SearchHit>> = combine(bundledHits, _ktHits, _offHits) { bundled, kt, off ->
+        (bundled + kt + off)
             .distinctBy { it.key }
             .sortedByDescending { it.score }
             // Open Food Facts often has one product under several barcodes, and KT/OFF
@@ -380,21 +385,25 @@ class MainViewModel(
 
     init {
         launchOnlineSearch(_offHits, _isSearchingOff, _offError) { q, publish ->
-            val tokens = SearchMatcher.tokens(q)
             publish(
-                repository.searchProducts(q).withIndex().mapNotNull { (i, info) ->
-                    val score = SearchMatcher.score(tokens, info.name, info.brand) ?: return@mapNotNull null
-                    info.toSearchHit(score + (if (info.isCzech) CZECH_BOOST else 0.0) - 0.005 * i)
-                }
+                translatedQueries(q).flatMap { (query, penalty) ->
+                    val tokens = SearchMatcher.tokens(query)
+                    repository.searchProducts(query).withIndex().mapNotNull { (i, info) ->
+                        val score = SearchMatcher.score(tokens, info.name, info.brand) ?: return@mapNotNull null
+                        info.toSearchHit(score + (if (info.isCzech) CZECH_BOOST else 0.0) - 0.005 * i - penalty)
+                    }
+                }.distinctBy { it.key }
             )
         }
         launchOnlineSearch(_ktHits, _isSearchingKt, _ktError) { q, publish ->
-            val tokens = SearchMatcher.tokens(q)
-            val hits = kaloricke.search(q).withIndex().mapNotNull { (i, hit) ->
-                val score = SearchMatcher.score(tokens, hit.title, hit.brand) ?: return@mapNotNull null
-                // KT orders by popularity; keep that as a tie-breaker. It is a Czech database.
-                hit.toSearchHit(score + CZECH_BOOST - 0.01 * i)
-            }.sortedByDescending { it.score }.take(30)
+            val hits = translatedQueries(q).flatMap { (query, penalty) ->
+                val tokens = SearchMatcher.tokens(query)
+                kaloricke.search(query).withIndex().mapNotNull { (i, hit) ->
+                    val score = SearchMatcher.score(tokens, hit.title, hit.brand) ?: return@mapNotNull null
+                    // KT orders by popularity; keep that as a tie-breaker. It is a Czech database.
+                    hit.toSearchHit(score + CZECH_BOOST - 0.01 * i - penalty)
+                }
+            }.distinctBy { it.key }.sortedByDescending { it.score }.take(30)
             publish(hits)
 
             // Fill in P/C/F for the top results so they can be compared without tapping.
@@ -455,6 +464,14 @@ class MainViewModel(
                 }
         }
     }
+
+    /**
+     * What to ask the online databases for [query], each with a score penalty: the query
+     * itself, plus, for a Russian query, the Czech name of the matching base food, since the
+     * Czech databases don't understand Russian ("творог" also searches "Tvaroh").
+     */
+    private fun translatedQueries(query: String): List<Pair<String, Double>> =
+        listOf(query to 0.0) + listOfNotNull(baseFoods.czechQuery(query)?.let { it to TRANSLATED_QUERY_PENALTY })
 
     private fun SearchHit.duplicateKey(): String {
         val words = "$name ${brand.orEmpty()}".normalizedForSearch().split(' ').toSortedSet()
@@ -541,7 +558,9 @@ class MainViewModel(
         amount: Double,
         mealType: String,
         date: String = selectedDate.value.toString(),
-        confidence: Confidence = Confidence.ESTIMATED
+        confidence: Confidence = Confidence.ESTIMATED,
+        // Set when [amount] (grams/ml) was entered as a number of this portion.
+        portion: Portion? = null
     ) {
         viewModelScope.launch {
             // A search result may already be saved (same barcode / restaurant item id). Bump
@@ -554,9 +573,9 @@ class MainViewModel(
                 dao.insertCustomFood(food.copy(lastUsedAt = System.currentTimeMillis())).toInt()
             }
             // Linked to its saved food, so suggestions and insights can find it again.
-            dao.insertEntry(food.copy(id = foodId).toEntry(amount, mealType, date, confidence))
+            dao.insertEntry(food.copy(id = foodId).toEntry(amount, mealType, date, confidence, portion))
             // Next time, start from the portion actually eaten.
-            dao.setDefaultAmount(foodId, amount)
+            dao.setDefaultAmount(foodId, amount, portion?.key)
         }
     }
 
@@ -759,6 +778,8 @@ private const val KT_MACRO_PREFETCH = 8
 // Czech products (Kalorické tabulky, OFF items sold in CZ) outrank equally relevant
 // foreign ones; a clearly better name match still wins.
 private const val CZECH_BOOST = 0.7
+// Results found through a translated query rank below ones matching what was typed.
+private const val TRANSLATED_QUERY_PENALTY = 0.3
 
 /** First day of [date]'s week. Weeks always start on Monday, whatever the device locale. */
 fun weekStartOf(date: LocalDate): LocalDate =
@@ -766,6 +787,7 @@ fun weekStartOf(date: LocalDate): LocalDate =
 
 class MainViewModelFactory(
     private val dao: FoodDao,
+    private val baseFoods: BaseFoods,
     private val restaurantMenu: RestaurantMenu,
     private val userPrefs: UserPrefs,
     private val health: HealthData
@@ -773,7 +795,7 @@ class MainViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(dao, restaurantMenu, userPrefs, health) as T
+            return MainViewModel(dao, baseFoods, restaurantMenu, userPrefs, health) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

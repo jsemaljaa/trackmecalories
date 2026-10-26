@@ -208,6 +208,22 @@
     <string name="edit_food">Edit food</string>
     <string name="how_many_pieces">How many pieces?</string>
     <string name="how_many_unit">How many %1$s?</string>
+    <string name="how_many_portions">How many? (%1$s)</string>
+    <string name="portion_title">Portion</string>
+    <string name="portion_with_weight">%1$s · %2$s</string>
+    <!-- "2 × Medium (102 g)": count, portion, total amount -->
+    <string name="portion_amount">%1$s × %2$s (%3$s)</string>
+    <string name="portion_small">Small</string>
+    <string name="portion_medium">Medium</string>
+    <string name="portion_large">Large</string>
+    <string name="portion_extra_large">Extra large</string>
+    <string name="portion_piece">Piece</string>
+    <string name="portion_slice">Slice</string>
+    <string name="portion_clove">Clove</string>
+    <string name="portion_tbsp">Tbsp</string>
+    <string name="portion_tsp">Tsp</string>
+    <string name="portion_glass">Glass</string>
+    <string name="portion_cup">Cup</string>
     <string name="edit_entry_title">Edit entry: %1$s</string>
     <string name="quick_copy">Quick copy</string>
     <string name="copy_yesterday">Yesterday</string>
@@ -280,6 +296,7 @@
     <string name="source_kaloricke">Kalorické tabulky</string>
     <string name="source_off">Open Food Facts</string>
     <string name="source_off_cz">Open Food Facts · sold in CZ</string>
+    <string name="source_basic">Basic food</string>
     <string name="search_error_all">Couldn\'t reach the online food databases. Check your connection and try again.</string>
     <string name="search_error_off">Couldn\'t reach Open Food Facts. Check your connection and try again.</string>
     <string name="search_error_kt">Couldn\'t reach Kalorické tabulky. Check your connection and try again.</string>
@@ -370,6 +387,7 @@
     <string name="language_english">English</string>
     <string name="language_russian">Русский</string>
     <string name="data">Data</string>
+    <string name="food_data_credits">Basic foods: Fineli, Finnish Institute for Health and Welfare (THL), CC BY 4.0; USDA FoodData Central. Products: Open Food Facts (ODbL), Kalorické tabulky.</string>
     <string name="export_csv">Export data (CSV)</string>
     <string name="export_chooser">Export food log</string>
     <string name="export_failed">Export failed: %1$s</string>

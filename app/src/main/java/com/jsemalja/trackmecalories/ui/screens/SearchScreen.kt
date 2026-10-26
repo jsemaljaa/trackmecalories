@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Eco
+import com.jsemalja.trackmecalories.data.portionList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.*
@@ -254,11 +256,11 @@ fun SearchScreen(
         PortionEntryDialog(
             food = food,
             onDismiss = { foodToLog = null },
-            onConfirm = { amount, mealType, confidence ->
+            onConfirm = { amount, mealType, confidence, portion ->
                 if (pick != null) {
                     pick.onPick(food, amount)
                 } else {
-                    viewModel.logCustomFood(food, amount, mealType, selectedDate.toString(), confidence)
+                    viewModel.logCustomFood(food, amount, mealType, selectedDate.toString(), confidence, portion)
                 }
                 foodToLog = null
             },
@@ -342,9 +344,12 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
         hit.protein != null && hit.carbs != null && hit.fat != null -> macroLine(hit.protein, hit.carbs, hit.fat)
         else -> stringResource(R.string.tap_for_macros)
     }
+    // Base foods show their usual portion ("Medium · 51 g") so it's clear they can be logged that way.
+    val usualPortion = hit.food?.let { food -> food.portionList.firstOrNull { it.key == food.defaultPortion } }
+        ?.let { portionWithWeight(it, hit.unit) }
     ResultCard(
         title = hit.name,
-        subtitle = listOfNotNull(hit.brand, hit.detail).joinToString(" · ").ifBlank { null },
+        subtitle = listOfNotNull(hit.brand, hit.detail, usualPortion).joinToString(" · ").ifBlank { null },
         kcal = hit.kcal,
         macros = macros,
         per = perLabel(hit.unit),
@@ -352,7 +357,11 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
             SearchSource.OPEN_FOOD_FACTS -> if (hit.isCzech) stringResource(R.string.source_off_cz) else stringResource(R.string.source_off)
             else -> stringResource(hit.source.label)
         },
-        leading = if (hit.source == SearchSource.MENU) Icons.Default.Restaurant else null,
+        leading = when (hit.source) {
+            SearchSource.MENU -> Icons.Default.Restaurant
+            SearchSource.BASIC -> Icons.Default.Eco
+            else -> null
+        },
         onClick = onClick,
         rated = hit.food,
         trailing = if (isLoading) {

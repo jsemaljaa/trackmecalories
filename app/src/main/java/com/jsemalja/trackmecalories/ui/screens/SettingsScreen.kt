@@ -157,6 +157,14 @@ fun SettingsScreen(
                 Spacer(Modifier.height(4.dp))
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
+
+            // Fineli's CC BY licence requires crediting it.
+            Spacer(Modifier.height(12.dp))
+            Text(
+                stringResource(R.string.food_data_credits),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         Spacer(Modifier.height(16.dp))

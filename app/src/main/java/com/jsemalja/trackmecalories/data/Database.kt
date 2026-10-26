@@ -13,7 +13,7 @@ object Database {
 
     fun get(context: Context): AppDatabase = instance ?: synchronized(this) {
         instance ?: Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "track-me-calories-db")
-            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
             // Only destructive on downgrade (e.g. reinstalling an older debug build).
             // Upgrades must ship a real Migration so user data is never silently wiped.
             .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)

@@ -294,8 +294,8 @@ fun HomeScreen(
         PortionEntryDialog(
             food = showPortionDialogFor!!,
             onDismiss = { showPortionDialogFor = null },
-            onConfirm = { amount, mealType, confidence ->
-                viewModel.logCustomFood(showPortionDialogFor!!, amount, mealType, selectedDate.toString(), confidence)
+            onConfirm = { amount, mealType, confidence, portion ->
+                viewModel.logCustomFood(showPortionDialogFor!!, amount, mealType, selectedDate.toString(), confidence, portion)
                 showPortionDialogFor = null
             }
         )
@@ -694,7 +694,7 @@ private fun NutrientProgress(
 
 @Composable
 fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
-    val amount = amountLabel(entry.amount, entry.unit)
+    val amount = entryAmountLabel(entry)
     AppCard(
         onClick = onClick,
         shape = shape,

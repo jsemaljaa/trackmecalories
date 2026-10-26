@@ -119,3 +119,17 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         db.execSQL("DELETE FROM food_cache")
     }
 }
+
+/**
+ * v8 -> v9: natural portions ("1 medium egg"). Saved foods get their list of portions and the
+ * last-used one; entries remember which portion they were logged as. Additive only; existing
+ * rows keep null, which means "logged in grams/ml/pieces" exactly as before.
+ */
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN portions TEXT")
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN defaultPortion TEXT")
+        db.execSQL("ALTER TABLE food_entries ADD COLUMN portion TEXT")
+        db.execSQL("ALTER TABLE food_entries ADD COLUMN portionGrams REAL")
+    }
+}

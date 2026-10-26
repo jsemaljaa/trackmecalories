@@ -4,6 +4,7 @@ import java.text.Normalizer
 
 /** Where a search result came from; shown on the result so you know how far to trust it. */
 enum class SearchSource(@androidx.annotation.StringRes val label: Int) {
+    BASIC(com.jsemalja.trackmecalories.R.string.source_basic),
     MENU(com.jsemalja.trackmecalories.R.string.source_menu),
     KALORICKE(com.jsemalja.trackmecalories.R.string.source_kaloricke),
     OPEN_FOOD_FACTS(com.jsemalja.trackmecalories.R.string.source_off)
@@ -109,7 +110,10 @@ object SearchMatcher {
     }
 }
 
-/** Lowercase, accents stripped, punctuation collapsed to single spaces. */
+/**
+ * Lowercase, accents stripped, punctuation collapsed to single spaces. Cyrillic is kept;
+ * stripping its marks folds "ё" into "е" and "й" into "и", which is how people often type them.
+ */
 fun String.normalizedForSearch(): String =
     Normalizer.normalize(this, Normalizer.Form.NFD)
         .replace(DIACRITICS, "")
@@ -117,5 +121,8 @@ fun String.normalizedForSearch(): String =
         .replace(NON_ALNUM, " ")
         .trim()
 
+/** Whether [query] is (partly) typed in Cyrillic. */
+fun isCyrillic(query: String): Boolean = query.any { it in 'Ѐ'..'ӿ' }
+
 private val DIACRITICS = Regex("""\p{Mn}+""")
-private val NON_ALNUM = Regex("""[^a-z0-9]+""")
+private val NON_ALNUM = Regex("""[^a-z0-9а-я]+""")

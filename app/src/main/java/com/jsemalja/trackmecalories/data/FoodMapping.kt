@@ -9,7 +9,9 @@ fun CustomFood.toEntry(
     amount: Double,
     mealType: String,
     date: String,
-    confidence: Confidence = Confidence.ESTIMATED
+    confidence: Confidence = Confidence.ESTIMATED,
+    // Set when [amount] was entered as a number of this portion.
+    portion: Portion? = null
 ): FoodEntry {
     val ratio = amount / referenceAmount
     return FoodEntry(
@@ -26,7 +28,9 @@ fun CustomFood.toEntry(
         mealType = mealType,
         date = date,
         confidence = confidence.name,
-        foodId = id.takeIf { it != 0 }
+        foodId = id.takeIf { it != 0 },
+        portion = portion?.key,
+        portionGrams = portion?.grams
     )
 }
 

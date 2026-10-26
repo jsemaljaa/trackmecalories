@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jsemalja.trackmecalories.data.RestaurantMenu
+import com.jsemalja.trackmecalories.data.BaseFoods
 import com.jsemalja.trackmecalories.ui.screens.HomeScreen
 import com.jsemalja.trackmecalories.ui.screens.OnboardingDialog
 import com.jsemalja.trackmecalories.ui.screens.ScannerScreen
@@ -100,10 +101,11 @@ class MainActivity : ComponentActivity() {
                 .distinctUntilChanged()
                 .collect { TodayWidget.refresh(applicationContext) }
         }
+        val baseFoods = BaseFoods(applicationContext.assets)
         val restaurantMenu = RestaurantMenu(applicationContext.assets)
         val appearancePrefs = AppearancePrefs(applicationContext)
         val userPrefs = UserPrefs(applicationContext)
-        viewModelFactory = MainViewModelFactory(dao, restaurantMenu, userPrefs, HealthData(applicationContext))
+        viewModelFactory = MainViewModelFactory(dao, baseFoods, restaurantMenu, userPrefs, HealthData(applicationContext))
 
         enableEdgeToEdge()
         setContent {

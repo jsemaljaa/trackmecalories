@@ -71,4 +71,20 @@ class SearchMatcherTest {
         // A too-short remainder isn't worth a request.
         assertEquals(listOf("mc do"), SearchMatcher.onlineVariants("mc do"))
     }
+
+    @Test
+    fun `cyrillic is kept, with yo and short i folded`() {
+        assertEquals("яицо куриное", "Яйцо куриное".normalizedForSearch())
+        assertEquals("свекла", "Свёкла".normalizedForSearch())
+        assertNotNull(score("свекла", "Свёкла, варёная"))
+        assertNotNull(score("яйцо", "Яйцо куриное, сырое"))
+        assertNull(score("молоко", "Кефир"))
+    }
+
+    @Test
+    fun `russian word endings are tolerated`() {
+        assertNotNull(score("куриная грудка", "Куриная грудка, сырая"))
+        assertNotNull(score("курица грудка", "Куриная грудка, сырая"))
+        assertNotNull(score("яйца", "Яйцо куриное, сырое"))
+    }
 }

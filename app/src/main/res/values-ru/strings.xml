@@ -208,6 +208,22 @@
     <string name="edit_food">Изменить продукт</string>
     <string name="how_many_pieces">Сколько штук?</string>
     <string name="how_many_unit">Сколько %1$s?</string>
+    <string name="how_many_portions">Сколько? (%1$s)</string>
+    <string name="portion_title">Порция</string>
+    <string name="portion_with_weight">%1$s · %2$s</string>
+    <!-- "2 × Средний (102 г)": количество, порция, общий вес -->
+    <string name="portion_amount">%1$s × %2$s (%3$s)</string>
+    <string name="portion_small">Маленький</string>
+    <string name="portion_medium">Средний</string>
+    <string name="portion_large">Большой</string>
+    <string name="portion_extra_large">Очень большой</string>
+    <string name="portion_piece">Штука</string>
+    <string name="portion_slice">Ломтик</string>
+    <string name="portion_clove">Зубчик</string>
+    <string name="portion_tbsp">Ст. ложка</string>
+    <string name="portion_tsp">Ч. ложка</string>
+    <string name="portion_glass">Стакан</string>
+    <string name="portion_cup">Чашка</string>
     <string name="edit_entry_title">Запись: %1$s</string>
     <string name="quick_copy">Быстро скопировать</string>
     <string name="copy_yesterday">На вчера</string>
@@ -282,6 +298,7 @@
     <string name="source_kaloricke">Kalorické tabulky</string>
     <string name="source_off">Open Food Facts</string>
     <string name="source_off_cz">Open Food Facts · продаётся в ЧР</string>
+    <string name="source_basic">Базовый продукт</string>
     <string name="search_error_all">Не удалось подключиться к онлайн-базам продуктов. Проверьте соединение и попробуйте снова.</string>
     <string name="search_error_off">Не удалось подключиться к Open Food Facts. Проверьте соединение и попробуйте снова.</string>
     <string name="search_error_kt">Не удалось подключиться к Kalorické tabulky. Проверьте соединение и попробуйте снова.</string>
@@ -370,6 +387,7 @@
     <string name="language_english">English</string>
     <string name="language_russian">Русский</string>
     <string name="data">Данные</string>
+    <string name="food_data_credits">Базовые продукты: Fineli, Финский институт здравоохранения и социального обеспечения (THL), CC BY 4.0; USDA FoodData Central. Товары: Open Food Facts (ODbL), Kalorické tabulky.</string>
     <string name="export_csv">Экспорт данных (CSV)</string>
     <string name="export_chooser">Экспорт дневника</string>
     <string name="export_failed">Не удалось экспортировать: %1$s</string>

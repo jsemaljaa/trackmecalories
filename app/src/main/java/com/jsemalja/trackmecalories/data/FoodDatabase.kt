@@ -40,7 +40,11 @@ data class FoodEntry(
     val satiety: Int? = null,
     val energyLevel: Int? = null,
     // The saved food this came from, when known (older entries are matched by name).
-    val foodId: Int? = null
+    val foodId: Int? = null,
+    // Logged as a number of portions ("2 medium eggs"): the portion key (see [Portion]) and
+    // its weight at the time. [amount] stays in grams, so totals never depend on these.
+    val portion: String? = null,
+    val portionGrams: Double? = null
 )
 
 /**
@@ -73,7 +77,11 @@ data class CustomFood(
     val sugarPer100: Double? = null,
     val saturatedFatPer100: Double? = null,
     // Official Nutri-Score grade (a-e) from Open Food Facts, if it has one.
-    val nutriScore: String? = null
+    val nutriScore: String? = null,
+    // Natural servings, encoded "small=42;medium=51" (see [parsePortions]); null if none.
+    val portions: String? = null,
+    // The portion to preselect when logging: the last one used, else the food's usual one.
+    val defaultPortion: String? = null
 )
 
 /**
@@ -374,8 +382,8 @@ interface FoodDao {
     @Query("SELECT * FROM food_entries WHERE date >= :sinceDate ORDER BY time DESC")
     fun observeEntriesSince(sinceDate: String): Flow<List<FoodEntry>>
 
-    @Query("UPDATE custom_foods SET defaultAmount = :amount WHERE id = :id")
-    suspend fun setDefaultAmount(id: Int, amount: Double)
+    @Query("UPDATE custom_foods SET defaultAmount = :amount, defaultPortion = :portion WHERE id = :id")
+    suspend fun setDefaultAmount(id: Int, amount: Double, portion: String?)
 
     @Query("UPDATE food_entries SET satiety = :satiety, energyLevel = :energy WHERE date = :date AND mealType = :mealType")
     suspend fun rateMeal(date: String, mealType: String, satiety: Int?, energy: Int?)
@@ -469,7 +477,7 @@ interface FoodDao {
         FoodEntry::class, CustomFood::class, UserGoal::class, WaterEntry::class, FoodCache::class,
         WeightEntry::class, Recipe::class, RecipeIngredient::class, DayLog::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
