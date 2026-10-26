@@ -38,6 +38,7 @@ import com.jsemalja.trackmecalories.data.Recipe
 import com.jsemalja.trackmecalories.data.RecipeIngredient
 import com.jsemalja.trackmecalories.data.estimatedCookedWeightG
 import com.jsemalja.trackmecalories.data.hasCookFactors
+import com.jsemalja.trackmecalories.data.inPieces
 import com.jsemalja.trackmecalories.data.missingWeights
 import com.jsemalja.trackmecalories.data.per100g
 import com.jsemalja.trackmecalories.data.rawWeightG
@@ -86,10 +87,12 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
         }
     }
 
-    // A food counted in pieces needs its piece weight to count toward the dish, so ask right away.
+    // A food counted in pieces needs its piece weight to count toward the dish, so ask right
+    // away unless it's already known.
     fun addIngredient(food: CustomFood, amount: Double) {
-        ingredients.add(food.toIngredient(amount))
-        if (food.unit == "pcs") editing = ingredients.lastIndex
+        val ingredient = food.toIngredient(amount)
+        ingredients.add(ingredient)
+        if (ingredient.unit == "pcs" && ingredient.gramsPerUnit <= 0.0) editing = ingredients.lastIndex
     }
 
     val list = ingredients.toList()
@@ -389,9 +392,12 @@ private fun IngredientRow(ing: RecipeIngredient, onClick: () -> Unit, onRemove: 
             Column(Modifier.weight(1f)) {
                 Text(ing.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val grams = ing.amount * ing.gramsPerUnit
+                val gramsLabel = "${grams.roundToInt()} ${stringResource(R.string.unit_g)}"
                 val amount = when {
                     ing.unit != "pcs" -> stringResource(R.string.recipe_raw_amount, "${ing.amount.clean()} ${unitLabel(ing.unit)}")
-                    grams > 0 -> "${ing.amount.clean()} ${unitLabel(ing.unit)} · " + stringResource(R.string.recipe_raw_amount, "${grams.roundToInt()} ${stringResource(R.string.unit_g)}")
+                    // Entered in grams: a share of a piece ("0.01 pcs") means nothing.
+                    !ing.inPieces() -> stringResource(R.string.recipe_raw_amount, gramsLabel)
+                    grams > 0 -> "${ing.amount.clean()} ${unitLabel(ing.unit)} · " + stringResource(R.string.recipe_raw_amount, gramsLabel)
                     else -> "${ing.amount.clean()} ${unitLabel(ing.unit)}"
                 }
                 val cook = if (abs(ing.cookFactor - 1.0) > 0.001 && grams > 0) " · " + stringResource(R.string.recipe_cooks_to, (grams * ing.cookFactor).roundToInt()) else ""
@@ -424,14 +430,21 @@ private fun TotalsRow(label: String, kcal: Double, protein: Double, carbs: Doubl
 }
 
 /**
- * Raw amount and piece weight (for "pcs" foods) of one ingredient. The cooking factor is
- * tucked away: it only matters when the finished dish isn't weighed.
+ * Raw amount and piece weight (for "pcs" foods) of one ingredient. A food counted in pieces
+ * can be entered as pieces or grams. The cooking factor is tucked away: it only matters when
+ * the finished dish isn't weighed.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit, onSave: (RecipeIngredient) -> Unit) {
-    var amount by remember { mutableStateOf(ingredient.amount.clean()) }
-    var pieceGrams by remember { mutableStateOf(if (ingredient.unit == "pcs" && ingredient.gramsPerUnit > 0) ingredient.gramsPerUnit.clean() else "") }
+    val pieces = ingredient.unit == "pcs"
+    // Grams of a piece-counted food are stored as a share of a piece, so they need its weight.
+    var inGrams by remember { mutableStateOf(pieces && !ingredient.inPieces()) }
+    var amount by remember {
+        mutableStateOf((if (inGrams) Math.round(ingredient.amount * ingredient.gramsPerUnit * 10) / 10.0 else ingredient.amount).clean())
+    }
+    var pieceGrams by remember { mutableStateOf(if (pieces && ingredient.gramsPerUnit > 0) ingredient.gramsPerUnit.clean() else "") }
+    val pieceWeight = pieceGrams.toDecimal()?.takeIf { it > 0 }
     var factor by remember { mutableStateOf(ingredient.cookFactor.clean()) }
     var showFactor by remember { mutableStateOf(abs(ingredient.cookFactor - 1.0) > 0.001) }
 
@@ -440,22 +453,45 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
         title = { Text(ingredient.name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (pieces) {
+                    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                        listOf(false, true).forEachIndexed { i, grams ->
+                            SegmentedButton(
+                                selected = inGrams == grams,
+                                onClick = {
+                                    // Same quantity in the other unit, once a piece's weight is known.
+                                    if (inGrams != grams) {
+                                        val n = amount.toDecimal()
+                                        if (n != null && pieceWeight != null) {
+                                            amount = (if (grams) Math.round(n * pieceWeight * 10) / 10.0 else Math.round(n / pieceWeight * 100) / 100.0).clean()
+                                        }
+                                        inGrams = grams
+                                    }
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(i, 2),
+                                colors = appSegmentedColors(),
+                                icon = {}
+                            ) { Text(stringResource(if (grams) R.string.recipe_in_grams else R.string.recipe_in_pieces)) }
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
                     label = { Text(stringResource(R.string.recipe_amount)) },
-                    suffix = { Text(unitLabel(ingredient.unit)) },
+                    suffix = { Text(unitLabel(if (inGrams) "g" else ingredient.unit)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (ingredient.unit == "pcs") {
+                if (pieces) {
                     OutlinedTextField(
                         value = pieceGrams,
                         onValueChange = { pieceGrams = it },
                         label = { Text(stringResource(R.string.recipe_piece_weight)) },
                         suffix = { Text(stringResource(R.string.unit_g)) },
-                        supportingText = { Text(stringResource(R.string.recipe_piece_weight_help)) },
+                        supportingText = { Text(stringResource(if (inGrams) R.string.piece_weight_needed else R.string.recipe_piece_weight_help)) },
+                        isError = inGrams && pieceWeight == null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -490,15 +526,21 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onSave(
-                    ingredient.copy(
-                        amount = amount.toDecimal()?.takeIf { it > 0 } ?: ingredient.amount,
-                        gramsPerUnit = if (ingredient.unit == "pcs") pieceGrams.toDecimal()?.takeIf { it > 0 } ?: 0.0 else ingredient.gramsPerUnit,
-                        cookFactor = factor.toDecimal()?.takeIf { it > 0 } ?: 1.0
+            Button(
+                onClick = {
+                    val entered = amount.toDecimal()?.takeIf { it > 0 }
+                    onSave(
+                        ingredient.copy(
+                            // Always stored in the food's unit (pieces).
+                            amount = (if (inGrams) entered?.let { n -> pieceWeight?.let { n / it } } else entered) ?: ingredient.amount,
+                            gramsPerUnit = if (pieces) pieceWeight ?: 0.0 else ingredient.gramsPerUnit,
+                            cookFactor = factor.toDecimal()?.takeIf { it > 0 } ?: 1.0
+                        )
                     )
-                )
-            }) { Text(stringResource(R.string.save)) }
+                },
+                // Grams can't be turned into pieces without a piece's weight.
+                enabled = !(inGrams && pieceWeight == null)
+            ) { Text(stringResource(R.string.save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )

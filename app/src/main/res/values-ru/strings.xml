@@ -175,6 +175,8 @@
     <string name="recipe_delete_title">Удалить «%1$s»?</string>
     <string name="recipe_delete_body">Рецепт и список ингредиентов будут удалены. Сохранённый продукт и уже сделанные записи останутся.</string>
     <string name="recipe_amount">Количество (сырым)</string>
+    <string name="recipe_in_pieces">Штуки</string>
+    <string name="recipe_in_grams">Граммы</string>
     <string name="recipe_piece_weight">Вес одной штуки</string>
     <string name="recipe_piece_weight_help">Нужен, чтобы учесть его в весе блюда.</string>
     <string name="recipe_cook_factor_toggle">Вес меняется при готовке?</string>

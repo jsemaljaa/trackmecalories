@@ -1,5 +1,7 @@
 package com.jsemalja.trackmecalories.data
 
+import kotlin.math.abs
+
 /** Nutrient amounts (not per-100). */
 data class NutrientTotals(
     val kcal: Double = 0.0,
@@ -41,6 +43,17 @@ fun List<RecipeIngredient>.hasCookFactors(): Boolean = any { kotlin.math.abs(it.
 
 /** Ingredients counted in pieces whose piece weight is unknown, so they're missing from the dish weight. */
 fun List<RecipeIngredient>.missingWeights(): List<RecipeIngredient> = filter { it.gramsPerUnit <= 0.0 }
+
+/**
+ * Whether a "pcs" ingredient reads best as a count ("6 pcs") rather than in grams: whole or
+ * half pieces, or no piece weight to convert with. 6 g of a 500 g tub is "6 g", not "0.01 pcs".
+ */
+fun RecipeIngredient.inPieces(): Boolean {
+    if (unit != "pcs") return false
+    if (gramsPerUnit <= 0.0) return true
+    val halves = amount * 2
+    return amount >= 0.5 && abs(halves - Math.round(halves)) < 0.01
+}
 
 /** Nutrients per 100 g of a dish weighing [weightG]; null while the weight is unknown. */
 fun NutrientTotals.per100g(weightG: Double): NutrientTotals? = if (weightG > 0) this * (100.0 / weightG) else null

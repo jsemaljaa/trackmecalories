@@ -125,13 +125,20 @@ fun portionLabel(key: String): String = when (key) {
 fun portionWithWeight(portion: Portion, unit: String): String =
     stringResource(R.string.portion_with_weight, portionLabel(portion.key), amountLabel(portion.grams, unit))
 
+/**
+ * Whether an entry's unit says it all, with no "(… pcs)" after it: grams and ml, and spoons of
+ * a food counted in pieces, where the share of a piece ("0.02 pcs") means nothing.
+ */
+private fun unitOnly(entry: FoodEntry): Boolean =
+    entry.portion in WEIGHT_UNITS || (entry.unit == "pcs" && entry.portion in LOG_UNITS)
+
 /** "2 × Medium (102 g)" for an entry logged in portions, "150 g" of a burger, else the plain amount. */
 @Composable
 fun entryAmountLabel(entry: FoodEntry): String {
     val grams = entry.portionGrams
     val key = entry.portion
-    return if (key in WEIGHT_UNITS && grams != null && grams > 0) {
-        amountLabel(entry.amount / grams, key!!)
+    return if (key != null && grams != null && grams > 0 && unitOnly(entry)) {
+        "${(entry.amount / grams).clean()} ${logUnitLabel(key)}"
     } else if (key != null && grams != null && grams > 0) {
         stringResource(R.string.portion_amount, (entry.amount / grams).clean(), portionLabel(key), amountLabel(entry.amount, entry.unit))
     } else {
@@ -229,13 +236,20 @@ fun PortionEntryDialog(
                 }
             }
 
+            val shown = enteredAmount ?: portion?.grams ?: food.referenceAmount
             LogTotals(
                 food = food,
-                amount = enteredAmount ?: portion?.grams ?: food.referenceAmount,
+                amount = shown,
                 // Ingredients carry no confidence of their own.
                 relativeError = if (showMeal) confidence.relativeError else null,
-                // In portions the amount in the food's unit isn't on screen otherwise.
-                showAmount = portion != null,
+                // The weight, when it isn't what's typed: "for 102 g" of 2 eggs, "for 215 g" of a
+                // burger. Never a share of a piece ("for 0.01 pieces").
+                amountNote = when {
+                    measure in WEIGHT_UNITS -> null
+                    food.unit == "pcs" -> pieceGrams?.let { amountLabel(Math.round(shown * it * 10) / 10.0, "g") }
+                    portion != null -> amountLabel(shown, food.unit)
+                    else -> null
+                },
                 modifier = gutter
             )
 
@@ -351,7 +365,7 @@ fun PortionEntryDialog(
 
 /** The log sheet's headline: calories (± what [relativeError] allows) and macros for [amount]. */
 @Composable
-private fun LogTotals(food: CustomFood, amount: Double, relativeError: Double?, showAmount: Boolean, modifier: Modifier = Modifier) {
+private fun LogTotals(food: CustomFood, amount: Double, relativeError: Double?, amountNote: String?, modifier: Modifier = Modifier) {
     val ratio = amount / food.referenceAmount
     val kcal = food.kcalPer100 * ratio
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
@@ -377,8 +391,8 @@ private fun LogTotals(food: CustomFood, amount: Double, relativeError: Double?, 
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold
             )
-            if (showAmount) {
-                Text(stringResource(R.string.for_amount, amountLabel(amount, food.unit)), style = MaterialTheme.typography.bodySmall, color = muted)
+            amountNote?.let {
+                Text(stringResource(R.string.for_amount, it), style = MaterialTheme.typography.bodySmall, color = muted)
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -500,7 +514,7 @@ fun EditEntryDialog(
                     label = {
                         Text(
                             when {
-                                portionGrams != null && entry.portion in WEIGHT_UNITS -> stringResource(R.string.how_many_unit, unitLabel(entry.portion!!))
+                                portionGrams != null && unitOnly(entry) -> stringResource(R.string.how_many_unit, logUnitLabel(entry.portion!!))
                                 portionGrams != null -> stringResource(
                                     R.string.how_many_portions,
                                     portionWithWeight(Portion(entry.portion!!, portionGrams), entry.unit)

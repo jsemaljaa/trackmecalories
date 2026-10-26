@@ -5,6 +5,7 @@ import com.jsemalja.trackmecalories.data.Recipe
 import com.jsemalja.trackmecalories.data.dishWeightG
 import com.jsemalja.trackmecalories.data.estimatedCookedWeightG
 import com.jsemalja.trackmecalories.data.hasCookFactors
+import com.jsemalja.trackmecalories.data.inPieces
 import com.jsemalja.trackmecalories.data.missingWeights
 import com.jsemalja.trackmecalories.data.per100g
 import com.jsemalja.trackmecalories.data.toCustomFood
@@ -92,5 +93,17 @@ class RecipeMathTest {
         assertEquals(true, f.isFavorite)
         assertEquals(123L, f.lastUsedAt)
         assertEquals("Bowl", f.name)
+    }
+
+    @Test
+    fun `a piece-counted ingredient reads as pieces only when whole or half`() {
+        val tub = food("Doenjang", 900.0, 60.0, unit = "pcs").copy(pieceGrams = 500.0)
+        assertEquals(500.0, tub.toIngredient(1.0).gramsPerUnit, 0.0)
+        assertEquals(false, tub.toIngredient(6.0 / 500).inPieces())
+        assertEquals(true, tub.toIngredient(6.0).inPieces())
+        assertEquals(true, tub.toIngredient(0.5).inPieces())
+        // Without a weight there's nothing else to show.
+        assertEquals(true, food("Egg", 75.0, 6.5, unit = "pcs").toIngredient(0.3).inPieces())
+        assertEquals(false, rice.inPieces())
     }
 }

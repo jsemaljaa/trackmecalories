@@ -177,6 +177,8 @@
     <string name="recipe_delete_title">Delete %1$s?</string>
     <string name="recipe_delete_body">The recipe and its ingredient list are removed. Its saved food and anything you already logged stay.</string>
     <string name="recipe_amount">Amount (raw)</string>
+    <string name="recipe_in_pieces">Pieces</string>
+    <string name="recipe_in_grams">Grams</string>
     <string name="recipe_piece_weight">Weight of one piece</string>
     <string name="recipe_piece_weight_help">Needed to count it toward the dish weight.</string>
     <string name="recipe_cook_factor_toggle">Weight changes when cooked?</string>
