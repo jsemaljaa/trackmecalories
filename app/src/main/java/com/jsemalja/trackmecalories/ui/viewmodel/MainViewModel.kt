@@ -477,6 +477,8 @@ class MainViewModel(
      * Runs one online source against the debounced query, publishing its results, loading
      * and error state independently so a slow or failing source doesn't hold up the others.
      * A new keystroke cancels the previous search; [publish] refuses to post stale results.
+     * Stale-while-revalidate: a query searched earlier this session shows its last results
+     * at once while the fresh ones load (going back to "jogurt" after trying "jogurt bily").
      */
     private fun launchOnlineSearch(
         results: MutableStateFlow<List<SearchHit>>,
@@ -484,6 +486,9 @@ class MainViewModel(
         failed: MutableStateFlow<Boolean>,
         search: suspend (query: String, publish: suspend (List<SearchHit>) -> Unit) -> Unit
     ) {
+        val recent = object : LinkedHashMap<String, List<SearchHit>>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<SearchHit>>) = size > SEARCH_CACHE_SIZE
+        }
         viewModelScope.launch {
             combine(_searchQuery.debounce(SEARCH_DEBOUNCE_MS), _retryTick) { q, tick -> q.trim() to tick }
                 .distinctUntilChanged()
@@ -495,10 +500,12 @@ class MainViewModel(
                         return@collectLatest
                     }
                     loading.value = true
+                    recent[q]?.let { results.value = it }
                     try {
                         search(q) { hits ->
                             currentCoroutineContext().ensureActive()
                             results.value = hits
+                            recent[q] = hits
                         }
                     } catch (e: CancellationException) {
                         throw e
@@ -581,9 +588,33 @@ class MainViewModel(
     }
 
     /**
-     * Looks up a scanned barcode, via the repository's offline cache when possible.
+     * Looks up a scanned barcode, via the repository's offline cache when possible. An old
+     * cache entry is used right away and refreshed in the background for next time.
      */
-    suspend fun lookupBarcode(barcode: String): FoodInfo? = repository.getProductInfo(barcode)
+    suspend fun lookupBarcode(barcode: String): FoodInfo? = repository.getProductInfo(barcode) {
+        viewModelScope.launch {
+            try {
+                repository.fetchProductInfo(barcode)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Offline: the cached copy stays as it was.
+            }
+        }
+    }
+
+    // Idempotency keys of log requests already carried out (newest last). A dialog sends
+    // one key per opening, so a double tap on "Log" can't log the same food twice.
+    private val handledRequests = ArrayDeque<String>()
+
+    /** True the first time [key] is seen (and always for no key); remembers the last 50. */
+    private fun firstRequest(key: String?): Boolean {
+        if (key == null) return true
+        if (key in handledRequests) return false
+        handledRequests.addLast(key)
+        if (handledRequests.size > 50) handledRequests.removeFirst()
+        return true
+    }
 
     /**
      * Adds a new food entry to the database.
@@ -607,8 +638,11 @@ class MainViewModel(
         date: String = selectedDate.value.toString(),
         confidence: Confidence = Confidence.ESTIMATED,
         // Set when [amount] (in the food's unit) was entered as a number of this portion or unit.
-        portion: Portion? = null
+        portion: Portion? = null,
+        // From rememberRequestKey(): a repeat of an already logged request is ignored.
+        requestKey: String? = null
     ) {
+        if (!firstRequest(requestKey)) return
         viewModelScope.launch {
             // A search result may already be saved (same barcode / restaurant item id). Bump
             // that one instead of REPLACE-inserting, which would drop its favorite flag and edits.
@@ -660,7 +694,8 @@ class MainViewModel(
     /**
      * Quickly adds a calorie-only entry for the current day.
      */
-    fun addQuickCalories(kcal: Int) {
+    fun addQuickCalories(kcal: Int, requestKey: String? = null) {
+        if (!firstRequest(requestKey)) return
         viewModelScope.launch {
             dao.insertEntry(
                 FoodEntry(
@@ -731,6 +766,13 @@ class MainViewModel(
         }
     }
 
+    /** Puts back a food removed by [deleteCustomFood] (its Undo), with the same id. */
+    fun restoreCustomFood(food: CustomFood) {
+        viewModelScope.launch {
+            dao.insertCustomFood(food)
+        }
+    }
+
     /**
      * Pins a saved food to the Favorites list, or unpins it.
      */
@@ -759,6 +801,13 @@ class MainViewModel(
     fun deleteWaterEntry(entry: WaterEntry) {
         viewModelScope.launch {
             dao.deleteWaterEntry(entry)
+        }
+    }
+
+    /** Puts back a water entry removed by [deleteWaterEntry] (its Undo). */
+    fun restoreWaterEntry(entry: WaterEntry) {
+        viewModelScope.launch {
+            dao.upsertWaterEntry(entry)
         }
     }
 
@@ -822,6 +871,7 @@ class MainViewModel(
 data class RecipeListItem(val recipe: Recipe, val food: CustomFood?)
 
 private const val SEARCH_DEBOUNCE_MS = 350L
+private const val SEARCH_CACHE_SIZE = 20 // queries per online source kept for stale-while-revalidate
 private const val MAX_RESULTS = 150 // a chain shortcut lists its whole menu
 private const val KT_MACRO_PREFETCH = 8
 // Czech products (Kalorické tabulky, OFF items sold in CZ) outrank equally relevant

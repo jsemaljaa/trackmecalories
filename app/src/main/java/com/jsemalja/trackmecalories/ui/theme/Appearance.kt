@@ -102,7 +102,8 @@ private fun weights(regular: Int, medium: Int, semiBold: Int, bold: Int) = FontF
 data class Appearance(
     val style: DesignStyle = DesignStyle.FLAT,
     val accent: AccentColor = AccentColor.GREEN,
-    val font: AppFont = AppFont.SYSTEM
+    val font: AppFont = AppFont.SYSTEM,
+    val corners: CornerStyle = CornerStyle.ROUNDED
 )
 
 /**
@@ -121,11 +122,14 @@ class AppearancePrefs(context: Context) {
 
     fun setFont(font: AppFont) = update(_appearance.value.copy(font = font))
 
+    fun setCorners(corners: CornerStyle) = update(_appearance.value.copy(corners = corners))
+
     private fun update(value: Appearance) {
         prefs.edit()
             .putString(KEY_STYLE, value.style.name)
             .putString(KEY_ACCENT, value.accent.name)
             .putString(KEY_FONT, value.font.name)
+            .putString(KEY_CORNERS, value.corners.name)
             .apply()
         _appearance.value = value
     }
@@ -136,12 +140,15 @@ class AppearancePrefs(context: Context) {
         accent = prefs.getString(KEY_ACCENT, null)
             ?.let { name -> AccentColor.entries.firstOrNull { it.name == name } } ?: AccentColor.GREEN,
         font = prefs.getString(KEY_FONT, null)
-            ?.let { name -> AppFont.entries.firstOrNull { it.name == name } } ?: AppFont.SYSTEM
+            ?.let { name -> AppFont.entries.firstOrNull { it.name == name } } ?: AppFont.SYSTEM,
+        corners = prefs.getString(KEY_CORNERS, null)
+            ?.let { name -> CornerStyle.entries.firstOrNull { it.name == name } } ?: CornerStyle.ROUNDED
     )
 
     private companion object {
         const val KEY_STYLE = "style"
         const val KEY_ACCENT = "accent"
         const val KEY_FONT = "font"
+        const val KEY_CORNERS = "corners"
     }
 }

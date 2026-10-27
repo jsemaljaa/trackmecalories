@@ -214,6 +214,12 @@ fun SearchScreen(
                     }
                 }
 
+                // Skeletons while the online databases answer: a full list's worth when there's
+                // nothing to show yet, a couple under the offline hits otherwise.
+                if (isSearching) {
+                    items(if (nothingFound) 5 else 2, key = { "skeleton_$it" }) { SkeletonResultCard() }
+                }
+
                 searchError?.let { error ->
                     item(key = "error") {
                         SearchMessage(
@@ -253,6 +259,7 @@ fun SearchScreen(
     }
 
     foodToLog?.let { food ->
+        val requestKey = rememberRequestKey()
         PortionEntryDialog(
             food = food,
             onDismiss = { foodToLog = null },
@@ -260,7 +267,7 @@ fun SearchScreen(
                 if (pick != null) {
                     pick.onPick(logged, amount)
                 } else {
-                    viewModel.logCustomFood(logged, amount, mealType, selectedDate.toString(), confidence, portion)
+                    viewModel.logCustomFood(logged, amount, mealType, selectedDate.toString(), confidence, portion, requestKey)
                 }
                 foodToLog = null
             },

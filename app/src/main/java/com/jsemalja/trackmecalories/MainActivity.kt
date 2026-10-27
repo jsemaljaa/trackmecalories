@@ -18,20 +18,27 @@ import android.content.Intent
 import androidx.compose.ui.res.stringResource
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,9 +60,11 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +82,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jsemalja.trackmecalories.data.RestaurantMenu
 import com.jsemalja.trackmecalories.data.BaseFoods
 import com.jsemalja.trackmecalories.ui.screens.HomeScreen
+import com.jsemalja.trackmecalories.ui.screens.LocalUndo
+import com.jsemalja.trackmecalories.ui.screens.rememberUndoController
 import com.jsemalja.trackmecalories.ui.screens.OnboardingDialog
 import com.jsemalja.trackmecalories.ui.screens.ScannerScreen
 import com.jsemalja.trackmecalories.ui.screens.SearchScreen
@@ -80,6 +91,9 @@ import com.jsemalja.trackmecalories.ui.screens.SettingsScreen
 import com.jsemalja.trackmecalories.ui.screens.TrendsScreen
 import com.jsemalja.trackmecalories.ui.theme.AppearancePrefs
 import com.jsemalja.trackmecalories.ui.theme.TrackmecaloriesTheme
+import com.jsemalja.trackmecalories.ui.theme.fadeThrough
+import com.jsemalja.trackmecalories.ui.theme.predictiveBack
+import com.jsemalja.trackmecalories.ui.theme.rememberPredictiveBack
 import com.jsemalja.trackmecalories.ui.theme.glassBorder
 import com.jsemalja.trackmecalories.ui.theme.isGlass
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
@@ -169,50 +183,74 @@ fun TrackmecaloriesApp(
     val hasSetGoals by viewModel.hasSetGoals.collectAsState()
     val appearance by appearancePrefs.appearance.collectAsState()
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            MinimalNavBar(
-                current = currentDestination,
-                onSelect = { currentDestination = it }
-            )
-        }
-    ) { innerPadding ->
-        val modifier = Modifier.padding(innerPadding)
-        when (currentDestination) {
-            AppDestinations.HOME -> HomeScreen(
-                viewModel,
-                modifier,
-                onOpenSearch = { currentDestination = AppDestinations.FOOD },
-                onOpenScanner = { showScanner = true },
-                request = homeRequest,
-                onRequestHandled = { homeRequest = null }
-            )
-            AppDestinations.FOOD -> SearchScreen(viewModel, modifier, onOpenScanner = { showScanner = true })
-            AppDestinations.TRENDS -> TrendsScreen(
-                viewModel,
-                modifier,
-                // Tapping a day in the chart opens that day's log.
-                onOpenDay = { date ->
-                    viewModel.changeDate(date)
-                    currentDestination = AppDestinations.HOME
-                }
-            )
-            AppDestinations.SETTINGS -> SettingsScreen(
-                viewModel,
-                modifier,
-                appearance = appearance,
-                onStyleChange = appearancePrefs::setStyle,
-                onAccentChange = appearancePrefs::setAccent,
-                onFontChange = appearancePrefs::setFont
-            )
-        }
+    val undo = rememberUndoController()
+    // Back from another tab goes to Today (the start destination) before leaving the app.
+    val tabBack = rememberPredictiveBack(enabled = currentDestination != AppDestinations.HOME && !showScanner) {
+        currentDestination = AppDestinations.HOME
     }
 
-    // The scanner is a full-screen overlay rather than a tab: it's an action, not a place.
-    if (showScanner) {
-        BackHandler { showScanner = false }
-        ScannerScreen(viewModel, onClose = { showScanner = false })
+    CompositionLocalProvider(LocalUndo provides undo) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            // System bars plus the camera cutout, so nothing hides under it in landscape.
+            contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
+            // Home shows the snackbar itself, above its add button.
+            snackbarHost = { if (currentDestination != AppDestinations.HOME) SnackbarHost(undo.hostState) },
+            bottomBar = {
+                MinimalNavBar(
+                    current = currentDestination,
+                    onSelect = { currentDestination = it }
+                )
+            }
+        ) { innerPadding ->
+            AnimatedContent(
+                targetState = currentDestination,
+                transitionSpec = { fadeThrough() },
+                modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding).predictiveBack(tabBack),
+                label = "tab"
+            ) { destination ->
+                val modifier = Modifier.fillMaxSize()
+                when (destination) {
+                    AppDestinations.HOME -> HomeScreen(
+                        viewModel,
+                        modifier,
+                        onOpenSearch = { currentDestination = AppDestinations.FOOD },
+                        onOpenScanner = { showScanner = true },
+                        request = homeRequest,
+                        onRequestHandled = { homeRequest = null }
+                    )
+                    AppDestinations.FOOD -> SearchScreen(viewModel, modifier, onOpenScanner = { showScanner = true })
+                    AppDestinations.TRENDS -> TrendsScreen(
+                        viewModel,
+                        modifier,
+                        // Tapping a day in the chart opens that day's log.
+                        onOpenDay = { date ->
+                            viewModel.changeDate(date)
+                            currentDestination = AppDestinations.HOME
+                        }
+                    )
+                    AppDestinations.SETTINGS -> SettingsScreen(
+                        viewModel,
+                        modifier,
+                        appearance = appearance,
+                        onStyleChange = appearancePrefs::setStyle,
+                        onAccentChange = appearancePrefs::setAccent,
+                        onFontChange = appearancePrefs::setFont,
+                        onCornersChange = appearancePrefs::setCorners
+                    )
+                }
+            }
+        }
+
+        // The scanner is a full-screen overlay rather than a tab: it's an action, not a place.
+        AnimatedVisibility(
+            visible = showScanner,
+            enter = fadeIn() + slideInVertically { it / 10 },
+            exit = fadeOut() + slideOutVertically { it / 10 }
+        ) {
+            val scannerBack = rememberPredictiveBack(enabled = showScanner) { showScanner = false }
+            ScannerScreen(viewModel, Modifier.predictiveBack(scannerBack), onClose = { showScanner = false })
+        }
     }
 
     if (!hasSetGoals) {

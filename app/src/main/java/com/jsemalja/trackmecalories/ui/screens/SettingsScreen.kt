@@ -35,6 +35,7 @@ import com.jsemalja.trackmecalories.ui.theme.AccentColor
 import com.jsemalja.trackmecalories.ui.theme.AppFont
 import com.jsemalja.trackmecalories.ui.theme.Appearance
 import com.jsemalja.trackmecalories.ui.theme.DesignStyle
+import com.jsemalja.trackmecalories.ui.theme.CornerStyle
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -66,7 +67,8 @@ fun SettingsScreen(
     appearance: Appearance,
     onStyleChange: (DesignStyle) -> Unit,
     onAccentChange: (AccentColor) -> Unit,
-    onFontChange: (AppFont) -> Unit
+    onFontChange: (AppFont) -> Unit,
+    onCornersChange: (CornerStyle) -> Unit
 ) {
     val currentGoals by viewModel.userGoal.collectAsState()
     
@@ -84,7 +86,7 @@ fun SettingsScreen(
         Spacer(Modifier.height(24.dp))
 
         SettingsSectionCard(title = stringResource(R.string.appearance), titleColor = MaterialTheme.colorScheme.primary) {
-            AppearanceSettings(appearance, onStyleChange, onAccentChange, onFontChange)
+            AppearanceSettings(appearance, onStyleChange, onAccentChange, onFontChange, onCornersChange)
             LanguageSettings()
         }
 
@@ -428,7 +430,8 @@ private fun AppearanceSettings(
     appearance: Appearance,
     onStyleChange: (DesignStyle) -> Unit,
     onAccentChange: (AccentColor) -> Unit,
-    onFontChange: (AppFont) -> Unit
+    onFontChange: (AppFont) -> Unit,
+    onCornersChange: (CornerStyle) -> Unit
 ) {
     Text(stringResource(R.string.style), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
@@ -440,6 +443,20 @@ private fun AppearanceSettings(
                 shape = SegmentedButtonDefaults.itemShape(i, DesignStyle.entries.size),
                 colors = appSegmentedColors()
             ) { FitText(stringResource(style.label)) }
+        }
+    }
+
+    Spacer(Modifier.height(20.dp))
+    Text(stringResource(R.string.corners), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        CornerStyle.entries.forEachIndexed { i, corners ->
+            SegmentedButton(
+                selected = appearance.corners == corners,
+                onClick = { onCornersChange(corners) },
+                shape = SegmentedButtonDefaults.itemShape(i, CornerStyle.entries.size),
+                colors = appSegmentedColors()
+            ) { FitText(stringResource(corners.label)) }
         }
     }
 

@@ -74,7 +74,6 @@ import com.jsemalja.trackmecalories.ui.theme.MacroProtein
 import com.jsemalja.trackmecalories.ui.theme.MacroSalt
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import com.jsemalja.trackmecalories.ui.viewmodel.weekStartOf
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -139,25 +138,15 @@ fun HomeScreen(
 
     var showPortionDialogFor by remember { mutableStateOf<CustomFood?>(null) }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    // Resolved here: the snackbar is shown from a coroutine, outside composition.
+    val undo = LocalUndo.current
     val deletedMessage = stringResource(R.string.deleted_entry)
-    val undoLabel = stringResource(R.string.undo)
+    val deletedWater = stringResource(R.string.deleted_water)
 
     // Every delete (swipe or the dialog's button) is undoable for a few seconds, so an
     // accidental swipe never loses anything.
     fun deleteWithUndo(entry: FoodEntry) {
         viewModel.deleteEntry(entry)
-        scope.launch {
-            snackbarHostState.currentSnackbarData?.dismiss()
-            val result = snackbarHostState.showSnackbar(
-                message = deletedMessage.format(entry.name),
-                actionLabel = undoLabel,
-                duration = SnackbarDuration.Long
-            )
-            if (result == SnackbarResult.ActionPerformed) viewModel.restoreEntry(entry)
-        }
+        undo.offer(deletedMessage.format(entry.name)) { viewModel.restoreEntry(entry) }
     }
 
     val grouped = remember(entries) { entries.groupBy { it.mealType } }
@@ -172,7 +161,7 @@ fun HomeScreen(
         // The app-level Scaffold already applies system-bar insets; applying them again here
         // pushed Home's content down by an extra status-bar height.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { SnackbarHost(undo.hostState) },
         floatingActionButton = {
             // One entry point for every way of adding food (see AddFoodSheet).
             FloatingActionButton(
@@ -220,7 +209,10 @@ fun HomeScreen(
                                 waterEntries = waterEntries,
                                 goalMl = goals.waterGoalMl,
                                 onAddWater = { viewModel.addWater(it) },
-                                onRemove = { viewModel.deleteWaterEntry(it) }
+                                onRemove = { entry ->
+                                    viewModel.deleteWaterEntry(entry)
+                                    undo.offer(deletedWater) { viewModel.restoreWaterEntry(entry) }
+                                }
                             )
                         }
                         // Only once connected (Settings > Health data); otherwise nothing to show.
@@ -306,11 +298,12 @@ fun HomeScreen(
     }
 
     if (showPortionDialogFor != null) {
+        val requestKey = rememberRequestKey()
         PortionEntryDialog(
             food = showPortionDialogFor!!,
             onDismiss = { showPortionDialogFor = null },
             onConfirm = { food, amount, mealType, confidence, portion ->
-                viewModel.logCustomFood(food, amount, mealType, selectedDate.toString(), confidence, portion)
+                viewModel.logCustomFood(food, amount, mealType, selectedDate.toString(), confidence, portion, requestKey)
                 showPortionDialogFor = null
             }
         )
@@ -353,9 +346,10 @@ fun HomeScreen(
     }
 
     if (showQuickAddDialog) {
+        val requestKey = rememberRequestKey()
         QuickAddDialog(
             onDismiss = { showQuickAddDialog = false },
-            onSave = { kcal -> viewModel.addQuickCalories(kcal) }
+            onSave = { kcal -> viewModel.addQuickCalories(kcal, requestKey) }
         )
     }
 

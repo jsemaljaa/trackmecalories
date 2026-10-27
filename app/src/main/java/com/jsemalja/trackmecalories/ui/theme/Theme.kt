@@ -39,12 +39,13 @@ fun TrackmecaloriesTheme(
         if (glass) base.toGlass(darkTheme) else base
     }
     val typography = remember(appearance.font) { appTypography(appearance.font.family) }
+    val shapes = remember(appearance.corners) { appShapes(appearance.corners) }
 
     CompositionLocalProvider(LocalDesignStyle provides appearance.style) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = typography,
-            shapes = AppShapes,
+            shapes = shapes,
         ) {
             // Same tree in both styles (only the backdrop layer differs), so switching style
             // doesn't reset the UI state below — e.g. which tab is open.

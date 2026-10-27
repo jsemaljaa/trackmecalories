@@ -265,6 +265,8 @@
 
     <!-- Home -->
     <string name="deleted_entry">Deleted %1$s</string>
+    <string name="deleted_weight">Weigh-in deleted</string>
+    <string name="deleted_water">Water entry removed</string>
     <string name="add_food">Add food</string>
     <string name="daily_log">Daily log</string>
     <string name="no_entries_day">No entries for this day</string>
@@ -317,6 +319,7 @@
     <string name="no_matches">No matches for “%1$s”</string>
     <string name="no_matches_body">Try fewer or more general words, or add it yourself.</string>
     <string name="cant_find_create">Can\'t find it? Create a custom food</string>
+    <string name="loading">Loading…</string>
     <string name="loading_serving">Loading serving size…</string>
     <string name="tap_for_macros">Tap for macros &amp; serving size</string>
     <string name="per_piece_short">piece</string>
@@ -372,6 +375,10 @@
     <string name="style">Style</string>
     <string name="style_flat">Flat</string>
     <string name="style_glass">Glass</string>
+    <string name="corners">Corners</string>
+    <string name="corners_rounded">Rounded</string>
+    <string name="corners_continuous">Smooth</string>
+    <string name="corners_compact">Compact</string>
     <string name="accent_colour">Accent colour</string>
     <string name="accent_green">Green</string>
     <string name="accent_teal">Teal</string>

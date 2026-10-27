@@ -64,6 +64,14 @@ import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 
 private val MEAL_TYPES = listOf("Breakfast", "Lunch", "Dinner", "Snack")
 
+/**
+ * A fresh idempotency key for one opening of a logging dialog, passed along with the
+ * request (see MainViewModel.logCustomFood) so a double tap on its button logs once.
+ * Call it inside the block that shows the dialog, so reopening gets a new key.
+ */
+@Composable
+fun rememberRequestKey(): String = remember { java.util.UUID.randomUUID().toString() }
+
 /** Meal types are stored in English (the database key); this is the display name. */
 @Composable
 fun mealLabel(key: String): String = when (key) {
@@ -891,6 +899,8 @@ fun EditCustomFoodDialog(
 fun EditSavedFoodDialog(viewModel: MainViewModel, food: CustomFood, onDismiss: () -> Unit) {
     var loggedCount by remember(food.id) { mutableIntStateOf(0) }
     LaunchedEffect(food.id) { loggedCount = viewModel.countLoggedEntries(food) }
+    val undo = LocalUndo.current
+    val deletedMessage = stringResource(R.string.deleted_entry)
 
     EditCustomFoodDialog(
         food = food,
@@ -903,6 +913,7 @@ fun EditSavedFoodDialog(viewModel: MainViewModel, food: CustomFood, onDismiss: (
         onDelete = {
             viewModel.deleteCustomFood(food)
             onDismiss()
+            undo.offer(deletedMessage.format(food.name)) { viewModel.restoreCustomFood(food) }
         }
     )
 }

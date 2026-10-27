@@ -267,6 +267,8 @@
 
     <!-- Home -->
     <string name="deleted_entry">Удалено: %1$s</string>
+    <string name="deleted_weight">Взвешивание удалено</string>
+    <string name="deleted_water">Запись о воде удалена</string>
     <string name="add_food">Добавить еду</string>
     <string name="daily_log">Дневник</string>
     <string name="no_entries_day">За этот день записей нет</string>
@@ -319,6 +321,7 @@
     <string name="no_matches">Ничего не найдено по запросу «%1$s»</string>
     <string name="no_matches_body">Попробуйте меньше слов или более общие, либо добавьте продукт сами.</string>
     <string name="cant_find_create">Не нашли? Создайте свой продукт</string>
+    <string name="loading">Загрузка…</string>
     <string name="loading_serving">Загружаем размер порции…</string>
     <string name="tap_for_macros">Нажмите, чтобы увидеть БЖУ и порцию</string>
     <string name="per_piece_short">шт</string>
@@ -378,6 +381,10 @@
     <string name="style">Стиль</string>
     <string name="style_flat">Плоский</string>
     <string name="style_glass">Стекло</string>
+    <string name="corners">Углы</string>
+    <string name="corners_rounded">Скруглённые</string>
+    <string name="corners_continuous">Плавные</string>
+    <string name="corners_compact">Компактные</string>
     <string name="accent_colour">Цвет акцента</string>
     <string name="accent_green">Зелёный</string>
     <string name="accent_teal">Бирюзовый</string>

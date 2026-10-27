@@ -111,6 +111,8 @@ fun TrendsScreen(
             val points by viewModel.weightPoints.collectAsState()
             val entries by viewModel.weightEntries.collectAsState()
             val adaptive by viewModel.adaptiveMaintenance.collectAsState()
+            val undo = LocalUndo.current
+            val deletedWeight = stringResource(R.string.deleted_weight)
             WeightSection(
                 points = points,
                 entries = entries,
@@ -118,7 +120,10 @@ fun TrendsScreen(
                 heightCm = goals.heightCm,
                 adaptive = adaptive,
                 onLog = viewModel::logWeight,
-                onDelete = viewModel::deleteWeight,
+                onDelete = { entry ->
+                    viewModel.deleteWeight(entry)
+                    undo.offer(deletedWeight) { viewModel.restoreWeight(entry) }
+                },
                 onSetGoal = viewModel::setTargetWeight
             )
             return@Column

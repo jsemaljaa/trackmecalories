@@ -53,7 +53,8 @@ fun ScannerScreen(
             FilledTonalIconButton(
                 onClick = onClose,
                 modifier = Modifier
-                    .statusBarsPadding()
+                    // Clear of the status bar and, in landscape, the camera cutout.
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
                     .padding(12.dp)
                     .align(Alignment.TopStart)
             ) {
@@ -147,6 +148,7 @@ private fun ScannerContent(
     }
 
     if (showPortionDialog && foundFood != null) {
+        val requestKey = rememberRequestKey()
         PortionEntryDialog(
             food = foundFood!!,
             onDismiss = {
@@ -161,7 +163,7 @@ private fun ScannerContent(
                     onPick(food, amount)
                     return@PortionEntryDialog
                 }
-                viewModel.logCustomFood(food, amount, mealType, viewModel.selectedDate.value.toString(), confidence, portion)
+                viewModel.logCustomFood(food, amount, mealType, viewModel.selectedDate.value.toString(), confidence, portion, requestKey)
 
                 showPortionDialog = false
                 foundFood = null

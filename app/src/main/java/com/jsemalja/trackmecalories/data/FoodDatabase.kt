@@ -373,6 +373,9 @@ interface FoodDao {
     @Insert
     suspend fun insertWaterEntry(entry: WaterEntry)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertWaterEntry(entry: WaterEntry)
+
     @Delete
     suspend fun deleteWaterEntry(entry: WaterEntry)
 

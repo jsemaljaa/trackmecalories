@@ -64,17 +64,28 @@ class FoodRepository(private val dao: FoodDao? = null) {
     }
 
     /**
-     * Fetches product information from the Open Food Facts API v2, preferring a local
-     * cache hit over the network. Asks the Czech instance first (same database, but names
-     * come back in Czech where the product has them), then the world one if that fails.
-     * @param barcode The UPC/EAN code of the product.
+     * Product information for [barcode], stale-while-revalidate: a cached product is
+     * returned at once (offline, no wait), and if it was cached more than
+     * [STALE_AFTER_MS] ago [onStale] is called so the caller can refresh it in the
+     * background with [fetchProductInfo] (recipes and labels change). Without a cache hit
+     * it's fetched from Open Food Facts.
      * @return FoodInfo if found, null otherwise.
      */
-    suspend fun getProductInfo(barcode: String): FoodInfo? {
+    suspend fun getProductInfo(barcode: String, onStale: () -> Unit = {}): FoodInfo? {
         dao?.getCachedProduct(barcode)?.let {
             Log.d(TAG, "Cache hit for barcode: $barcode")
+            if (System.currentTimeMillis() - it.cachedAt > STALE_AFTER_MS) onStale()
             return it.toFoodInfo()
         }
+        return fetchProductInfo(barcode)
+    }
+
+    /**
+     * Fetches a product from the Open Food Facts API v2 and caches it. Asks the Czech
+     * instance first (same database, but names come back in Czech where the product has
+     * them), then the world one if that fails.
+     */
+    suspend fun fetchProductInfo(barcode: String): FoodInfo? {
         Log.d(TAG, "Fetching product info for barcode: $barcode")
         for (host in OFF_PRODUCT_HOSTS) {
             try {
@@ -217,5 +228,8 @@ class FoodRepository(private val dao: FoodDao? = null) {
 
         // Czech names first so "Jogurt bílý" isn't shown as its English/German label.
         val PREFERRED_LANGS = listOf("cs", Locale.getDefault().language.ifBlank { "en" }, "en").distinct()
+
+        // A cached product older than this is still shown, then re-fetched in the background.
+        const val STALE_AFTER_MS = 30L * 24 * 60 * 60 * 1000
     }
 }
