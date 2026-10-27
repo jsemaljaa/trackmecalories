@@ -883,7 +883,7 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
 
 /** Corner shape for row [index] of [count] in a grouped list: rounded only at the block's ends. */
 @Composable
-private fun groupedShape(index: Int, count: Int): Shape {
+fun groupedShape(index: Int, count: Int): Shape {
     val (outer, inner) = when (LocalAppTheme.current) {
         AppTheme.PAPER -> 4.dp to 0.dp
         AppTheme.BOLD -> 10.dp to 4.dp

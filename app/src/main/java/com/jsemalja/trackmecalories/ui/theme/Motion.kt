@@ -34,6 +34,18 @@ fun <S> AnimatedContentTransitionScope<S>.fadeThrough(): ContentTransform =
     (fadeIn(tween(210, delayMillis = 90)) + scaleIn(tween(210, delayMillis = 90), initialScale = 0.96f))
         .togetherWith(fadeOut(tween(90)))
 
+/**
+ * Material "shared axis X" between a page and the pages under it (Settings): going [forward]
+ * the new page slides in a little from the end edge while the old one fades towards the start;
+ * going back it's mirrored.
+ */
+fun <S> AnimatedContentTransitionScope<S>.sharedAxisX(forward: Boolean): ContentTransform {
+    val towards = if (forward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+    val distance: (Int) -> Int = { it / 10 }
+    return (fadeIn(tween(210, delayMillis = 90)) + slideIntoContainer(towards, tween(300), distance))
+        .togetherWith(fadeOut(tween(90)) + slideOutOfContainer(towards, tween(300), distance))
+}
+
 /** How far a back gesture has gone (0 = not in progress) and which edge it came from. */
 class PredictiveBackState {
     var progress by mutableFloatStateOf(0f)

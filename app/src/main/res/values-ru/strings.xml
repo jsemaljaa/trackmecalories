@@ -650,4 +650,19 @@
     <string name="fasting_channel_timer">Таймер голодания</string>
     <string name="fasting_channel_alerts">Напоминания о голодании</string>
     <string name="unit_h">ч</string>
+    <string name="back">Назад</string>
+    <string name="settings_features">Функции</string>
+    <string name="settings_features_none">Всё выключено</string>
+    <string name="settings_fasting_plan">Голодание %1$s</string>
+    <string name="settings_off">Выключено</string>
+    <string name="settings_health_connected">Подключено</string>
+    <string name="settings_health_not_connected">Не подключено</string>
+    <string name="settings_health_needs_install">Health Connect не установлен</string>
+    <string name="settings_health_unavailable">Недоступно на этом телефоне</string>
+    <string name="settings_data_summary">Экспорт, удаление всех данных</string>
+    <string name="settings_export_desc">Все записи в виде таблицы, чтобы сохранить или открыть в другом приложении.</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_about_summary">Версия, оценка питательности, источники данных</string>
+    <string name="settings_version">Версия %1$s</string>
+    <string name="settings_food_data">Данные о продуктах</string>
 </resources>

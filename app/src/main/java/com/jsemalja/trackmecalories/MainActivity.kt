@@ -90,7 +90,7 @@ import com.jsemalja.trackmecalories.ui.screens.rememberUndoController
 import com.jsemalja.trackmecalories.ui.screens.OnboardingDialog
 import com.jsemalja.trackmecalories.ui.screens.ScannerScreen
 import com.jsemalja.trackmecalories.ui.screens.SearchScreen
-import com.jsemalja.trackmecalories.ui.screens.SettingsScreen
+import com.jsemalja.trackmecalories.ui.screens.settings.SettingsScreen
 import com.jsemalja.trackmecalories.ui.screens.TrendsScreen
 import com.jsemalja.trackmecalories.ui.theme.AppearancePrefs
 import com.jsemalja.trackmecalories.ui.theme.TrackmecaloriesTheme

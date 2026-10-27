@@ -642,4 +642,19 @@
     <string name="fasting_channel_timer">Fasting timer</string>
     <string name="fasting_channel_alerts">Fasting alerts</string>
     <string name="unit_h">h</string>
+    <string name="back">Back</string>
+    <string name="settings_features">Features</string>
+    <string name="settings_features_none">All off</string>
+    <string name="settings_fasting_plan">Fasting %1$s</string>
+    <string name="settings_off">Off</string>
+    <string name="settings_health_connected">Connected</string>
+    <string name="settings_health_not_connected">Not connected</string>
+    <string name="settings_health_needs_install">Health Connect isn\'t installed</string>
+    <string name="settings_health_unavailable">Not available on this phone</string>
+    <string name="settings_data_summary">Export, wipe all data</string>
+    <string name="settings_export_desc">Every logged entry as a spreadsheet, to keep or open elsewhere.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_summary">Version, nutrition score, food data sources</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_food_data">Food data</string>
 </resources>
