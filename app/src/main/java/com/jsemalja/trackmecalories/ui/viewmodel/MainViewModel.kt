@@ -11,6 +11,10 @@ import com.jsemalja.trackmecalories.data.HealthData
 import com.jsemalja.trackmecalories.data.HealthStatus
 import com.jsemalja.trackmecalories.data.WeeklyBudget
 import com.jsemalja.trackmecalories.data.UserPrefs
+import com.jsemalja.trackmecalories.data.Fast
+import com.jsemalja.trackmecalories.data.FastingSettings
+import com.jsemalja.trackmecalories.fasting.FastingAccess
+import com.jsemalja.trackmecalories.fasting.FastingTimer
 import com.jsemalja.trackmecalories.data.suggestionHistoryStart
 import com.jsemalja.trackmecalories.data.DayLog
 import com.jsemalja.trackmecalories.R
@@ -67,7 +71,8 @@ class MainViewModel(
     private val baseFoods: BaseFoods,
     private val restaurantMenu: RestaurantMenu,
     private val userPrefs: UserPrefs,
-    private val health: HealthData
+    private val health: HealthData,
+    private val fasting: FastingTimer
 ) : ViewModel() {
 
     private val repository = FoodRepository(dao)
@@ -180,6 +185,48 @@ class MainViewModel(
     val waterTrackingEnabled: StateFlow<Boolean> = userPrefs.waterTracking
 
     fun setWaterTracking(enabled: Boolean) = userPrefs.setWaterTracking(enabled)
+
+    // --- Fasting ---
+
+    val fastingSettings: StateFlow<FastingSettings> = userPrefs.fasting
+
+    /** The running fast, or null between fasts. */
+    val activeFast: StateFlow<Fast?> = dao.getActiveFast()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val lastFast: StateFlow<Fast?> = dao.getLastFast()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    private val _fastingAccess = MutableStateFlow(fasting.access())
+    /** Whether fasting alerts can be shown, and on time; re-checked on resume. */
+    val fastingAccess: StateFlow<FastingAccess> = _fastingAccess
+
+    fun setFastingSettings(value: FastingSettings) {
+        val planChanged = value.planHours != userPrefs.fasting.value.planHours
+        userPrefs.setFasting(value)
+        viewModelScope.launch { if (planChanged) fasting.retarget(value.planHours) else fasting.sync() }
+    }
+
+    fun startFast() {
+        viewModelScope.launch { fasting.start() }
+    }
+
+    fun endFast() {
+        viewModelScope.launch { fasting.end() }
+    }
+
+    fun moveFastStart(startTime: Long) {
+        viewModelScope.launch { fasting.moveStart(startTime) }
+    }
+
+    /**
+     * Called on resume and after a permission request: notifications or exact alarms may have
+     * been allowed meanwhile, and the ongoing notification may have been swiped away.
+     */
+    fun refreshFasting() {
+        _fastingAccess.value = fasting.access()
+        viewModelScope.launch { fasting.sync() }
+    }
 
     /** This week's budget and today's flexible target; null when weekly budgeting is off. */
     val weeklyBudget: StateFlow<WeeklyBudget?> = run {
@@ -792,12 +839,13 @@ class MainViewModelFactory(
     private val baseFoods: BaseFoods,
     private val restaurantMenu: RestaurantMenu,
     private val userPrefs: UserPrefs,
-    private val health: HealthData
+    private val health: HealthData,
+    private val fasting: FastingTimer
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(dao, baseFoods, restaurantMenu, userPrefs, health) as T
+            return MainViewModel(dao, baseFoods, restaurantMenu, userPrefs, health, fasting) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -219,6 +219,19 @@ data class DayLog(
 )
 
 /**
+ * One fast of the fasting timer. [endTime] is null while it's running; at most one fast runs
+ * at a time. [targetHours] is the plan when it ran (16 for 16:8), so changing the plan later
+ * doesn't rewrite past fasts. Times are epoch milliseconds.
+ */
+@Entity(tableName = "fasts")
+data class Fast(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val startTime: Long,
+    val endTime: Long? = null,
+    val targetHours: Int
+)
+
+/**
  * Aggregated per-day totals used by the weekly trends screen. Not an entity — just a
  * query result shape.
  */
@@ -366,6 +379,26 @@ interface FoodDao {
     @Query("SELECT * FROM water_entries WHERE date = :date ORDER BY time ASC")
     fun getWaterEntriesForDate(date: String): Flow<List<WaterEntry>>
 
+    // --- Fasting ---
+
+    @Query("SELECT * FROM fasts WHERE endTime IS NULL ORDER BY startTime DESC LIMIT 1")
+    fun getActiveFast(): Flow<Fast?>
+
+    @Query("SELECT * FROM fasts WHERE endTime IS NULL ORDER BY startTime DESC LIMIT 1")
+    suspend fun getActiveFastOnce(): Fast?
+
+    @Query("SELECT * FROM fasts WHERE endTime IS NOT NULL ORDER BY endTime DESC LIMIT 1")
+    fun getLastFast(): Flow<Fast?>
+
+    @Query("SELECT * FROM fasts WHERE endTime IS NOT NULL ORDER BY endTime DESC LIMIT 1")
+    suspend fun getLastFastOnce(): Fast?
+
+    @Insert
+    suspend fun insertFast(fast: Fast)
+
+    @Update
+    suspend fun updateFast(fast: Fast)
+
     // --- Day completeness ---
 
     @Query("SELECT * FROM day_logs WHERE date BETWEEN :startDate AND :endDate")
@@ -481,9 +514,9 @@ interface FoodDao {
 @Database(
     entities = [
         FoodEntry::class, CustomFood::class, UserGoal::class, WaterEntry::class, FoodCache::class,
-        WeightEntry::class, Recipe::class, RecipeIngredient::class, DayLog::class
+        WeightEntry::class, Recipe::class, RecipeIngredient::class, DayLog::class, Fast::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <!-- Samsung Health syncs workout calories only as total calories. -->
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
+    <!-- Fasting timer: its notifications, alarms on time (Android 14+ asks the user), and
+         re-scheduling them after a reboot. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-feature android:name="android.hardware.camera.any" />
 
     <!-- Android 13 and older: Health Connect is a separate app. Samsung Health: to offer
@@ -77,6 +82,18 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_today_info" />
+        </receiver>
+
+        <!-- Fasting alarms and notification buttons (explicit intents from this app only), and
+             system broadcasts after which the alarms must be set again. -->
+        <receiver
+            android:name=".fasting.FastingReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
         </receiver>
 
         <provider

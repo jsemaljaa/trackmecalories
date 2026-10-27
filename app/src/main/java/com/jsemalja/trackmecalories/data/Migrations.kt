@@ -143,3 +143,15 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         db.execSQL("ALTER TABLE custom_foods ADD COLUMN pieceGrams REAL")
     }
 }
+
+/**
+ * v10 -> v11: the fasting timer. A new table only; nothing existing changes.
+ */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `fasts` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`startTime` INTEGER NOT NULL, `endTime` INTEGER, `targetHours` INTEGER NOT NULL)"
+        )
+    }
+}

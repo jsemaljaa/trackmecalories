@@ -2,6 +2,7 @@ package com.jsemalja.trackmecalories
 
 import com.jsemalja.trackmecalories.data.UserPrefs
 import com.jsemalja.trackmecalories.data.HealthData
+import com.jsemalja.trackmecalories.fasting.FastingTimer
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -105,7 +106,9 @@ class MainActivity : ComponentActivity() {
         val restaurantMenu = RestaurantMenu(applicationContext.assets)
         val appearancePrefs = AppearancePrefs(applicationContext)
         val userPrefs = UserPrefs(applicationContext)
-        viewModelFactory = MainViewModelFactory(dao, baseFoods, restaurantMenu, userPrefs, HealthData(applicationContext))
+        viewModelFactory = MainViewModelFactory(
+            dao, baseFoods, restaurantMenu, userPrefs, HealthData(applicationContext), FastingTimer(applicationContext, dao, userPrefs)
+        )
 
         enableEdgeToEdge()
         setContent {
@@ -127,7 +130,9 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // The watch may have synced (or permissions changed) while we were away. Same
         // instance as the UI's viewModel(): both come from this activity's store.
-        ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java].refreshHealth()
+        val viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
+        viewModel.refreshHealth()
+        viewModel.refreshFasting()
     }
 
     override fun onStop() {

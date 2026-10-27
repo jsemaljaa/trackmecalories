@@ -100,6 +100,9 @@ fun HomeScreen(
     val selectedDate by viewModel.selectedDate.collectAsState()
     val waterEntries by viewModel.waterEntries.collectAsState()
     val waterTracking by viewModel.waterTrackingEnabled.collectAsState()
+    val fasting by viewModel.fastingSettings.collectAsState()
+    val activeFast by viewModel.activeFast.collectAsState()
+    val lastFast by viewModel.lastFast.collectAsState()
     val dayComplete by viewModel.selectedDayComplete.collectAsState()
     val weekly by viewModel.weeklyBudget.collectAsState()
     val healthStatus by viewModel.healthStatus.collectAsState()
@@ -198,6 +201,18 @@ fun HomeScreen(
                 item(key = "progress") { DailyProgressCard(entries, goals, if (isToday) weekly else null, activityBonus) }
                 item(key = "water") {
                     Column {
+                        // Optional (Settings > Fasting); a fast runs in real time, so today only.
+                        if (fasting.enabled && isToday) {
+                            Spacer(Modifier.height(8.dp))
+                            FastingCard(
+                                active = activeFast,
+                                last = lastFast,
+                                planHours = fasting.planHours,
+                                onStart = viewModel::startFast,
+                                onEnd = viewModel::endFast,
+                                onMoveStart = viewModel::moveFastStart
+                            )
+                        }
                         // Optional (Settings > Goals > Track water).
                         if (waterTracking) {
                             Spacer(Modifier.height(8.dp))

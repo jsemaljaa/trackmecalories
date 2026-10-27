@@ -1,0 +1,58 @@
+package com.jsemalja.trackmecalories.data
+
+import java.time.LocalTime
+import java.time.ZonedDateTime
+
+const val HOUR_MS = 3_600_000L
+private const val MINUTE_MS = 60_000L
+
+/** Fasting hours of the common daily plans (16 = 16:8: fast 16 hours, eat within 8). */
+val FASTING_PLANS = listOf(12, 14, 16, 18, 20, 23)
+const val DEFAULT_FASTING_HOURS = 16
+
+/** When the fast reaches its goal. */
+val Fast.goalTime: Long get() = startTime + targetHours * HOUR_MS
+
+/** How far a running fast is at [now]. */
+data class FastProgress(val elapsedMs: Long, val targetMs: Long) {
+    val remainingMs: Long get() = (targetMs - elapsedMs).coerceAtLeast(0)
+    val fraction: Float get() = if (targetMs <= 0) 1f else (elapsedMs.toFloat() / targetMs).coerceIn(0f, 1f)
+    val reached: Boolean get() = elapsedMs >= targetMs
+}
+
+fun fastProgress(fast: Fast, now: Long): FastProgress =
+    FastProgress(((fast.endTime ?: now) - fast.startTime).coerceAtLeast(0), fast.targetHours * HOUR_MS)
+
+/**
+ * When the next fast is due: the eating window after the last fast is 24 h minus the plan's
+ * fasting hours, so a 16:8 fast ended at noon makes the next one due at 20:00.
+ */
+fun nextFastDue(lastFastEnd: Long, planHours: Int): Long =
+    lastFastEnd + (24 - planHours).coerceAtLeast(0) * HOUR_MS
+
+/**
+ * A fast's start picked as a clock time ("I stopped eating at 20:30"): today, or yesterday when
+ * that time hasn't come yet today. Never in the future.
+ */
+fun fastStartFromClock(time: LocalTime, now: ZonedDateTime): ZonedDateTime {
+    val today = now.with(time).withSecond(0).withNano(0)
+    return if (today.isAfter(now)) today.minusDays(1) else today
+}
+
+/** "16 h", "12 h 5 min" or "45 min"; the unit words are passed in so they can be localized. */
+fun formatFastDuration(ms: Long, hourUnit: String, minuteUnit: String): String {
+    val totalMinutes = ms.coerceAtLeast(0) / MINUTE_MS
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return when {
+        hours == 0L -> "$minutes $minuteUnit"
+        minutes == 0L -> "$hours $hourUnit"
+        else -> "$hours $hourUnit $minutes $minuteUnit"
+    }
+}
+
+/** A stopwatch reading, "12:04:09"; hours keep counting past 24. */
+fun formatStopwatch(ms: Long): String {
+    val totalSeconds = ms.coerceAtLeast(0) / 1000
+    return "%d:%02d:%02d".format(totalSeconds / 3600, totalSeconds / 60 % 60, totalSeconds % 60)
+}
