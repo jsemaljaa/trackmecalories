@@ -18,7 +18,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 
 /** True when the glass style is active. */
@@ -27,14 +26,13 @@ val isGlass: Boolean
     get() = LocalDesignStyle.current == DesignStyle.GLASS
 
 /**
- * The colourful backdrop glass surfaces sit on: a dark (or light) base with large, soft
- * glows of the accent, amber and blue. The glows are radial gradients, i.e. already
- * "blurred", so translucent cards on top read as frosted without a live blur.
+ * The colourful backdrop glass surfaces sit on: the theme's dark (or light) [base] with
+ * large, soft glows of the accent, amber and blue. The glows are radial gradients, i.e.
+ * already "blurred", so translucent cards on top read as frosted without a live blur.
  */
 @Composable
-fun GlassBackdrop(dark: Boolean) {
+fun GlassBackdrop(dark: Boolean, base: Color) {
     val colors = MaterialTheme.colorScheme
-    val base = if (dark) lerp(Color(0xFF07090A), colors.primary, 0.06f) else lerp(Color(0xFFF2F5F3), colors.primary, 0.05f)
     val glow = if (dark) 0.55f else 0.45f
 
     Box(Modifier.fillMaxSize().background(base)) {
@@ -93,8 +91,9 @@ fun glassBorder(): BorderStroke {
 }
 
 /**
- * The app's one card. Flat (minimal): a quiet neutral container with no shadow, border or
- * colour block — the accent is left to the content (rings, bars, buttons). Glass: a
+ * The app's one card. Flat (minimal): a quiet neutral container with no shadow or colour
+ * block — the accent is left to the content (rings, bars, buttons) — and a hairline edge
+ * only in themes where card and page are close in tone ([ThemePalette.outlinedCards]). Glass: a
  * translucent frosted panel with a light edge, coloured by [tint] if given.
  * [strong] is for cards that need to stand out a little more (search results).
  */
@@ -115,7 +114,11 @@ fun AppCard(
         else -> colors.surfaceContainerLow
     }
     val contentColor = if (glass && tint != null) contentColorFor(tint) else colors.onSurface
-    val border = if (glass) glassBorder() else null
+    val border = when {
+        glass -> glassBorder()
+        LocalThemePalette.current.outlinedCards -> BorderStroke(1.dp, colors.outlineVariant)
+        else -> null
+    }
 
     if (onClick != null) {
         Surface(

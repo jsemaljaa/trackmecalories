@@ -18,6 +18,27 @@ enum class DesignStyle(@StringRes val label: Int) {
     GLASS(R.string.style_glass)
 }
 
+/** Light or dark: follow the phone, or pin one regardless of the system setting. */
+enum class ThemeMode(@StringRes val label: Int) {
+    SYSTEM(R.string.mode_system),
+    LIGHT(R.string.mode_light),
+    DARK(R.string.mode_dark)
+}
+
+/**
+ * The neutral family behind the accent: backgrounds, cards, outlines and text greys.
+ * [CLASSIC] is grey faintly tinted with the accent; the others have a character of their
+ * own — [BLACK] true black for OLED screens (pure white in light mode), [PAPER] warm
+ * cream and sepia, [SLATE] cool navy and blue-grey. [outlinedCards] gives flat cards a
+ * hairline edge, for themes where the card and the page are close in tone.
+ */
+enum class ThemePalette(@StringRes val label: Int, val outlinedCards: Boolean) {
+    CLASSIC(R.string.palette_classic, outlinedCards = false),
+    BLACK(R.string.palette_black, outlinedCards = true),
+    PAPER(R.string.palette_paper, outlinedCards = true),
+    SLATE(R.string.palette_slate, outlinedCards = false)
+}
+
 /**
  * Accent colour choices. Each defines the primary tones for dark and light mode; the
  * neutrals (backgrounds, cards, outlines) are tinted with the accent so the whole UI
@@ -103,7 +124,9 @@ data class Appearance(
     val style: DesignStyle = DesignStyle.FLAT,
     val accent: AccentColor = AccentColor.GREEN,
     val font: AppFont = AppFont.SYSTEM,
-    val corners: CornerStyle = CornerStyle.ROUNDED
+    val corners: CornerStyle = CornerStyle.ROUNDED,
+    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val palette: ThemePalette = ThemePalette.CLASSIC
 )
 
 /**
@@ -124,12 +147,18 @@ class AppearancePrefs(context: Context) {
 
     fun setCorners(corners: CornerStyle) = update(_appearance.value.copy(corners = corners))
 
+    fun setMode(mode: ThemeMode) = update(_appearance.value.copy(mode = mode))
+
+    fun setPalette(palette: ThemePalette) = update(_appearance.value.copy(palette = palette))
+
     private fun update(value: Appearance) {
         prefs.edit()
             .putString(KEY_STYLE, value.style.name)
             .putString(KEY_ACCENT, value.accent.name)
             .putString(KEY_FONT, value.font.name)
             .putString(KEY_CORNERS, value.corners.name)
+            .putString(KEY_MODE, value.mode.name)
+            .putString(KEY_PALETTE, value.palette.name)
             .apply()
         _appearance.value = value
     }
@@ -142,7 +171,11 @@ class AppearancePrefs(context: Context) {
         font = prefs.getString(KEY_FONT, null)
             ?.let { name -> AppFont.entries.firstOrNull { it.name == name } } ?: AppFont.SYSTEM,
         corners = prefs.getString(KEY_CORNERS, null)
-            ?.let { name -> CornerStyle.entries.firstOrNull { it.name == name } } ?: CornerStyle.ROUNDED
+            ?.let { name -> CornerStyle.entries.firstOrNull { it.name == name } } ?: CornerStyle.ROUNDED,
+        mode = prefs.getString(KEY_MODE, null)
+            ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: ThemeMode.SYSTEM,
+        palette = prefs.getString(KEY_PALETTE, null)
+            ?.let { name -> ThemePalette.entries.firstOrNull { it.name == name } } ?: ThemePalette.CLASSIC
     )
 
     private companion object {
@@ -150,5 +183,7 @@ class AppearancePrefs(context: Context) {
         const val KEY_ACCENT = "accent"
         const val KEY_FONT = "font"
         const val KEY_CORNERS = "corners"
+        const val KEY_MODE = "mode"
+        const val KEY_PALETTE = "palette"
     }
 }

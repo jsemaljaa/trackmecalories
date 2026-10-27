@@ -372,6 +372,15 @@
 
     <!-- Settings -->
     <string name="appearance">Appearance</string>
+    <string name="theme_mode">Mode</string>
+    <string name="mode_system">System</string>
+    <string name="mode_light">Light</string>
+    <string name="mode_dark">Dark</string>
+    <string name="theme">Theme</string>
+    <string name="palette_classic">Classic</string>
+    <string name="palette_black">Black</string>
+    <string name="palette_paper">Paper</string>
+    <string name="palette_slate">Slate</string>
     <string name="style">Style</string>
     <string name="style_flat">Flat</string>
     <string name="style_glass">Glass</string>

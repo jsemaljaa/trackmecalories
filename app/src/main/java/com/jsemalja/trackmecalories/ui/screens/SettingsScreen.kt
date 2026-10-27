@@ -23,7 +23,8 @@ import com.jsemalja.trackmecalories.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.ui.Alignment
@@ -36,6 +37,10 @@ import com.jsemalja.trackmecalories.ui.theme.AppFont
 import com.jsemalja.trackmecalories.ui.theme.Appearance
 import com.jsemalja.trackmecalories.ui.theme.DesignStyle
 import com.jsemalja.trackmecalories.ui.theme.CornerStyle
+import com.jsemalja.trackmecalories.ui.theme.LocalDarkTheme
+import com.jsemalja.trackmecalories.ui.theme.ThemeMode
+import com.jsemalja.trackmecalories.ui.theme.ThemePalette
+import com.jsemalja.trackmecalories.ui.theme.neutrals
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -68,7 +73,9 @@ fun SettingsScreen(
     onStyleChange: (DesignStyle) -> Unit,
     onAccentChange: (AccentColor) -> Unit,
     onFontChange: (AppFont) -> Unit,
-    onCornersChange: (CornerStyle) -> Unit
+    onCornersChange: (CornerStyle) -> Unit,
+    onModeChange: (ThemeMode) -> Unit,
+    onPaletteChange: (ThemePalette) -> Unit
 ) {
     val currentGoals by viewModel.userGoal.collectAsState()
     
@@ -86,7 +93,7 @@ fun SettingsScreen(
         Spacer(Modifier.height(24.dp))
 
         SettingsSectionCard(title = stringResource(R.string.appearance), titleColor = MaterialTheme.colorScheme.primary) {
-            AppearanceSettings(appearance, onStyleChange, onAccentChange, onFontChange, onCornersChange)
+            AppearanceSettings(appearance, onModeChange, onPaletteChange, onStyleChange, onAccentChange, onFontChange, onCornersChange)
             LanguageSettings()
         }
 
@@ -434,11 +441,45 @@ private fun SettingsSectionCard(
 @Composable
 private fun AppearanceSettings(
     appearance: Appearance,
+    onModeChange: (ThemeMode) -> Unit,
+    onPaletteChange: (ThemePalette) -> Unit,
     onStyleChange: (DesignStyle) -> Unit,
     onAccentChange: (AccentColor) -> Unit,
     onFontChange: (AppFont) -> Unit,
     onCornersChange: (CornerStyle) -> Unit
 ) {
+    val dark = LocalDarkTheme.current
+
+    Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        ThemeMode.entries.forEachIndexed { i, mode ->
+            SegmentedButton(
+                selected = appearance.mode == mode,
+                onClick = { onModeChange(mode) },
+                shape = SegmentedButtonDefaults.itemShape(i, ThemeMode.entries.size),
+                colors = appSegmentedColors()
+            ) { FitText(stringResource(mode.label)) }
+        }
+    }
+
+    Spacer(Modifier.height(20.dp))
+    Text(stringResource(R.string.theme), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        ThemePalette.entries.forEach { palette ->
+            PaletteTile(
+                palette = palette,
+                accent = appearance.accent,
+                dark = dark,
+                selected = appearance.palette == palette,
+                onClick = { onPaletteChange(palette) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+
+    Spacer(Modifier.height(20.dp))
     Text(stringResource(R.string.style), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -469,7 +510,6 @@ private fun AppearanceSettings(
     Spacer(Modifier.height(20.dp))
     Text(stringResource(R.string.accent_colour), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(10.dp))
-    val dark = isSystemInDarkTheme()
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -496,6 +536,68 @@ private fun AppearanceSettings(
                 label = { Text(stringResource(font.label), fontFamily = font.family) }
             )
         }
+    }
+}
+
+/**
+ * A miniature page in [palette] (its background, a card with a title, a subtitle and an
+ * accent progress bar) so the themes can be compared at a glance rather than by name.
+ */
+@Composable
+private fun PaletteTile(
+    palette: ThemePalette,
+    accent: AccentColor,
+    dark: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val n = remember(palette, accent, dark) { neutrals(palette, accent.primaryLight, dark) }
+    val colors = MaterialTheme.colorScheme
+    val shape = MaterialTheme.shapes.medium
+    val cardShape = MaterialTheme.shapes.small
+
+    Column(
+        modifier.selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .clip(shape)
+                .background(n.background)
+                .border(
+                    width = if (selected) 2.dp else 1.dp,
+                    color = if (selected) colors.primary else colors.outlineVariant,
+                    shape = shape
+                )
+                .padding(if (selected) 8.dp else 7.dp)
+        ) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .clip(cardShape)
+                    .background(n.containerLow)
+                    .then(if (palette.outlinedCards) Modifier.border(1.dp, n.outlineVariant, cardShape) else Modifier)
+                    .padding(7.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Box(Modifier.fillMaxWidth(0.7f).height(5.dp).clip(CircleShape).background(n.onBackground))
+                Box(Modifier.fillMaxWidth(0.45f).height(4.dp).clip(CircleShape).background(n.onSurfaceVariant))
+                Spacer(Modifier.weight(1f))
+                Box(Modifier.fillMaxWidth().height(5.dp).clip(CircleShape).background(n.surfaceVariant)) {
+                    Box(Modifier.fillMaxWidth(0.6f).fillMaxHeight().clip(CircleShape).background(colors.primary))
+                }
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        FitText(
+            stringResource(palette.label),
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) colors.primary else colors.onSurfaceVariant,
+            fontWeight = if (selected) FontWeight.SemiBold else null
+        )
     }
 }
 

@@ -236,7 +236,9 @@ fun TrackmecaloriesApp(
                         onStyleChange = appearancePrefs::setStyle,
                         onAccentChange = appearancePrefs::setAccent,
                         onFontChange = appearancePrefs::setFont,
-                        onCornersChange = appearancePrefs::setCorners
+                        onCornersChange = appearancePrefs::setCorners,
+                        onModeChange = appearancePrefs::setMode,
+                        onPaletteChange = appearancePrefs::setPalette
                     )
                 }
             }
