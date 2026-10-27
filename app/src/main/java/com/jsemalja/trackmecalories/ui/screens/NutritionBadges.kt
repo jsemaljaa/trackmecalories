@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,7 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.R
@@ -46,12 +51,25 @@ fun NutriScoreBadge(grade: Char, estimated: Boolean, size: Dp = 22.dp) {
             ),
         contentAlignment = Alignment.Center
     ) {
+        // Sized from the box in dp, so a large system font can't push the letter out of it.
+        val fontSize = with(LocalDensity.current) { (size * 0.6f).toSp() }
         Text(
             grade.toString(),
             color = if (estimated) color else if (grade == 'C') Color.Black else Color.White,
             fontWeight = FontWeight.Bold,
-            // Sized from the box in dp, so a large system font can't push the letter out of it.
-            fontSize = with(LocalDensity.current) { (size * 0.6f).toSp() }
+            fontSize = fontSize,
+            // The inherited body line height is taller than the box, which pushed the letter
+            // low; a one-em line with the font padding trimmed keeps it centred in any app font.
+            style = LocalTextStyle.current.merge(
+                TextStyle(
+                    lineHeight = fontSize,
+                    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
+                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                )
+            ),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }

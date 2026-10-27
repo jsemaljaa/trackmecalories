@@ -435,7 +435,8 @@ internal fun ResultCard(
                     Spacer(Modifier.width(10.dp))
                 }
             }
-            Column(horizontalAlignment = Alignment.End) {
+            // A minimum width keeps the badges in one column when the "per" label varies.
+            Column(Modifier.widthIn(min = 64.dp), horizontalAlignment = Alignment.End) {
                 Text("${kcal.roundToInt()}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.kcal_per, per), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
