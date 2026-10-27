@@ -1,5 +1,6 @@
 package com.jsemalja.trackmecalories.ui.screens
 
+import com.jsemalja.trackmecalories.data.healthOrder
 import com.jsemalja.trackmecalories.data.rating
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import android.widget.Toast
@@ -14,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
@@ -74,6 +76,11 @@ fun SearchScreen(
     var allSort by rememberSaveable { mutableStateOf(FoodSort.NAME) }
     val query by viewModel.searchQuery.collectAsState()
     val results by viewModel.searchResults.collectAsState()
+    // Results come best match first; this re-sorts them healthiest first.
+    var healthFirst by rememberSaveable { mutableStateOf(false) }
+    val shownResults = remember(results, healthFirst) {
+        if (healthFirst) results.sortedWith(compareBy(healthOrder) { (it.food ?: it.rated)?.rating() }) else results
+    }
     val savedMatches by viewModel.savedFoodMatches.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
     val searchError by viewModel.searchError.collectAsState()
@@ -208,8 +215,17 @@ fun SearchScreen(
                 }
 
                 if (results.isNotEmpty()) {
-                    item(key = "results_header") { SectionLabel(stringResource(R.string.results)) }
-                    items(results, key = { it.key }) { hit ->
+                    item(key = "results_header") {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.weight(1f)) { SectionLabel(stringResource(R.string.results)) }
+                            TextButton(onClick = { healthFirst = !healthFirst }) {
+                                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text(stringResource(if (healthFirst) R.string.sort_nutriscore else R.string.sort_relevance))
+                            }
+                        }
+                    }
+                    items(shownResults, key = { it.key }) { hit ->
                         SearchHitRow(hit, isLoading = resolvingKey == hit.key) { open(hit) }
                     }
                 }
@@ -370,7 +386,7 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
             else -> null
         },
         onClick = onClick,
-        rated = hit.food,
+        rated = hit.food ?: hit.rated,
         trailing = if (isLoading) {
             { CircularProgressIndicator(Modifier.padding(start = 8.dp).size(20.dp), strokeWidth = 2.dp) }
         } else null

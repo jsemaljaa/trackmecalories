@@ -12,6 +12,9 @@
    "fat": 22.5,
    "fiber": 0.0,
    "salt": 3.0,
+   "sugar": 5.0,
+   "satFat": 11.0,
+   "ktType": "jidla-a-prilohy/polevky-1",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (500 g)"
@@ -25,6 +28,9 @@
    "fat": 30.0,
    "fiber": 0.0,
    "salt": 2.0,
+   "sugar": 9.0,
+   "satFat": 11.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (500 g)"
@@ -38,6 +44,9 @@
    "fat": 7.9,
    "fiber": 0.0,
    "salt": 2.0,
+   "sugar": 1.2,
+   "satFat": 1.2,
+   "ktType": "jidla-a-prilohy/polevky-1",
    "unit": "ml",
    "referenceAmount": 100.0,
    "portion": null
@@ -51,6 +60,9 @@
    "fat": 34.5,
    "fiber": 0.0,
    "salt": 3.5,
+   "sugar": 8.0,
+   "satFat": 19.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (500 g)"
@@ -64,6 +76,9 @@
    "fat": 8.0,
    "fiber": 0.0,
    "salt": 6.0,
+   "sugar": 6.5,
+   "satFat": 5.0,
+   "ktType": "jidla-a-prilohy/polevky-1",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (500 g)"
@@ -77,6 +92,9 @@
    "fat": 7.9,
    "fiber": 0.0,
    "salt": 2.0,
+   "sugar": 6.6,
+   "satFat": 0.2,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -90,6 +108,9 @@
    "fat": 13.75,
    "fiber": 0.0,
    "salt": 1.0,
+   "sugar": 2.0,
+   "satFat": 4.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (250 g)"
@@ -103,6 +124,9 @@
    "fat": 5.3,
    "fiber": 0.0,
    "salt": 0.4,
+   "sugar": 6.2,
+   "satFat": 2.7,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -116,6 +140,9 @@
    "fat": 95.0,
    "fiber": 0.0,
    "salt": 4.0,
+   "sugar": 10.0,
+   "satFat": 50.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (500 g)"
@@ -129,6 +156,9 @@
    "fat": 39.5,
    "fiber": 0.0,
    "salt": 3.5,
+   "sugar": 35.0,
+   "satFat": 19.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (500 g)"

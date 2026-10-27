@@ -12,6 +12,7 @@
    "fat": 12.94,
    "fiber": 0.76,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (196 g)"
@@ -25,6 +26,7 @@
    "fat": 24.69,
    "fiber": 0.03,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (160 g)"
@@ -38,6 +40,7 @@
    "fat": 46.76,
    "fiber": 1.55,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (304 g)"
@@ -51,6 +54,7 @@
    "fat": 27.92,
    "fiber": 1.4,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (274 g)"
@@ -64,6 +68,7 @@
    "fat": 14.64,
    "fiber": 0.41,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (216 g)"
@@ -77,6 +82,7 @@
    "fat": 16.78,
    "fiber": 1.17,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (158 g)"
@@ -90,6 +96,7 @@
    "fat": 20.12,
    "fiber": 0.92,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (241 g)"
@@ -103,6 +110,7 @@
    "fat": 29.64,
    "fiber": 0.15,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (192 g)"
@@ -116,6 +124,7 @@
    "fat": 15.92,
    "fiber": 1.32,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (169 g)"
@@ -129,6 +138,7 @@
    "fat": 19.17,
    "fiber": 0.78,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (205 g)"
@@ -142,6 +152,7 @@
    "fat": 25.6,
    "fiber": 0.4,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (175 g)"
@@ -155,6 +166,7 @@
    "fat": 18.9,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (195 g)"
@@ -168,6 +180,7 @@
    "fat": 17.85,
    "fiber": 1.2,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (214 g)"
@@ -181,6 +194,7 @@
    "fat": 31.89,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (219 g)"
@@ -194,6 +208,7 @@
    "fat": 24.8,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (189 g)"
@@ -207,6 +222,7 @@
    "fat": 18.94,
    "fiber": 1.17,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (220 g)"
@@ -220,6 +236,7 @@
    "fat": 30.36,
    "fiber": 1.58,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (288 g)"
@@ -233,6 +250,7 @@
    "fat": 32.26,
    "fiber": 0.77,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (219 g)"
@@ -246,6 +264,7 @@
    "fat": 24.75,
    "fiber": 0.02,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (204 g)"
@@ -259,6 +278,7 @@
    "fat": 25.88,
    "fiber": 0.79,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (203 g)"
@@ -272,6 +292,7 @@
    "fat": 2.29,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (70 g)"
@@ -285,6 +306,7 @@
    "fat": 7.6,
    "fiber": 1.9,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (221 g)"
@@ -298,6 +320,7 @@
    "fat": 19.12,
    "fiber": 1.32,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (220 g)"
@@ -311,6 +334,7 @@
    "fat": 22.96,
    "fiber": 1.53,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "236 g"
@@ -324,6 +348,7 @@
    "fat": 11.64,
    "fiber": 0.41,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (170 g)"
@@ -337,6 +362,7 @@
    "fat": 37.14,
    "fiber": 0.9,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (237 g)"
@@ -350,6 +376,7 @@
    "fat": 13.2,
    "fiber": 0.18,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (129 g)"
@@ -363,6 +390,7 @@
    "fat": 11.49,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (100 g)"
@@ -376,6 +404,7 @@
    "fat": 32.74,
    "fiber": 1.67,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (242 g)"
@@ -389,6 +418,7 @@
    "fat": 12.61,
    "fiber": 0.41,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (206 g)"
@@ -402,6 +432,7 @@
    "fat": 7.2,
    "fiber": 1.92,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "171 g"
@@ -415,6 +446,7 @@
    "fat": 2.82,
    "fiber": 1.32,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (155 g)"
@@ -428,6 +460,7 @@
    "fat": 9.55,
    "fiber": 0.59,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (155 g)"
@@ -441,6 +474,7 @@
    "fat": 10.32,
    "fiber": 0.45,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (186 g)"
@@ -454,6 +488,7 @@
    "fat": 10.55,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (161 g)"

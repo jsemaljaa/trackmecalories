@@ -84,7 +84,11 @@ data class CustomFood(
     val defaultPortion: String? = null,
     // Weight of one piece in g (ml for liquids), so a food counted in pieces can be logged
     // by weight and one weighed by the piece (see [unitPortion]); null if unknown.
-    val pieceGrams: Double? = null
+    val pieceGrams: Double? = null,
+    // Nutri-Score food group ([FoodCategory.key]) and % of fruit, vegetables, legumes and
+    // nuts, when the source says; null means guessed from the name / counted as none.
+    val category: String? = null,
+    val fvlPercent: Double? = null
 )
 
 /**
@@ -205,7 +209,9 @@ data class FoodCache(
     val quantity: String? = null,
     val sugarPer100: Double? = null,
     val saturatedFatPer100: Double? = null,
-    val nutriScore: String? = null
+    val nutriScore: String? = null,
+    val category: String? = null,
+    val fvlPercent: Double? = null
 )
 
 /**
@@ -519,7 +525,7 @@ interface FoodDao {
         FoodEntry::class, CustomFood::class, UserGoal::class, WaterEntry::class, FoodCache::class,
         WeightEntry::class, Recipe::class, RecipeIngredient::class, DayLog::class, Fast::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

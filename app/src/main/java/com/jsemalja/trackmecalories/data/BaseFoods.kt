@@ -24,7 +24,10 @@ data class BaseFood(
     val sugar: Double?,
     val saturatedFat: Double?,
     val portions: List<Portion>,
-    val defaultPortion: String?
+    val defaultPortion: String?,
+    // Nutri-Score food group ([FoodCategory.key]) and % fruit/vegetables/legumes/nuts.
+    val category: String? = null,
+    val fvlPercent: Double? = null
 ) {
     /** The name in the app's [language], English otherwise. */
     fun name(language: String): String = names[language] ?: names.getValue("en")
@@ -44,7 +47,9 @@ data class BaseFood(
         sugarPer100 = sugar,
         saturatedFatPer100 = saturatedFat,
         portions = encodePortions(portions),
-        defaultPortion = defaultPortion
+        defaultPortion = defaultPortion,
+        category = category,
+        fvlPercent = fvlPercent
     )
 }
 
@@ -68,7 +73,9 @@ fun parseBaseFoods(json: String): List<BaseFood> =
             portions = obj["portions"]?.jsonObject.orEmpty().mapNotNull { (key, grams) ->
                 grams.jsonPrimitive.doubleOrNull?.takeIf { key in PORTION_KEYS }?.let { Portion(key, it) }
             },
-            defaultPortion = obj["defaultPortion"]?.jsonPrimitive?.contentOrNull
+            defaultPortion = obj["defaultPortion"]?.jsonPrimitive?.contentOrNull,
+            category = obj["cat"]?.jsonPrimitive?.contentOrNull,
+            fvlPercent = num("fvl")
         )
     }
 
@@ -147,4 +154,8 @@ class BaseFoods(private val assets: AssetManager) {
     fun search(query: String): List<SearchHit> = searchBaseFoods(foods, query, language())
 
     fun czechQuery(query: String): String? = czechQueryFor(foods, query)
+
+    /** The bundled food behind a saved "base:<key>" food, if it's still in the list. */
+    fun byBarcode(barcode: String): BaseFood? =
+        barcode.removePrefix("base:").takeIf { it != barcode }?.let { key -> foods.firstOrNull { it.key == key } }
 }

@@ -155,3 +155,16 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
         )
     }
 }
+
+/**
+ * v11 -> v12: the Nutri-Score food group and fruit/vegetable share, for the full 2023 rating.
+ * Additive only; existing rows keep null, which means "guess from the name" as before.
+ */
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN category TEXT")
+        db.execSQL("ALTER TABLE custom_foods ADD COLUMN fvlPercent REAL")
+        db.execSQL("ALTER TABLE food_cache ADD COLUMN category TEXT")
+        db.execSQL("ALTER TABLE food_cache ADD COLUMN fvlPercent REAL")
+    }
+}

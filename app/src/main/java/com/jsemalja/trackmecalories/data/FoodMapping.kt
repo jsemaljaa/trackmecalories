@@ -34,6 +34,23 @@ fun CustomFood.toEntry(
     )
 }
 
+/**
+ * [this] saved food with the rating data it's missing filled in from [bundled], the same food
+ * in the app's own lists (saved before those lists had it). Null when nothing changes.
+ * Only empty fields are filled, so nothing the user edited is overwritten.
+ */
+fun CustomFood.withRatingDataFrom(bundled: CustomFood): CustomFood? {
+    val filled = copy(
+        category = category ?: bundled.category,
+        fvlPercent = fvlPercent ?: bundled.fvlPercent,
+        // Totals per the same reference amount (both per 100 g, or both per piece).
+        sugarPer100 = sugarPer100 ?: bundled.sugarPer100?.takeIf { unit == bundled.unit && referenceAmount == bundled.referenceAmount },
+        saturatedFatPer100 = saturatedFatPer100
+            ?: bundled.saturatedFatPer100?.takeIf { unit == bundled.unit && referenceAmount == bundled.referenceAmount }
+    )
+    return filled.takeIf { it != this }
+}
+
 /** "Tvaroh · Tatra" — the brand disambiguates otherwise-identical generic names in logs/Recents. */
 val FoodInfo.displayName: String
     get() = if (brand.isNullOrBlank() || name.contains(brand, ignoreCase = true)) name else "$name · $brand"
@@ -55,7 +72,9 @@ fun FoodInfo.toCustomFood(): CustomFood = CustomFood(
     pieceGrams = if (unit == "pcs") quantityGrams(quantity) else null,
     sugarPer100 = sugarPer100,
     saturatedFatPer100 = saturatedFatPer100,
-    nutriScore = nutriScore
+    nutriScore = nutriScore,
+    category = category,
+    fvlPercent = fvlPercent
 )
 
 /**
@@ -100,7 +119,9 @@ fun FoodCache.toFoodInfo(): FoodInfo = FoodInfo(
     quantity = quantity,
     sugarPer100 = sugarPer100,
     saturatedFatPer100 = saturatedFatPer100,
-    nutriScore = nutriScore
+    nutriScore = nutriScore,
+    category = category,
+    fvlPercent = fvlPercent
 )
 
 /** Only barcoded products are worth caching — search results without a barcode can't be re-looked-up. */
@@ -121,6 +142,8 @@ fun FoodInfo.toCache(): FoodCache? {
         quantity = quantity,
         sugarPer100 = sugarPer100,
         saturatedFatPer100 = saturatedFatPer100,
-        nutriScore = nutriScore
+        nutriScore = nutriScore,
+        category = category,
+        fvlPercent = fvlPercent
     )
 }

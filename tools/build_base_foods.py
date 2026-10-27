@@ -185,19 +185,44 @@ def source(ref, fineli, usda):
     return db, ref[1:]
 
 
+# Nutri-Score 2023 food groups the app knows (data/NutritionRating.kt, FoodCategory.key).
+CATEGORIES = {"general", "beverage", "water", "fat", "cheese", "red_meat", "alcohol"}
+
+
+def parse_nutri(spec, line_no, base=None):
+    """'cat=fat fvl=100' -> {"cat": "fat", "fvl": 100.0}, on top of [base]."""
+    nutri = dict(base or {"cat": "general", "fvl": 0.0})
+    for token in spec.split():
+        name, _, value = token.partition("=")
+        if name == "cat" and value in CATEGORIES:
+            nutri["cat"] = value
+        elif name == "fvl":
+            nutri["fvl"] = float(value)
+        else:
+            raise SystemExit(f"base_foods.txt:{line_no}: bad nutri token {token!r}")
+    return nutri
+
+
 def read_list():
     entries = []
+    nutri = parse_nutri("", 0)
     with open(LIST, encoding="utf-8") as f:
         for line_no, line in enumerate(f, 1):
             line = line.rstrip("\n")
+            if line.startswith("@"):
+                # "@ cat=fat fvl=100": the Nutri-Score group for the lines below.
+                nutri = parse_nutri(line[1:], line_no)
+                continue
             if not line.strip() or line.startswith("#"):
                 continue
             cols = line.split("|")
             if len(cols) < 6:
-                raise SystemExit(f"base_foods.txt:{line_no}: expected 6-7 |-separated columns, got {len(cols)}")
+                raise SystemExit(f"base_foods.txt:{line_no}: expected 6-8 |-separated columns, got {len(cols)}")
             key, src, portions, en, ru, cs = (c.strip() for c in cols[:6])
             aliases = cols[6].strip() if len(cols) > 6 else ""
-            entries.append(dict(line=line_no, key=key, src=src, portions=portions, en=en, ru=ru, cs=cs, aliases=aliases))
+            own = parse_nutri(cols[7], line_no, nutri) if len(cols) > 7 else nutri
+            entries.append(dict(line=line_no, key=key, src=src, portions=portions, en=en, ru=ru, cs=cs, aliases=aliases,
+                                cat=own["cat"], fvl=own["fvl"]))
     keys = [e["key"] for e in entries]
     dupes = {k for k in keys if keys.count(k) > 1}
     if dupes:
@@ -275,6 +300,10 @@ def main():
             food["satFat"] = round(n["satFat"], 2)
         if e["aliases"]:
             food["aliases"] = e["aliases"]
+        if e["cat"] != "general":
+            food["cat"] = e["cat"]
+        if e["fvl"]:
+            food["fvl"] = e["fvl"]
         if ordered:
             food["portions"] = ordered
             food["defaultPortion"] = default

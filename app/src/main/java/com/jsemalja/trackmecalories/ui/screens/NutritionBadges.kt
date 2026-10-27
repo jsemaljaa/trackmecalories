@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.CustomFood
+import com.jsemalja.trackmecalories.data.healthOrder
 import com.jsemalja.trackmecalories.data.rating
 import kotlin.math.roundToInt
 
@@ -74,7 +75,7 @@ fun NutriScoreBadge(grade: Char, estimated: Boolean, size: Dp = 22.dp) {
     }
 }
 
-/** Badge plus the densities, for the log dialog. */
+/** Badge plus the score, the possible range and the densities, for the log dialog. */
 @Composable
 fun RatingLine(food: CustomFood) {
     val r = food.rating()
@@ -86,6 +87,10 @@ fun RatingLine(food: CustomFood) {
         }
         val parts = buildList {
             if (r.grade != null && r.estimated) add(stringResource(R.string.nutriscore_estimated))
+            r.score?.let { add(stringResource(R.string.health_score, it.toInt())) }
+            if (r.uncertain && r.bestGrade != null && r.worstGrade != null) {
+                add(stringResource(R.string.nutriscore_range, r.bestGrade.toString(), r.worstGrade.toString()))
+            }
             add(stringResource(R.string.protein_per_100kcal, "%.1f".format(r.proteinPer100kcal)))
             if (r.fiberPer100kcal > 0) add(stringResource(R.string.fiber_per_100kcal, "%.1f".format(r.fiberPer100kcal)))
             r.energyDensity?.let { add(stringResource(R.string.energy_density, "%.1f".format(it))) }
@@ -108,8 +113,8 @@ enum class FoodSort(@androidx.annotation.StringRes val label: Int) {
 
     fun sort(foods: List<CustomFood>): List<CustomFood> = when (this) {
         NAME -> foods
-        // Ungraded foods go last.
-        NUTRISCORE -> foods.sortedBy { it.rating().grade ?: 'Z' }
+        // By the 0–100 health score; unrated foods go last.
+        NUTRISCORE -> foods.sortedWith(compareBy(healthOrder) { it.rating() })
         PROTEIN -> foods.sortedByDescending { it.rating().proteinPer100kcal }
         FIBER -> foods.sortedByDescending { it.rating().fiberPer100kcal }
         ENERGY_DENSITY -> foods.sortedBy { it.rating().energyDensity ?: Double.MAX_VALUE }

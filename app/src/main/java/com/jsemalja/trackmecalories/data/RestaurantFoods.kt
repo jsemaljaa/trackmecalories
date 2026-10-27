@@ -62,6 +62,7 @@ class RestaurantMenu(private val assets: AssetManager) {
                 val unit = obj["unit"]?.jsonPrimitive?.contentOrNull ?: "pcs"
                 val grams = obj["portionGrams"]?.jsonPrimitive?.doubleOrNull
                 val portion = obj["portion"]?.jsonPrimitive?.contentOrNull
+                val (category, fvl) = ktCategory(obj["ktType"]?.jsonPrimitive?.contentOrNull)
                 val food = CustomFood(
                     // Pseudo-barcode: lets a logged item be recognised (and not duplicated) in
                     // saved foods without its own column. KT items share the live search's
@@ -74,6 +75,10 @@ class RestaurantMenu(private val assets: AssetManager) {
                     fatPer100 = obj.num("fat"),
                     fiberPer100 = obj.num("fiber"),
                     saltPer100 = obj.num("salt"),
+                    sugarPer100 = obj["sugar"]?.jsonPrimitive?.doubleOrNull,
+                    saturatedFatPer100 = obj["satFat"]?.jsonPrimitive?.doubleOrNull,
+                    category = category?.key,
+                    fvlPercent = fvl,
                     unit = unit,
                     referenceAmount = obj["referenceAmount"]?.jsonPrimitive?.doubleOrNull ?: if (unit == "pcs") 1.0 else 100.0,
                     // McDonald's lists the weight; KT chains name the serving, "balení (400 g)".
@@ -86,6 +91,9 @@ class RestaurantMenu(private val assets: AssetManager) {
         Log.e("RestaurantMenu", "Couldn't load bundled menus", e)
         emptyList()
     }
+
+    /** The bundled item behind a saved menu food ("kt:…" or "menu:…" barcode), if any. */
+    fun byBarcode(barcode: String): CustomFood? = items.firstOrNull { it.food.barcode == barcode }?.food
 
     private fun JsonObject.num(key: String): Double = this[key]?.jsonPrimitive?.doubleOrNull ?: 0.0
 
@@ -121,7 +129,9 @@ data class KtMacros(
     val fiber: Double,
     val salt: Double,
     val sugar: Double?,
-    val saturatedFat: Double?
+    val saturatedFat: Double?,
+    // KT's food type, e.g. "vareni-a-peceni/oleje-olivove" (see [ktCategory]).
+    val typeUrl: String? = null
 )
 
 /**
@@ -206,7 +216,8 @@ class KalorickeTabulkyRepository {
                 fiber = food.str("fiber")?.czechNumber() ?: 0.0,
                 salt = food.str("salt")?.czechNumber() ?: 0.0,
                 sugar = food.str("sugar")?.czechNumber(),
-                saturatedFat = food.str("saturatedFattyAcid")?.czechNumber()
+                saturatedFat = food.str("saturatedFattyAcid")?.czechNumber(),
+                typeUrl = food.str("foodstuffTypeUrl")
             )
             synchronized(macrosCache) { macrosCache[hit.id] = macros }
             macros
@@ -239,6 +250,8 @@ class KalorickeTabulkyRepository {
             sugarPer100 = macros.sugar?.times(scale),
             saturatedFatPer100 = macros.saturatedFat?.times(scale),
             barcode = "kt:${hit.id}",
+            category = ktCategory(macros.typeUrl).first?.key,
+            fvlPercent = ktCategory(macros.typeUrl).second,
             unit = if (portion != null) "pcs" else hit.unit,
             referenceAmount = if (portion != null) 1.0 else 100.0,
             brand = hit.brand,

@@ -29,6 +29,9 @@ import com.jsemalja.trackmecalories.data.FoodInfo
 import com.jsemalja.trackmecalories.data.FoodRepository
 import com.jsemalja.trackmecalories.data.KalorickeTabulkyRepository
 import com.jsemalja.trackmecalories.data.KtHit
+import com.jsemalja.trackmecalories.data.KtMacros
+import com.jsemalja.trackmecalories.data.ktCategory
+import com.jsemalja.trackmecalories.data.withRatingDataFrom
 import com.jsemalja.trackmecalories.data.Recipe
 import com.jsemalja.trackmecalories.data.RecipeIngredient
 import com.jsemalja.trackmecalories.data.RestaurantMenu
@@ -431,6 +434,7 @@ class MainViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
+        refreshSavedRatings()
         launchOnlineSearch(_offHits, _isSearchingOff, _offError) { q, publish ->
             publish(
                 translatedQueries(q).flatMap { (query, penalty) ->
@@ -460,7 +464,7 @@ class MainViewModel(
                         if (i >= KT_MACRO_PREFETCH) return@async h
                         try {
                             val m = kaloricke.macros(h.ktHit!!)
-                            h.copy(protein = m.protein, carbs = m.carbs, fat = m.fat)
+                            h.copy(protein = m.protein, carbs = m.carbs, fat = m.fat, rated = m.toRatedFood(h.ktHit!!))
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: Exception) {
@@ -547,6 +551,29 @@ class MainViewModel(
         food = toCustomFood(),
         isCzech = isCzech
     )
+
+    private fun KtMacros.toRatedFood(hit: KtHit): CustomFood {
+        val (category, fvl) = ktCategory(typeUrl)
+        return CustomFood(
+            name = hit.title, kcalPer100 = kcal, proteinPer100 = protein, carbsPer100 = carbs, fatPer100 = fat,
+            fiberPer100 = fiber, saltPer100 = salt, unit = hit.unit, sugarPer100 = sugar, saturatedFatPer100 = saturatedFat,
+            category = category?.key, fvlPercent = fvl
+        )
+    }
+
+    /**
+     * Foods saved from the bundled lists before those had categories and (for restaurant
+     * menus) sugar and saturated fat: fill in what's missing so they rate like new ones.
+     */
+    private fun refreshSavedRatings() {
+        viewModelScope.launch(Dispatchers.Default) {
+            dao.getAllCustomFoods().first().forEach { food ->
+                val code = food.barcode ?: return@forEach
+                val bundled = baseFoods.byBarcode(code)?.toCustomFood("en") ?: restaurantMenu.byBarcode(code) ?: return@forEach
+                food.withRatingDataFrom(bundled)?.let { dao.updateCustomFood(it) }
+            }
+        }
+    }
 
     private fun KtHit.toSearchHit(score: Double) = SearchHit(
         key = "kt:$id",

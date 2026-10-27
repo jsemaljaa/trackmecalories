@@ -108,6 +108,11 @@ def resolve(hit: dict) -> dict | None:
 
     scale = portion[1] / 100 if portion else 1.0
     value = lambda key: round((czech_number(food.get(key)) or 0.0) * scale, 2)
+
+    def optional(name: str, key: str) -> dict:
+        number = czech_number(food.get(key))
+        return {} if number is None else {name: round(number * scale, 2)}
+
     return {
         "ktId": hit["id"],
         "kcal": round(kcal100 * scale, 1),
@@ -116,6 +121,10 @@ def resolve(hit: dict) -> dict | None:
         "fat": value("fat"),
         "fiber": value("fiber"),
         "salt": value("salt"),
+        # For the Nutri-Score rating; KT leaves them empty for some foods.
+        **optional("sugar", "sugar"),
+        **optional("satFat", "saturatedFattyAcid"),
+        "ktType": food.get("foodstuffTypeUrl"),
         "unit": "pcs" if portion else unit,
         "referenceAmount": 1.0 if portion else 100.0,
         "portion": portion[0] if portion else None,

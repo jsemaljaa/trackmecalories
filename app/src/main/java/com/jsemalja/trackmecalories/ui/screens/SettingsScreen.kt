@@ -138,6 +138,12 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        SettingsSectionCard(title = stringResource(R.string.nutrition_score), titleColor = MaterialTheme.colorScheme.primary) {
+            NutritionScoreSettings()
+        }
+
+        Spacer(Modifier.height(16.dp))
+
         SettingsSectionCard(title = stringResource(R.string.data), titleColor = MaterialTheme.colorScheme.primary) {
             OutlinedButton(
                 onClick = {

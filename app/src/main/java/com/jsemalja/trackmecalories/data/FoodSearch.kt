@@ -29,6 +29,8 @@ data class SearchHit(
     val score: Double,
     val food: CustomFood? = null,
     val ktHit: KtHit? = null,
+    // Per-100 values for the rating badge when [food] isn't known yet (a live KT hit).
+    val rated: CustomFood? = null,
     val isCzech: Boolean = false
 )
 

@@ -1,7 +1,7 @@
 # Base foods bundled with the app (built into app/src/main/assets/base_foods.json by
 # tools/build_base_foods.py). One food per line, columns separated by "|":
 #
-#   key | source | portions | English | Russian | Czech | aliases
+#   key | source | portions | English | Russian | Czech | aliases | nutri
 #
 # source:   F<id> = Fineli food id, U<id> = USDA FoodData Central (SR Legacy) fdc_id.
 # portions: empty = the source food's own small/medium/large/piece/slice/tbsp/tsp weights;
@@ -10,11 +10,18 @@
 #           Keys: small medium large extra_large piece slice clove tbsp tsp glass cup
 #           (glass/cup make the food liquid: logged in ml).
 # aliases:  extra search words in any language (synonyms, plurals, other spellings).
+# nutri:    optional; overrides the Nutri-Score group for this food, e.g. "cat=beverage".
+#
+# Lines starting with "@" set the Nutri-Score 2023 group for the foods below them:
+#   cat=general|beverage|water|fat|cheese|red_meat|alcohol (default general)
+#   fvl=<% fruit, vegetables, legumes and nuts> (default 0; potatoes don't count, nuts and
+#   olive/rapeseed oil do)
 #
 # Order matters: within equally good matches, earlier lines are listed first, so raw comes
 # before cooked.
 
 # --- Eggs ---
+@ cat=general
 # Egg weights follow the EU size classes (Reg. 589/2008: S <53 g, M 53-63 g, L 63-73 g,
 # XL >73 g in shell) at ~88% edible, which are heavier than the USDA's US classes.
 egg | U171287 | small=42 medium=51 large=60 extra_large=66 | Egg, raw | Яйцо куриное, сырое | Vejce slepičí, syrové | eggs яйца vajicko vajicka
@@ -43,6 +50,7 @@ turkey_breast | U174515 | - | Turkey breast, raw | Индейка, филе гр
 turkey_breast_roasted | U174516 | - | Turkey breast, roasted | Индейка, филе грудки, запечённое | Krůtí prsa, pečená | fillet cooked индюшка филе
 
 # --- Meat ---
+@ cat=red_meat
 beef_mince_5 | U171790 | - | Ground beef 5% fat, raw | Говяжий фарш 5%, сырой | Hovězí mleté maso 5 %, syrové | minced mince говядина
 beef_mince_10 | U174030 | - | Ground beef 10% fat, raw | Говяжий фарш 10%, сырой | Hovězí mleté maso 10 %, syrové | minced mince говядина
 beef_mince_15 | U171796 | - | Ground beef 15% fat, raw | Говяжий фарш 15%, сырой | Hovězí mleté maso 15 %, syrové | minced mince говядина
@@ -63,6 +71,7 @@ bacon_cooked | U167914 | | Bacon, fried | Бекон, жареный | Slanina, 
 ham | F779 | slice=15 | Ham, cooked | Ветчина | Šunka, vařená | sunka
 
 # --- Fish and seafood ---
+@ cat=general
 salmon | U175167 | - | Salmon, raw | Лосось (сёмга), сырой | Losos, syrový | fish рыба семга
 salmon_baked | U175168 | - | Salmon, baked | Лосось (сёмга), запечённый | Losos, pečený | fish cooked рыба семга
 cod | U171955 | - | Cod, raw | Треска, сырая | Treska, syrová | fish рыба
@@ -80,29 +89,31 @@ shrimp | U175179 | - | Shrimp, raw | Креветки, сырые | Krevety, syr
 shrimp_cooked | U175180 | - | Shrimp, cooked | Креветки, варёные | Krevety, vařené | prawns
 
 # --- Dairy ---
-milk_skim | F606 | glass=250 | Milk, skimmed | Молоко обезжиренное | Mléko odtučněné | 0.5% 0%
-milk_15 | F684 | glass=250 | Milk 1.5% | Молоко 1,5% | Mléko polotučné 1,5 % | semi-skimmed
-milk_35 | F689 | glass=250 | Milk 3.5% | Молоко 3,5% | Mléko plnotučné 3,5 % | whole
-kefir | U170904 | glass=250 | Kefir | Кефир | Kefír |
+@ cat=general
+milk_skim | F606 | glass=250 | Milk, skimmed | Молоко обезжиренное | Mléko odtučněné | 0.5% 0% | cat=beverage
+milk_15 | F684 | glass=250 | Milk 1.5% | Молоко 1,5% | Mléko polotučné 1,5 % | semi-skimmed | cat=beverage
+milk_35 | F689 | glass=250 | Milk 3.5% | Молоко 3,5% | Mléko plnotučné 3,5 % | whole | cat=beverage
+kefir | U170904 | glass=250 | Kefir | Кефир | Kefír | | cat=beverage
 yogurt | F33162 | - | Yogurt, plain 2.5% | Йогурт натуральный 2,5% | Bílý jogurt 2,5 % | yoghurt natural йогурт
 yogurt_0 | F32598 | - | Yogurt, plain, fat-free | Йогурт натуральный обезжиренный | Bílý jogurt, odtučněný | yoghurt natural 0%
 greek_yogurt | F32201 | - | Greek yogurt 10% | Греческий йогурт 10% | Řecký jogurt 10 % | yoghurt
 greek_yogurt_0 | U170894 | - | Greek yogurt, fat-free | Греческий йогурт обезжиренный | Řecký jogurt bez tuku | yoghurt 0%
 skyr | F34585 | - | Skyr, plain | Скир натуральный | Skyr, bílý |
 quark | F622 | - | Quark, low-fat | Творог обезжиренный | Tvaroh odtučněný | curd cottage tvarog
-cottage_cheese | F649 | - | Cottage cheese | Творог зернёный | Cottage sýr | творог cottage
+cottage_cheese | F649 | - | Cottage cheese | Творог зернёный | Cottage sýr | творог cottage | cat=cheese
 sour_cream | F615 | | Sour cream 12% | Сметана 10–12% | Zakysaná smetana 12 % |
 cream_cooking | F29065 | | Cooking cream 15% | Сливки 15% | Smetana na vaření |
 cream_whipping | F29066 | | Whipping cream 35% | Сливки 35% | Smetana ke šlehání | double heavy
-butter | F576 | | Butter | Масло сливочное | Máslo |
-cheese_gouda | F654 | - | Gouda / Edam cheese | Сыр гауда / эдам | Eidam, gouda | cheese сыр edam
-cheese_emmental | F642 | - | Emmental cheese | Сыр эмменталь | Ementál | cheese сыр
-mozzarella | U170845 | - | Mozzarella | Моцарелла | Mozzarella | cheese сыр
-parmesan | U170848 | - | Parmesan | Пармезан | Parmazán | cheese сыр
-feta | F690 | - | Feta | Фета | Balkánský sýr, feta | cheese сыр брынза
-cream_cheese | U173418 | tbsp=14.5 | Cream cheese | Сливочный сыр | Smetanový sýr, žervé | philadelphia cheese сыр
+butter | F576 | | Butter | Масло сливочное | Máslo | | cat=fat
+cheese_gouda | F654 | - | Gouda / Edam cheese | Сыр гауда / эдам | Eidam, gouda | cheese сыр edam | cat=cheese
+cheese_emmental | F642 | - | Emmental cheese | Сыр эмменталь | Ementál | cheese сыр | cat=cheese
+mozzarella | U170845 | - | Mozzarella | Моцарелла | Mozzarella | cheese сыр | cat=cheese
+parmesan | U170848 | - | Parmesan | Пармезан | Parmazán | cheese сыр | cat=cheese
+feta | F690 | - | Feta | Фета | Balkánský sýr, feta | cheese сыр брынза | cat=cheese
+cream_cheese | U173418 | tbsp=14.5 | Cream cheese | Сливочный сыр | Smetanový sýr, žervé | philadelphia cheese сыр | cat=cheese
 
 # --- Grains, bread, pasta ---
+@ cat=general
 rice | U168877 | - | White rice, raw | Рис белый, сухой | Rýže bílá, syrová | dry
 rice_cooked | U168878 | - | White rice, cooked | Рис белый, варёный | Rýže bílá, vařená | boiled
 rice_brown | U169703 | - | Brown rice, raw | Рис бурый, сухой | Rýže natural, syrová | dry
@@ -132,6 +143,7 @@ tortilla | U175037 | small=30 medium=49 large=72 | Tortilla wrap | Тортил�
 rice_cakes | U170250 | piece=9 | Rice cakes | Рисовые хлебцы | Rýžové chlebíčky |
 
 # --- Legumes ---
+@ cat=general fvl=100
 lentils | U172420 | - | Lentils, raw | Чечевица, сухая | Čočka, syrová | dry
 lentils_cooked | U172421 | - | Lentils, cooked | Чечевица, варёная | Čočka, vařená | boiled
 chickpeas | U173756 | - | Chickpeas, raw | Нут, сухой | Cizrna, syrová | dry
@@ -139,17 +151,18 @@ chickpeas_cooked | U173757 | - | Chickpeas, cooked | Нут, варёный | Ci
 beans_red | U173744 | - | Red kidney beans, raw | Фасоль красная, сухая | Červené fazole, syrové | dry
 beans_red_cooked | U175194 | - | Red kidney beans, cooked | Фасоль красная, варёная | Červené fazole, vařené | boiled canned
 peas | U170419 | - | Green peas | Зелёный горошек | Hrášek |
-tofu | U172475 | - | Tofu | Тофу | Tofu |
+tofu | U172475 | - | Tofu | Тофу | Tofu | | fvl=0
 
 # --- Vegetables ---
+@ cat=general fvl=100
 carrot | F300 | | Carrot | Морковь | Mrkev | carrots морковка
 carrot_boiled | F29229 | F300 | Carrot, boiled | Морковь, варёная | Mrkev, vařená | carrots cooked морковка
 # USDA boiled-potato sizes (the raw ones are for jumbo US baking potatoes).
-potato | F205 | U170440 | Potato, raw | Картофель, сырой | Brambory, syrové | potatoes картошка brambora
-potato_boiled | F11511 | U170440 | Potato, boiled | Картофель, варёный | Brambory, vařené | potatoes cooked картошка brambora
-potato_baked | U170093 | | Potato, baked in skin | Картофель, запечённый в мундире | Brambory pečené ve slupce | potatoes cooked картошка brambora
-sweet_potato | U168482 | U168483 | Sweet potato, raw | Батат, сырой | Batáty, syrové |
-sweet_potato_baked | U168483 | | Sweet potato, baked | Батат, запечённый | Batáty, pečené | cooked
+potato | F205 | U170440 | Potato, raw | Картофель, сырой | Brambory, syrové | potatoes картошка brambora | fvl=0
+potato_boiled | F11511 | U170440 | Potato, boiled | Картофель, варёный | Brambory, vařené | potatoes cooked картошка brambora | fvl=0
+potato_baked | U170093 | | Potato, baked in skin | Картофель, запечённый в мундире | Brambory pečené ve slupce | potatoes cooked картошка brambora | fvl=0
+sweet_potato | U168482 | U168483 | Sweet potato, raw | Батат, сырой | Batáty, syrové | | fvl=0
+sweet_potato_baked | U168483 | | Sweet potato, baked | Батат, запечённый | Batáty, pečené | cooked | fvl=0
 tomato | F352 | | Tomato | Помидор | Rajče | tomatoes томат помидоры rajcata
 cherry_tomato | U170457 | piece=17 | Cherry tomatoes | Помидоры черри | Cherry rajčata | tomato томат
 cucumber | F346 | | Cucumber | Огурец | Okurka salátová | огурцы
@@ -192,6 +205,7 @@ spring_onion | U170005 | | Spring onion | Лук зелёный | Jarní cibulka
 olives | U169094 | | Black olives | Маслины | Černé olivy | olive оливки
 
 # --- Fruit ---
+@ cat=general fvl=100
 apple | U171688 | F28916 | Apple | Яблоко | Jablko | apples яблоки
 banana | F11049 | | Banana | Банан | Banán | bananas бананы
 orange | F11045 | | Orange | Апельсин | Pomeranč | oranges апельсины
@@ -221,6 +235,7 @@ prunes | U168162 | piece=9.5 | Prunes | Чернослив | Sušené švestky |
 dried_apricots | F409 | | Dried apricots | Курага | Sušené meruňky |
 
 # --- Nuts and seeds ---
+@ cat=fat fvl=100
 almonds | U170567 | piece=1.2 | Almonds | Миндаль | Mandle | nuts орехи
 walnuts | U170187 | - | Walnuts | Грецкие орехи | Vlašské ořechy | nuts орехи
 hazelnuts | U170581 | piece=1.4 | Hazelnuts | Фундук | Lískové ořechy | nuts орехи лесные
@@ -235,20 +250,22 @@ sesame | U170150 | | Sesame seeds | Кунжут | Sezam |
 peanut_butter | U172470 | tbsp=16 | Peanut butter | Арахисовая паста | Arašídové máslo |
 
 # --- Oils, fats, sugar ---
-olive_oil | U171413 | tbsp=13.5 tsp=4.5 | Olive oil | Масло оливковое | Olivový olej |
+@ cat=fat
+olive_oil | U171413 | tbsp=13.5 tsp=4.5 | Olive oil | Масло оливковое | Olivový olej | | fvl=100
 sunflower_oil | U171025 | | Sunflower oil | Масло подсолнечное | Slunečnicový olej |
-rapeseed_oil | U172336 | | Rapeseed oil | Масло рапсовое | Řepkový olej | canola
+rapeseed_oil | U172336 | | Rapeseed oil | Масло рапсовое | Řepkový olej | canola | fvl=100
 coconut_oil | U171412 | | Coconut oil | Масло кокосовое | Kokosový olej |
-sugar | U169655 | tsp=4.2 | Sugar | Сахар | Cukr |
-honey | U169640 | tbsp=21 tsp=7 | Honey | Мёд | Med |
-dark_chocolate | U170273 | - | Dark chocolate 70–85% | Шоколад горький 70–85% | Hořká čokoláda 70–85 % |
-milk_chocolate | U167587 | - | Milk chocolate | Шоколад молочный | Mléčná čokoláda |
+sugar | U169655 | tsp=4.2 | Sugar | Сахар | Cukr | | cat=general
+honey | U169640 | tbsp=21 tsp=7 | Honey | Мёд | Med | | cat=general
+dark_chocolate | U170273 | - | Dark chocolate 70–85% | Шоколад горький 70–85% | Hořká čokoláda 70–85 % | | cat=general
+milk_chocolate | U167587 | - | Milk chocolate | Шоколад молочный | Mléčná čokoláda | | cat=general
 
 # --- Drinks ---
+@ cat=beverage
 coffee | U171890 | cup=250 | Coffee, black | Кофе чёрный | Káva černá |
 tea | U173227 | cup=250 | Tea, unsweetened | Чай без сахара | Čaj neslazený |
-orange_juice | U169098 | glass=250 | Orange juice | Апельсиновый сок | Pomerančový džus |
-apple_juice | U173933 | glass=250 | Apple juice | Яблочный сок | Jablečný džus |
-beer | U168746 | glass=500 | Beer | Пиво | Pivo |
-wine_red | U173190 | glass=150 | Red wine | Вино красное | Červené víno |
-wine_white | U174837 | glass=150 | White wine | Вино белое | Bílé víno |
+orange_juice | U169098 | glass=250 | Orange juice | Апельсиновый сок | Pomerančový džus | | fvl=100
+apple_juice | U173933 | glass=250 | Apple juice | Яблочный сок | Jablečný džus | | fvl=100
+beer | U168746 | glass=500 | Beer | Пиво | Pivo | | cat=alcohol
+wine_red | U173190 | glass=150 | Red wine | Вино красное | Červené víno | | cat=alcohol
+wine_white | U174837 | glass=150 | White wine | Вино белое | Bílé víno | | cat=alcohol

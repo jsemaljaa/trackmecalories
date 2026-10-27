@@ -12,6 +12,9 @@
    "fat": 44.2,
    "fiber": 0.0,
    "salt": 2.0,
+   "sugar": 1.0,
+   "satFat": 0.0,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -25,6 +28,9 @@
    "fat": 5.59,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (27 g)"
@@ -38,6 +44,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.09,
+   "sugar": 33.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/limonady-a-ochucene-mineralni-vody",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (300 ml)"
@@ -51,6 +60,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/kava-kavove-napoje-a-kakaa",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (200 ml)"
@@ -64,6 +76,9 @@
    "fat": 15.76,
    "fiber": 0.0,
    "salt": 1.72,
+   "sugar": 2.34,
+   "satFat": 4.68,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (156 g)"
@@ -77,6 +92,7 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/prilohy-brambory-polotovary-z-brambor-kase",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "250 g"
@@ -90,6 +106,9 @@
    "fat": 25.85,
    "fiber": 0.0,
    "salt": 2.04,
+   "sugar": 6.58,
+   "satFat": 5.17,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (235 g)"
@@ -103,6 +122,9 @@
    "fat": 0.07,
    "fiber": 0.0,
    "salt": 0.47,
+   "sugar": 7.25,
+   "satFat": 0.03,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (25 g)"
@@ -116,6 +138,9 @@
    "fat": 37.01,
    "fiber": 4.88,
    "salt": 2.83,
+   "sugar": 2.57,
+   "satFat": 9.25,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (257 g)"
@@ -129,6 +154,9 @@
    "fat": 41.54,
    "fiber": 5.12,
    "salt": 3.91,
+   "sugar": 3.91,
+   "satFat": 7.83,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (301 g)"
@@ -142,6 +170,9 @@
    "fat": 1.32,
    "fiber": 0.0,
    "salt": 0.22,
+   "sugar": 0.22,
+   "satFat": 0.22,
+   "ktType": "jidla-a-prilohy/prilohy-brambory-polotovary-z-brambor-kase",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (220 g)"
@@ -155,6 +186,9 @@
    "fat": 17.46,
    "fiber": 0.0,
    "salt": 0.3,
+   "sugar": 0.3,
+   "satFat": 4.08,
+   "ktType": "jidla-a-prilohy/prilohy-brambory-polotovary-z-brambor-kase",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "malá porce (60 g)"
@@ -168,6 +202,9 @@
    "fat": 14.2,
    "fiber": 0.0,
    "salt": 1.28,
+   "sugar": 0.3,
+   "satFat": 1.8,
+   "ktType": "jidla-a-prilohy/prilohy-brambory-polotovary-z-brambor-kase",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -181,6 +218,9 @@
    "fat": 17.01,
    "fiber": 5.13,
    "salt": 0.0,
+   "sugar": 4.05,
+   "satFat": 2.97,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "270 g"
@@ -194,6 +234,9 @@
    "fat": 21.59,
    "fiber": 0.0,
    "salt": 0.5,
+   "sugar": 26.88,
+   "satFat": 13.11,
+   "ktType": "pecivo/sladke-pecivo-male",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (84 g)"
@@ -207,6 +250,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.09,
+   "sugar": 45.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/limonady-a-ochucene-mineralni-vody",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (300 ml)"
@@ -220,6 +266,9 @@
    "fat": 50.01,
    "fiber": 2.69,
    "salt": 2.3,
+   "sugar": 10.39,
+   "satFat": 10.0,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (280 g)"
@@ -233,6 +282,9 @@
    "fat": 16.2,
    "fiber": 0.0,
    "salt": 0.78,
+   "sugar": 4.2,
+   "satFat": 1.32,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (60 g)"
@@ -246,6 +298,9 @@
    "fat": 52.8,
    "fiber": 0.0,
    "salt": 3.07,
+   "sugar": 1.92,
+   "satFat": 12.0,
+   "ktType": "jidla-a-prilohy/michane-salaty",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (240 g)"
@@ -259,6 +314,8 @@
    "fat": 16.02,
    "fiber": 0.0,
    "salt": 0.0,
+   "satFat": 1.02,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (60 g)"
@@ -272,6 +329,9 @@
    "fat": 10.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/kava-kavove-napoje-a-kakaa",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "velká porce (400 ml)"
@@ -285,6 +345,9 @@
    "fat": 28.31,
    "fiber": 0.0,
    "salt": 9.79,
+   "sugar": 15.1,
+   "satFat": 3.41,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (307 g)"
@@ -298,6 +361,9 @@
    "fat": 27.75,
    "fiber": 0.0,
    "salt": 4.18,
+   "sugar": 15.54,
+   "satFat": 4.81,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (370 g)"
@@ -311,6 +377,9 @@
    "fat": 42.03,
    "fiber": 0.0,
    "salt": 1.45,
+   "sugar": 3.26,
+   "satFat": 22.5,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (296 g)"
@@ -324,6 +393,9 @@
    "fat": 5.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/kava-kavove-napoje-a-kakaa",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (200 ml)"
@@ -337,6 +409,9 @@
    "fat": 15.0,
    "fiber": 0.0,
    "salt": 2.62,
+   "sugar": 8.12,
+   "satFat": 8.25,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (125 g)"
@@ -350,6 +425,9 @@
    "fat": 70.09,
    "fiber": 2.58,
    "salt": 5.16,
+   "sugar": 43.43,
+   "satFat": 15.91,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (430 g)"
@@ -363,6 +441,9 @@
    "fat": 19.1,
    "fiber": 0.0,
    "salt": 1.8,
+   "sugar": 1.3,
+   "satFat": 6.5,
+   "ktType": "jidla-a-prilohy/prilohy-brambory-polotovary-z-brambor-kase",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (100 g)"
@@ -376,6 +457,9 @@
    "fat": 8.48,
    "fiber": 1.62,
    "salt": 0.06,
+   "sugar": 27.27,
+   "satFat": 7.17,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (101 g)"
@@ -389,6 +473,9 @@
    "fat": 12.6,
    "fiber": 2.4,
    "salt": 0.09,
+   "sugar": 40.5,
+   "satFat": 10.65,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (150 ml)"
@@ -402,6 +489,9 @@
    "fat": 1.75,
    "fiber": 0.0,
    "salt": 0.16,
+   "sugar": 0.59,
+   "satFat": 0.8,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (12 g)"
@@ -415,6 +505,9 @@
    "fat": 6.72,
    "fiber": 0.0,
    "salt": 0.84,
+   "sugar": 0.42,
+   "satFat": 1.26,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (42 g)"
@@ -428,6 +521,9 @@
    "fat": 10.2,
    "fiber": 0.0,
    "salt": 0.51,
+   "sugar": 3.06,
+   "satFat": 6.63,
+   "ktType": "pecivo/sladke-pecivo-male",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (51 g)"
@@ -441,6 +537,9 @@
    "fat": 10.56,
    "fiber": 0.48,
    "salt": 0.16,
+   "sugar": 25.92,
+   "satFat": 7.11,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (96 g)"
@@ -454,6 +553,9 @@
    "fat": 8.2,
    "fiber": 0.5,
    "salt": 0.08,
+   "sugar": 27.0,
+   "satFat": 7.0,
+   "ktType": "mlecne-vyrobky/mlecne-dezerty-a-pudinky",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -467,6 +569,9 @@
    "fat": 8.61,
    "fiber": 0.53,
    "salt": 0.08,
+   "sugar": 28.35,
+   "satFat": 7.35,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (105 g)"
@@ -480,6 +585,9 @@
    "fat": 45.63,
    "fiber": 0.0,
    "salt": 5.37,
+   "sugar": 7.29,
+   "satFat": 12.15,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (270 g)"
@@ -493,6 +601,9 @@
    "fat": 60.0,
    "fiber": 0.0,
    "salt": 6.92,
+   "sugar": 13.6,
+   "satFat": 14.0,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (400 g)"
@@ -506,6 +617,9 @@
    "fat": 28.8,
    "fiber": 0.0,
    "salt": 4.56,
+   "sugar": 5.04,
+   "satFat": 5.04,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (240 g)"
@@ -519,6 +633,9 @@
    "fat": 42.0,
    "fiber": 0.0,
    "salt": 2.31,
+   "sugar": 3.6,
+   "satFat": 12.9,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (300 g)"
@@ -532,6 +649,9 @@
    "fat": 4.0,
    "fiber": 0.0,
    "salt": 0.44,
+   "sugar": 42.0,
+   "satFat": 2.4,
+   "ktType": "nealkoholicke-napoje/kava-kavove-napoje-a-kakaa",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (400 g)"
@@ -545,6 +665,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/kava-kavove-napoje-a-kakaa",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (100 ml)"
@@ -558,6 +681,9 @@
    "fat": 19.72,
    "fiber": 4.59,
    "salt": 0.0,
+   "sugar": 0.34,
+   "satFat": 4.25,
+   "ktType": "jidla-a-prilohy/prilohy-brambory-polotovary-z-brambor-kase",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (170 g)"
@@ -571,6 +697,9 @@
    "fat": 21.06,
    "fiber": 1.56,
    "salt": 1.56,
+   "sugar": 5.46,
+   "satFat": 3.9,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (78 g)"
@@ -584,6 +713,9 @@
    "fat": 17.5,
    "fiber": 0.0,
    "salt": 0.63,
+   "sugar": 1.26,
+   "satFat": 1.5,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (35 g)"
@@ -597,6 +729,9 @@
    "fat": 9.0,
    "fiber": 0.0,
    "salt": 0.38,
+   "sugar": 5.25,
+   "satFat": 0.65,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (25 g)"
@@ -610,6 +745,9 @@
    "fat": 37.8,
    "fiber": 0.0,
    "salt": 5.0,
+   "sugar": 13.23,
+   "satFat": 8.64,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (270 g)"
@@ -623,6 +761,9 @@
    "fat": 45.0,
    "fiber": 0.0,
    "salt": 4.2,
+   "sugar": 12.3,
+   "satFat": 10.2,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (300 g)"
@@ -636,6 +777,9 @@
    "fat": 38.92,
    "fiber": 0.0,
    "salt": 5.09,
+   "sugar": 11.68,
+   "satFat": 19.74,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (278 g)"
@@ -649,6 +793,9 @@
    "fat": 43.86,
    "fiber": 0.0,
    "salt": 4.59,
+   "sugar": 5.42,
+   "satFat": 19.09,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (258 g)"
@@ -662,6 +809,9 @@
    "fat": 18.9,
    "fiber": 0.0,
    "salt": 1.17,
+   "sugar": 0.54,
+   "satFat": 18.9,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (90 g)"
@@ -675,6 +825,9 @@
    "fat": 6.08,
    "fiber": 0.0,
    "salt": 1.34,
+   "sugar": 0.13,
+   "satFat": 1.06,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (32 g)"
@@ -688,6 +841,9 @@
    "fat": 7.56,
    "fiber": 0.0,
    "salt": 0.86,
+   "sugar": 0.18,
+   "satFat": 1.37,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (36 g)"
@@ -701,6 +857,9 @@
    "fat": 7.0,
    "fiber": 0.0,
    "salt": 0.45,
+   "sugar": 0.21,
+   "satFat": 0.63,
+   "ktType": "jidla-a-prilohy/prilohy-brambory-polotovary-z-brambor-kase",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "malá porce (70 g)"
@@ -714,6 +873,7 @@
    "fat": 14.1,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -727,6 +887,9 @@
    "fat": 8.4,
    "fiber": 1.6,
    "salt": 0.06,
+   "sugar": 27.0,
+   "satFat": 7.1,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -740,6 +903,9 @@
    "fat": 26.75,
    "fiber": 5.29,
    "salt": 0.18,
+   "sugar": 73.5,
+   "satFat": 22.64,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (294 g)"
@@ -753,6 +919,9 @@
    "fat": 32.34,
    "fiber": 1.47,
    "salt": 0.5,
+   "sugar": 79.38,
+   "satFat": 20.87,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (294 g)"
@@ -766,6 +935,9 @@
    "fat": 1.5,
    "fiber": 0.0,
    "salt": 0.07,
+   "sugar": 3.33,
+   "satFat": 1.0,
+   "ktType": "nealkoholicke-napoje/kava-kavove-napoje-a-kakaa",
    "unit": "ml",
    "referenceAmount": 100.0,
    "portion": null
@@ -779,6 +951,9 @@
    "fat": 45.0,
    "fiber": 6.75,
    "salt": 1.8,
+   "sugar": 3.15,
+   "satFat": 3.45,
+   "ktType": "slane-pamlsky/chipsy-a-bramburky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (150 g)"
@@ -792,6 +967,9 @@
    "fat": 18.48,
    "fiber": 0.0,
    "salt": 1.58,
+   "sugar": 1.06,
+   "satFat": 1.98,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (132 g)"
@@ -805,6 +983,9 @@
    "fat": 8.99,
    "fiber": 0.0,
    "salt": 1.6,
+   "sugar": 2.14,
+   "satFat": 2.46,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (107 g)"
@@ -818,6 +999,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 5.12,
+   "satFat": 0.0,
+   "ktType": "vareni-a-peceni/sladidla-med",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (16 g)"
@@ -831,6 +1015,9 @@
    "fat": 0.61,
    "fiber": 0.0,
    "salt": 0.01,
+   "sugar": 5.4,
+   "satFat": 0.45,
+   "ktType": "vareni-a-peceni/sladidla-med",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (10 g)"
@@ -844,6 +1031,9 @@
    "fat": 4.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 7.0,
+   "satFat": 2.0,
+   "ktType": "nealkoholicke-napoje/kava-kavove-napoje-a-kakaa",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (100 g)"
@@ -857,6 +1047,9 @@
    "fat": 24.75,
    "fiber": 0.0,
    "salt": 2.56,
+   "sugar": 4.12,
+   "satFat": 5.61,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (165 g)"
@@ -870,6 +1063,9 @@
    "fat": 9.0,
    "fiber": 0.17,
    "salt": 0.45,
+   "sugar": 5.25,
+   "satFat": 0.65,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (25 g)"
@@ -883,6 +1079,9 @@
    "fat": 40.6,
    "fiber": 0.0,
    "salt": 4.52,
+   "sugar": 12.76,
+   "satFat": 7.54,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (290 g)"
@@ -896,6 +1095,9 @@
    "fat": 77.0,
    "fiber": 0.0,
    "salt": 7.35,
+   "sugar": 15.75,
+   "satFat": 15.4,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (350 g)"
@@ -909,6 +1111,9 @@
    "fat": 0.01,
    "fiber": 0.0,
    "salt": 0.28,
+   "sugar": 4.15,
+   "satFat": 0.01,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (12 g)"
@@ -922,6 +1127,9 @@
    "fat": 0.03,
    "fiber": 0.0,
    "salt": 0.6,
+   "sugar": 8.75,
+   "satFat": 0.03,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (25 g)"
@@ -935,6 +1143,9 @@
    "fat": 0.36,
    "fiber": 0.0,
    "salt": 0.04,
+   "sugar": 0.56,
+   "satFat": 0.19,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (7 g)"
@@ -948,6 +1159,9 @@
    "fat": 4.5,
    "fiber": 10.0,
    "salt": 0.62,
+   "sugar": 6.0,
+   "satFat": 1.75,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (250 g)"
@@ -961,6 +1175,9 @@
    "fat": 11.05,
    "fiber": 0.0,
    "salt": 1.23,
+   "sugar": 0.26,
+   "satFat": 2.8,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (65 g)"
@@ -974,6 +1191,9 @@
    "fat": 12.0,
    "fiber": 0.0,
    "salt": 1.5,
+   "sugar": 0.4,
+   "satFat": 2.9,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (100 g)"
@@ -987,6 +1207,9 @@
    "fat": 12.0,
    "fiber": 0.0,
    "salt": 1.5,
+   "sugar": 0.4,
+   "satFat": 2.9,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (100 g)"
@@ -1000,6 +1223,9 @@
    "fat": 19.98,
    "fiber": 0.0,
    "salt": 1.33,
+   "sugar": 0.44,
+   "satFat": 5.44,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (111 g)"
@@ -1013,6 +1239,9 @@
    "fat": 15.0,
    "fiber": 0.0,
    "salt": 1.95,
+   "sugar": 0.6,
+   "satFat": 4.2,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (150 g)"
@@ -1026,6 +1255,9 @@
    "fat": 14.7,
    "fiber": 2.38,
    "salt": 0.59,
+   "sugar": 14.28,
+   "satFat": 1.12,
+   "ktType": "jidla-a-prilohy/michane-salaty",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (140 g)"
@@ -1039,6 +1271,9 @@
    "fat": 39.2,
    "fiber": 6.02,
    "salt": 1.68,
+   "sugar": 2.66,
+   "satFat": 4.2,
+   "ktType": "slane-pamlsky/krekry-a-drobne-pamlsky-bez-orechu",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (140 g)"
@@ -1052,6 +1287,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.1,
+   "sugar": 22.44,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/ledove-caje",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (330 ml)"
@@ -1065,6 +1303,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.13,
+   "sugar": 22.45,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/ledove-caje",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (330 ml)"
@@ -1078,6 +1319,9 @@
    "fat": 8.13,
    "fiber": 0.0,
    "salt": 2.41,
+   "sugar": 9.4,
+   "satFat": 1.02,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (127 g)"
@@ -1091,6 +1335,9 @@
    "fat": 12.75,
    "fiber": 0.0,
    "salt": 0.38,
+   "sugar": 1.0,
+   "satFat": 1.0,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (25 g)"
@@ -1104,6 +1351,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 7.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/limonady-a-ochucene-mineralni-vody",
    "unit": "ml",
    "referenceAmount": 100.0,
    "portion": null
@@ -1117,6 +1367,9 @@
    "fat": 29.0,
    "fiber": 4.3,
    "salt": 1.4,
+   "sugar": 2.0,
+   "satFat": 2.4,
+   "ktType": "slane-pamlsky/krekry-a-drobne-pamlsky-bez-orechu",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -1130,6 +1383,9 @@
    "fat": 52.0,
    "fiber": 0.0,
    "salt": 1.3,
+   "sugar": 3.8,
+   "satFat": 4.1,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -1143,6 +1399,9 @@
    "fat": 24.03,
    "fiber": 0.0,
    "salt": 4.0,
+   "sugar": 7.74,
+   "satFat": 5.87,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (267 g)"
@@ -1156,6 +1415,9 @@
    "fat": 37.31,
    "fiber": 0.0,
    "salt": 5.45,
+   "sugar": 5.17,
+   "satFat": 4.88,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (287 g)"
@@ -1169,6 +1431,9 @@
    "fat": 0.12,
    "fiber": 0.0,
    "salt": 0.38,
+   "sugar": 7.5,
+   "satFat": 0.03,
+   "ktType": "vareni-a-peceni/dresinky-dipy-a-zalivky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (25 g)"
@@ -1182,6 +1447,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.06,
+   "sugar": 39.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/limonady-a-ochucene-mineralni-vody",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (300 ml)"
@@ -1195,6 +1463,9 @@
    "fat": 31.07,
    "fiber": 0.0,
    "salt": 0.52,
+   "sugar": 37.7,
+   "satFat": 4.29,
+   "ktType": "pecivo/sladke-pecivo-male",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (130 g)"
@@ -1208,6 +1479,9 @@
    "fat": 26.0,
    "fiber": 0.0,
    "salt": 0.78,
+   "sugar": 37.7,
+   "satFat": 5.46,
+   "ktType": "pecivo/sladke-pecivo-male",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (130 g)"
@@ -1221,6 +1495,9 @@
    "fat": 3.25,
    "fiber": 0.0,
    "salt": 0.75,
+   "sugar": 1.5,
+   "satFat": 0.82,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (25 g)"
@@ -1234,6 +1511,9 @@
    "fat": 0.03,
    "fiber": 0.0,
    "salt": 0.4,
+   "sugar": 7.0,
+   "satFat": 0.03,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (25 g)"
@@ -1247,6 +1527,9 @@
    "fat": 9.6,
    "fiber": 1.29,
    "salt": 0.36,
+   "sugar": 0.57,
+   "satFat": 1.2,
+   "ktType": "slane-pamlsky/chipsy-a-bramburky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (30 g)"
@@ -1260,6 +1543,9 @@
    "fat": 15.3,
    "fiber": 0.0,
    "salt": 1.91,
+   "sugar": 0.6,
+   "satFat": 4.2,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (150 g)"
@@ -1273,6 +1559,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.09,
+   "sugar": 33.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/kolove-napoje-s-cukrem",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (300 ml)"
@@ -1286,6 +1575,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.07,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/kolove-napoje-bez-cukru",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (330 ml)"
@@ -1299,6 +1591,9 @@
    "fat": 19.2,
    "fiber": 0.0,
    "salt": 0.66,
+   "sugar": 2.46,
+   "satFat": 1.32,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (60 g)"
@@ -1312,6 +1607,9 @@
    "fat": 20.52,
    "fiber": 0.0,
    "salt": 2.46,
+   "sugar": 11.97,
+   "satFat": 4.45,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (342 g)"
@@ -1325,6 +1623,9 @@
    "fat": 26.05,
    "fiber": 0.0,
    "salt": 3.24,
+   "sugar": 12.32,
+   "satFat": 16.54,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (352 g)"
@@ -1338,6 +1639,9 @@
    "fat": 20.16,
    "fiber": 0.0,
    "salt": 1.46,
+   "sugar": 11.84,
+   "satFat": 4.54,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (252 g)"
@@ -1351,6 +1655,9 @@
    "fat": 9.69,
    "fiber": 0.0,
    "salt": 0.94,
+   "sugar": 11.53,
+   "satFat": 5.76,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (262 g)"
@@ -1364,6 +1671,7 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "vareni-a-peceni/koreni-bujony-ochucovadla",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "malá porce (5 g)"
@@ -1377,6 +1685,9 @@
    "fat": 20.6,
    "fiber": 12.4,
    "salt": 1.0,
+   "sugar": 1.4,
+   "satFat": 1.8,
+   "ktType": "slane-pamlsky/krekry-a-drobne-pamlsky-bez-orechu",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -1390,6 +1701,9 @@
    "fat": 25.3,
    "fiber": 0.0,
    "salt": 5.75,
+   "sugar": 11.73,
+   "satFat": 16.33,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (230 g)"
@@ -1403,6 +1717,9 @@
    "fat": 36.0,
    "fiber": 0.0,
    "salt": 4.15,
+   "sugar": 8.16,
+   "satFat": 8.4,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (240 g)"
@@ -1416,6 +1733,9 @@
    "fat": 63.0,
    "fiber": 0.0,
    "salt": 7.8,
+   "sugar": 19.6,
+   "satFat": 21.7,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (350 g)"
@@ -1429,6 +1749,9 @@
    "fat": 23.1,
    "fiber": 0.0,
    "salt": 5.25,
+   "sugar": 10.5,
+   "satFat": 14.7,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (210 g)"
@@ -1442,6 +1765,9 @@
    "fat": 12.9,
    "fiber": 0.0,
    "salt": 0.57,
+   "sugar": 5.3,
+   "satFat": 1.0,
+   "ktType": "jidla-a-prilohy/michane-salaty",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -1455,6 +1781,9 @@
    "fat": 17.7,
    "fiber": 0.0,
    "salt": 4.44,
+   "sugar": 19.5,
+   "satFat": 2.4,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (300 g)"
@@ -1468,6 +1797,9 @@
    "fat": 19.8,
    "fiber": 0.0,
    "salt": 4.88,
+   "sugar": 21.45,
+   "satFat": 2.64,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (330 g)"
@@ -1481,6 +1813,9 @@
    "fat": 19.8,
    "fiber": 0.0,
    "salt": 3.89,
+   "sugar": 16.5,
+   "satFat": 2.31,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (330 g)"
@@ -1494,6 +1829,9 @@
    "fat": 15.6,
    "fiber": 0.0,
    "salt": 3.85,
+   "sugar": 16.9,
+   "satFat": 2.08,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (260 g)"
@@ -1507,6 +1845,9 @@
    "fat": 15.6,
    "fiber": 0.0,
    "salt": 3.07,
+   "sugar": 13.0,
+   "satFat": 1.82,
+   "ktType": "jidla-a-prilohy/hotove-pokrmy-a-polotovary",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (260 g)"
@@ -1520,6 +1861,9 @@
    "fat": 5.34,
    "fiber": 0.0,
    "salt": 0.57,
+   "sugar": 7.96,
+   "satFat": 0.73,
+   "ktType": "jidla-a-prilohy/michane-salaty",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -1533,6 +1877,9 @@
    "fat": 0.5,
    "fiber": 0.0,
    "salt": 0.57,
+   "sugar": 1.24,
+   "satFat": 0.25,
+   "ktType": "jidla-a-prilohy/michane-salaty",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (248 g)"
@@ -1546,6 +1893,9 @@
    "fat": 9.66,
    "fiber": 0.0,
    "salt": 0.53,
+   "sugar": 10.22,
+   "satFat": 0.84,
+   "ktType": "jidla-a-prilohy/michane-salaty",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (140 g)"
@@ -1559,6 +1909,9 @@
    "fat": 14.4,
    "fiber": 0.0,
    "salt": 0.34,
+   "sugar": 30.6,
+   "satFat": 5.76,
+   "ktType": "mlecne-vyrobky/jogurtove-a-mlecne-napoje-klasicke",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "malá porce (180 ml)"
@@ -1572,6 +1925,9 @@
    "fat": 4.68,
    "fiber": 0.0,
    "salt": 0.23,
+   "sugar": 34.2,
+   "satFat": 3.42,
+   "ktType": "mlecne-vyrobky/jogurtove-a-mlecne-napoje-klasicke",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "malá porce (180 ml)"
@@ -1585,6 +1941,9 @@
    "fat": 10.8,
    "fiber": 0.0,
    "salt": 0.45,
+   "sugar": 75.0,
+   "satFat": 7.8,
+   "ktType": "mlecne-vyrobky/jogurtove-a-mlecne-napoje-klasicke",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "velká porce (300 ml)"
@@ -1598,6 +1957,9 @@
    "fat": 9.3,
    "fiber": 0.0,
    "salt": 0.36,
+   "sugar": 45.0,
+   "satFat": 6.3,
+   "ktType": "mlecne-vyrobky/jogurtove-a-mlecne-napoje-klasicke",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "velké balení (300 ml)"
@@ -1611,6 +1973,9 @@
    "fat": 12.0,
    "fiber": 0.0,
    "salt": 0.15,
+   "sugar": 29.01,
+   "satFat": 8.01,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (300 g)"
@@ -1624,6 +1989,9 @@
    "fat": 11.16,
    "fiber": 0.0,
    "salt": 0.07,
+   "sugar": 45.0,
+   "satFat": 7.38,
+   "ktType": "mlecne-vyrobky/jogurtove-a-mlecne-napoje-klasicke",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "malá porce (180 ml)"
@@ -1637,6 +2005,9 @@
    "fat": 23.1,
    "fiber": 0.0,
    "salt": 1.89,
+   "sugar": 5.88,
+   "satFat": 4.62,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (210 g)"
@@ -1650,6 +2021,9 @@
    "fat": 20.62,
    "fiber": 2.15,
    "salt": 1.3,
+   "sugar": 3.63,
+   "satFat": 4.78,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (165 g)"
@@ -1663,6 +2037,9 @@
    "fat": 35.2,
    "fiber": 0.0,
    "salt": 1.32,
+   "sugar": 0.0,
+   "satFat": 14.74,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (220 g)"
@@ -1676,6 +2053,9 @@
    "fat": 28.6,
    "fiber": 0.0,
    "salt": 2.08,
+   "sugar": 1.04,
+   "satFat": 5.46,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (260 g)"
@@ -1689,6 +2069,9 @@
    "fat": 9.0,
    "fiber": 0.0,
    "salt": 0.45,
+   "sugar": 5.25,
+   "satFat": 0.65,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (25 g)"
@@ -1702,6 +2085,9 @@
    "fat": 0.12,
    "fiber": 0.0,
    "salt": 0.2,
+   "sugar": 8.25,
+   "satFat": 0.03,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (25 g)"
@@ -1715,6 +2101,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 40.0,
+   "satFat": 0.0,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -1728,6 +2117,9 @@
    "fat": 22.33,
    "fiber": 2.9,
    "salt": 1.16,
+   "sugar": 6.38,
+   "satFat": 4.06,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (145 g)"
@@ -1741,6 +2133,9 @@
    "fat": 7.8,
    "fiber": 0.0,
    "salt": 0.4,
+   "sugar": 1.4,
+   "satFat": 0.52,
+   "ktType": "vareni-a-peceni/omacky-kecupy-protlaky-horcice-majolky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (20 g)"
@@ -1754,6 +2149,9 @@
    "fat": 48.64,
    "fiber": 0.0,
    "salt": 3.2,
+   "sugar": 3.2,
+   "satFat": 25.6,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (320 g)"
@@ -1767,6 +2165,9 @@
    "fat": 19.5,
    "fiber": 0.0,
    "salt": 1.14,
+   "sugar": 1.95,
+   "satFat": 5.85,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (150 g)"
@@ -1780,6 +2181,9 @@
    "fat": 36.0,
    "fiber": 0.0,
    "salt": 3.36,
+   "sugar": 0.96,
+   "satFat": 9.12,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (240 g)"
@@ -1793,6 +2197,9 @@
    "fat": 6.08,
    "fiber": 0.0,
    "salt": 0.25,
+   "sugar": 48.64,
+   "satFat": 4.37,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (190 g)"
@@ -1806,6 +2213,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 22.5,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/limonady-a-ochucene-mineralni-vody",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (250 ml)"
@@ -1819,6 +2229,9 @@
    "fat": 23.56,
    "fiber": 2.47,
    "salt": 2.47,
+   "sugar": 3.23,
+   "satFat": 3.99,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (190 g)"
@@ -1832,6 +2245,9 @@
    "fat": 27.12,
    "fiber": 0.0,
    "salt": 3.84,
+   "sugar": 4.07,
+   "satFat": 2.94,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (226 g)"
@@ -1845,6 +2261,9 @@
    "fat": 14.06,
    "fiber": 0.0,
    "salt": 3.19,
+   "sugar": 4.05,
+   "satFat": 3.41,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (213 g)"
@@ -1858,6 +2277,9 @@
    "fat": 43.86,
    "fiber": 0.0,
    "salt": 4.59,
+   "sugar": 5.42,
+   "satFat": 19.09,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (258 g)"
@@ -1871,6 +2293,9 @@
    "fat": 41.01,
    "fiber": 0.0,
    "salt": 6.08,
+   "sugar": 9.39,
+   "satFat": 6.99,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (304 g)"
@@ -1884,6 +2309,9 @@
    "fat": 21.99,
    "fiber": 0.0,
    "salt": 2.87,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (239 g)"
@@ -1897,6 +2325,9 @@
    "fat": 5.6,
    "fiber": 0.0,
    "salt": 0.11,
+   "sugar": 13.3,
+   "satFat": 3.71,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (70 g)"
@@ -1910,6 +2341,9 @@
    "fat": 22.62,
    "fiber": 0.0,
    "salt": 2.34,
+   "sugar": 7.64,
+   "satFat": 2.81,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (156 g)"
@@ -1923,6 +2357,9 @@
    "fat": 56.1,
    "fiber": 0.0,
    "salt": 6.04,
+   "sugar": 14.52,
+   "satFat": 29.04,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (330 g)"
@@ -1936,6 +2373,7 @@
    "fat": 2.5,
    "fiber": 0.1,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/prilohy-brambory-polotovary-z-brambor-kase",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -1949,6 +2387,9 @@
    "fat": 22.1,
    "fiber": 0.0,
    "salt": 3.06,
+   "sugar": 4.76,
+   "satFat": 3.23,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (170 g)"
@@ -1962,6 +2403,9 @@
    "fat": 0.0,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "nealkoholicke-napoje/horke-napoje-caje",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (300 ml)"
@@ -1975,6 +2419,9 @@
    "fat": 0.58,
    "fiber": 0.0,
    "salt": 0.03,
+   "sugar": 7.49,
+   "satFat": 0.37,
+   "ktType": "vareni-a-peceni/sladidla-med",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "porce (15 g)"
@@ -1988,6 +2435,9 @@
    "fat": 15.1,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "maso/maso-susene",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -2001,6 +2451,7 @@
    "fat": 3.3,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "nealkoholicke-napoje/kava-kavove-napoje-a-kakaa",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (300 g)"
@@ -2014,6 +2465,9 @@
    "fat": 5.09,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.16,
+   "satFat": 1.02,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (32 g)"
@@ -2027,6 +2481,7 @@
    "fat": 7.6,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "zmrzliny-a-nanuky-1/zmrzliny-a-nanuky",
    "unit": "g",
    "referenceAmount": 100.0,
    "portion": null
@@ -2040,6 +2495,7 @@
    "fat": 7.6,
    "fiber": 0.0,
    "salt": 0.0,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "kus (50 g)"
@@ -2053,6 +2509,7 @@
    "fat": 9.0,
    "fiber": 0.0,
    "salt": 270.0,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (1 000 g)"
@@ -2066,6 +2523,9 @@
    "fat": 20.13,
    "fiber": 0.0,
    "salt": 0.0,
+   "sugar": 0.0,
+   "satFat": 0.0,
+   "ktType": "jidla-a-prilohy/fast-food",
    "unit": "pcs",
    "referenceAmount": 1.0,
    "portion": "balení (148 g)"
