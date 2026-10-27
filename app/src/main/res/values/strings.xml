@@ -309,7 +309,7 @@
     <string name="search_error_off">Couldn\'t reach Open Food Facts. Check your connection and try again.</string>
     <string name="search_error_kt">Couldn\'t reach Kalorické tabulky. Check your connection and try again.</string>
     <string name="could_not_load">Couldn\'t load %1$s. Check your connection.</string>
-    <string name="search_placeholder">e.g. skyr, big mac, caesar bageta</string>
+    <string name="search_placeholder">search for anything</string>
     <string name="clear_search">Clear search</string>
     <string name="your_foods">Your foods</string>
     <string name="results">Results</string>
@@ -395,6 +395,21 @@
     <string name="accent_rose">Rose</string>
     <string name="accent_orange">Orange</string>
     <string name="accent_wallpaper">Wallpaper</string>
+    <string name="accent_red">Red</string>
+    <string name="accent_lime">Lime</string>
+    <string name="accent_cyan">Cyan</string>
+    <string name="accent_indigo">Indigo</string>
+    <string name="accent_fuchsia">Fuchsia</string>
+    <string name="accent_brown">Brown</string>
+    <string name="accent_graphite">Graphite</string>
+    <string name="accent_custom">Custom</string>
+    <string name="accent_custom_hex">Custom · #%1$s</string>
+    <string name="custom_accent_title">Custom colour</string>
+    <string name="accent_hue">Hue</string>
+    <string name="accent_vividness">Vividness</string>
+    <string name="accent_hex">Hex code</string>
+    <string name="accent_hex_invalid">Six digits, 0–9 and A–F</string>
+    <string name="apply">Apply</string>
     <string name="font">Font</string>
     <string name="font_system">System</string>
     <!-- Font names are proper nouns: the same in every language. -->

@@ -53,8 +53,8 @@ fun TrackmecaloriesTheme(
             if (theme == AppTheme.CLASSIC || glass) scheme
             else scheme.withNeutrals(neutrals(theme, scheme.primary, darkTheme))
         } else {
-            accentScheme(appearance.accent, darkTheme)
-                .withNeutrals(neutrals(theme, appearance.accent.primaryLight, darkTheme))
+            accentScheme(appearance.palette, darkTheme)
+                .withNeutrals(neutrals(theme, appearance.palette.primaryLight, darkTheme))
         }
     }
     val colorScheme = if (glass) solidScheme.toGlass(darkTheme) else solidScheme
@@ -114,7 +114,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
  * A full scheme from an accent: its primary tones and the fixed amber/blue brand roles.
  * The neutrals are filled in by [withNeutrals] from the chosen [AppTheme].
  */
-private fun accentScheme(accent: AccentColor, dark: Boolean): ColorScheme = if (dark) {
+private fun accentScheme(accent: AccentPalette, dark: Boolean): ColorScheme = if (dark) {
     darkColorScheme(
         primary = accent.primaryDark,
         onPrimary = accent.onPrimaryDark,

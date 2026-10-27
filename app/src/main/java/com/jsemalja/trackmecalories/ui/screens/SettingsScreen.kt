@@ -33,6 +33,23 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Color
 import com.jsemalja.trackmecalories.ui.theme.AccentColor
+import com.jsemalja.trackmecalories.ui.theme.AccentPalette
+import com.jsemalja.trackmecalories.ui.theme.MAX_ACCENT_CHROMA
+import com.jsemalja.trackmecalories.ui.theme.colorAt
+import com.jsemalja.trackmecalories.ui.theme.hexOf
+import com.jsemalja.trackmecalories.ui.theme.hueChroma
+import com.jsemalja.trackmecalories.ui.theme.parseHexColor
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Wallpaper
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.jsemalja.trackmecalories.ui.theme.AppFont
 import com.jsemalja.trackmecalories.ui.theme.Appearance
 import com.jsemalja.trackmecalories.ui.theme.AppTheme
@@ -77,6 +94,7 @@ fun SettingsScreen(
     appearance: Appearance,
     onThemeChange: (AppTheme) -> Unit,
     onAccentChange: (AccentColor) -> Unit,
+    onCustomAccentChange: (Int) -> Unit,
     onFontChange: (AppFont?) -> Unit,
     onCornersChange: (CornerStyle?) -> Unit,
     onModeChange: (ThemeMode) -> Unit
@@ -97,7 +115,7 @@ fun SettingsScreen(
         Spacer(Modifier.height(24.dp))
 
         SettingsSectionCard(title = stringResource(R.string.appearance), titleColor = MaterialTheme.colorScheme.primary) {
-            AppearanceSettings(appearance, onThemeChange, onModeChange, onAccentChange, onFontChange, onCornersChange)
+            AppearanceSettings(appearance, onThemeChange, onModeChange, onAccentChange, onCustomAccentChange, onFontChange, onCornersChange)
             LanguageSettings()
         }
 
@@ -448,10 +466,12 @@ private fun AppearanceSettings(
     onThemeChange: (AppTheme) -> Unit,
     onModeChange: (ThemeMode) -> Unit,
     onAccentChange: (AccentColor) -> Unit,
+    onCustomAccentChange: (Int) -> Unit,
     onFontChange: (AppFont?) -> Unit,
     onCornersChange: (CornerStyle?) -> Unit
 ) {
     val dark = LocalDarkTheme.current
+    var editingCustom by rememberSaveable { mutableStateOf(false) }
 
     Text(stringResource(R.string.theme), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(10.dp))
@@ -463,7 +483,7 @@ private fun AppearanceSettings(
         AppTheme.entries.forEach { theme ->
             ThemeTile(
                 theme = theme,
-                accent = appearance.accent,
+                tint = appearance.palette.primaryLight,
                 dark = dark,
                 selected = appearance.theme == theme,
                 onClick = { onThemeChange(theme) }
@@ -486,20 +506,81 @@ private fun AppearanceSettings(
     }
 
     Spacer(Modifier.height(20.dp))
-    Text(stringResource(R.string.accent_colour), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Spacer(Modifier.height(10.dp))
+    // The dots are unlabelled (TalkBack reads their names), so the chosen one is named here.
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(R.string.accent_colour),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            if (appearance.accent == AccentColor.CUSTOM) stringResource(R.string.accent_custom_hex, hexOf(appearance.customAccent))
+            else stringResource(appearance.accent.label),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+    Spacer(Modifier.height(8.dp))
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         AccentColor.available.forEach { accent ->
-            AccentSwatch(
-                accent = accent,
-                color = if (dark) accent.primaryDark else accent.primaryLight,
-                selected = appearance.accent == accent,
-                onClick = { onAccentChange(accent) }
-            )
+            val selected = appearance.accent == accent
+            when (accent) {
+                // Wallpaper colours are unknown up front: a soft colour wheel.
+                AccentColor.WALLPAPER -> AccentSwatch(
+                    name = stringResource(accent.label),
+                    fill = Brush.sweepGradient(listOf(Color(0xFF8ED6AE), Color(0xFFA8C8FF), Color(0xFFCFBDFF), Color(0xFFFFB0CA), Color(0xFFFFB68B), Color(0xFF8ED6AE))),
+                    iconTint = Color.Black.copy(alpha = 0.7f),
+                    selected = selected,
+                    icon = Icons.Default.Wallpaper,
+                    onClick = { onAccentChange(accent) }
+                )
+                // A vivid wheel that opens the editor; once picked it shows the colour, and
+                // tapping it again edits it.
+                AccentColor.CUSTOM -> {
+                    val color = appearance.palette.primary(dark)
+                    AccentSwatch(
+                        name = stringResource(accent.label),
+                        fill = if (selected) SolidColor(color) else Brush.sweepGradient(vividWheel),
+                        iconTint = if (selected) checkTint(color) else Color.White,
+                        selected = selected,
+                        icon = if (selected) Icons.Default.Edit else Icons.Default.Palette,
+                        onClick = { editingCustom = true }
+                    )
+                }
+                else -> {
+                    val color = accent.palette.primary(dark)
+                    AccentSwatch(
+                        name = stringResource(accent.label),
+                        fill = SolidColor(color),
+                        iconTint = checkTint(color),
+                        selected = selected,
+                        onClick = { onAccentChange(accent) }
+                    )
+                }
+            }
         }
+    }
+
+    if (editingCustom) {
+        val wallpaperPrimary = MaterialTheme.colorScheme.primary
+        CustomAccentDialog(
+            // Start from what's on screen, so a small nudge from a preset is easy.
+            initial = when (appearance.accent) {
+                AccentColor.CUSTOM -> appearance.customAccent
+                AccentColor.WALLPAPER -> wallpaperPrimary.toArgb()
+                else -> appearance.palette.primaryLight.toArgb()
+            },
+            dark = dark,
+            onDismiss = { editingCustom = false },
+            onApply = {
+                onCustomAccentChange(it)
+                editingCustom = false
+            }
+        )
     }
 
     // Corners and font follow the theme until overridden here; picking a theme resets them.
@@ -547,12 +628,12 @@ private fun AppearanceSettings(
 @Composable
 private fun ThemeTile(
     theme: AppTheme,
-    accent: AccentColor,
+    tint: Color,
     dark: Boolean,
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val n = remember(theme, accent, dark) { neutrals(theme, accent.primaryLight, dark) }
+    val n = remember(theme, tint, dark) { neutrals(theme, tint, dark) }
     val shapes = remember(theme) { themeShapes(theme) }
     val headingFont = remember(theme) { themeTypography(theme).titleLarge.fontFamily }
     val colors = MaterialTheme.colorScheme
@@ -638,40 +719,184 @@ private fun ThemeTile(
     }
 }
 
+/** Every hue at full accent strength, closed into a loop for a sweep gradient. */
+private val vividWheel: List<Color> = (0..12).map { Color(colorAt(it * 30.0, MAX_ACCENT_CHROMA, 65.0)) }
+
+private fun checkTint(color: Color) = if (color.luminance() > 0.4f) Color.Black.copy(alpha = 0.75f) else Color.White
+
+/**
+ * One accent dot, in the colour the current mode would use. Picking it shrinks the dot inside
+ * a ring and shows a check (or [icon] for the special ones), like the system wallpaper picker.
+ */
 @Composable
-private fun AccentSwatch(accent: AccentColor, color: Color, selected: Boolean, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .then(
-                    if (accent == AccentColor.WALLPAPER) {
-                        // Wallpaper colours are unknown up front: show a colour wheel.
-                        Modifier.background(Brush.sweepGradient(listOf(Color(0xFF8ED6AE), Color(0xFFA8C8FF), Color(0xFFCFBDFF), Color(0xFFFFB0CA), Color(0xFFFFB68B), Color(0xFF8ED6AE))))
-                    } else {
-                        Modifier.background(color)
-                    }
-                )
-                .border(
-                    width = if (selected) 3.dp else 0.dp,
-                    color = if (selected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-                    shape = CircleShape
-                )
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            if (selected) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = null,
-                    tint = if (color.luminance() > 0.4f) Color.Black.copy(alpha = 0.75f) else Color.White,
-                    modifier = Modifier.size(20.dp)
+private fun AccentSwatch(
+    name: String,
+    fill: Brush,
+    iconTint: Color,
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: ImageVector? = null
+) {
+    val inset by animateDpAsState(if (selected) 6.dp else 2.dp, label = "swatch inset")
+    Box(
+        Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
+            .semantics { contentDescription = name }
+            .border(if (selected) 2.5.dp else 0.dp, if (selected) MaterialTheme.colorScheme.onSurface else Color.Transparent, CircleShape)
+            .padding(inset)
+            .clip(CircleShape)
+            .background(fill),
+        contentAlignment = Alignment.Center
+    ) {
+        val shown = if (selected && icon == null) Icons.Default.Check else icon
+        if (shown != null) Icon(shown, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
+    }
+}
+
+/**
+ * Builds a custom accent from hue and vividness sliders, or a hex code. The sliders work in
+ * OKLCh (see Tones.kt), so equal steps look equally far apart, and the preview is drawn with
+ * the same generated tones the app will use in the current mode: what you see is what you get.
+ */
+@Composable
+private fun CustomAccentDialog(initial: Int, dark: Boolean, onDismiss: () -> Unit, onApply: (Int) -> Unit) {
+    val start = remember { hueChroma(initial) }
+    var hue by rememberSaveable { mutableFloatStateOf(start.first.toFloat()) }
+    var chroma by rememberSaveable { mutableFloatStateOf(start.second.toFloat()) }
+    var seed by rememberSaveable { mutableIntStateOf(initial) }
+    var hex by rememberSaveable { mutableStateOf(hexOf(initial)) }
+    val palette = remember(seed) { AccentPalette.fromSeed(seed) }
+    val hexValid = parseHexColor(hex) != null
+
+    // The seed from the sliders is the light-mode primary itself (tone 40).
+    fun fromSliders(newHue: Float, newChroma: Float) {
+        hue = newHue
+        chroma = newChroma
+        seed = colorAt(newHue.toDouble(), newChroma.toDouble(), 40.0)
+        hex = hexOf(seed)
+    }
+
+    val vividness = remember(hue) { (0..6).map { Color(colorAt(hue.toDouble(), MAX_ACCENT_CHROMA * it / 6, 65.0)) } }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.custom_accent_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                AccentPreview(palette, dark)
+                Spacer(Modifier.height(16.dp))
+                Text(stringResource(R.string.accent_hue), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                GradientSlider(hue, 0f..360f, vividWheel) { fromSliders(it, chroma) }
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.accent_vividness), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                GradientSlider(chroma, 0f..MAX_ACCENT_CHROMA.toFloat(), vividness) { fromSliders(hue, it) }
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = hex,
+                    onValueChange = { text ->
+                        hex = text.removePrefix("#").filter { it.isDigit() || it.lowercaseChar() in 'a'..'f' }.take(6).uppercase()
+                        parseHexColor(hex)?.let { typed ->
+                            seed = typed
+                            val (h, c) = hueChroma(typed)
+                            hue = h.toFloat()
+                            chroma = c.toFloat()
+                        }
+                    },
+                    label = { Text(stringResource(R.string.accent_hex)) },
+                    prefix = { Text("#") },
+                    singleLine = true,
+                    isError = !hexValid,
+                    supportingText = { if (!hexValid) Text(stringResource(R.string.accent_hex_invalid)) },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, keyboardType = KeyboardType.Ascii),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(seed) }, enabled = hexValid) { Text(stringResource(R.string.apply)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
-        Spacer(Modifier.height(4.dp))
-        Text(stringResource(accent.label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    )
+}
+
+/** The palette's roles together: a ring and bar like the Today screen's, a filled and a tonal pill. */
+@Composable
+private fun AccentPreview(palette: AccentPalette, dark: Boolean) {
+    val primary = palette.primary(dark)
+    val onPrimary = if (dark) palette.onPrimaryDark else palette.onPrimaryLight
+    val container = if (dark) palette.containerDark else palette.containerLight
+    val onContainer = if (dark) palette.onContainerDark else palette.onContainerLight
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        CircularProgressIndicator(
+            progress = { 0.7f },
+            color = primary,
+            trackColor = container,
+            strokeWidth = 6.dp,
+            modifier = Modifier.size(52.dp)
+        )
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Aa",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = onPrimary,
+                    modifier = Modifier.clip(CircleShape).background(primary).padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+                Text(
+                    "Aa",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = onContainer,
+                    modifier = Modifier.clip(CircleShape).background(container).padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
+            LinearProgressIndicator(
+                progress = { 0.6f },
+                color = primary,
+                trackColor = container,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+/** A slider over a gradient of what its values look like (the track itself is hidden). */
+@Composable
+private fun GradientSlider(
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    gradient: List<Color>,
+    onChange: (Float) -> Unit
+) {
+    Box(contentAlignment = Alignment.Center) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(14.dp)
+                .clip(CircleShape)
+                .background(Brush.horizontalGradient(gradient))
+        )
+        Slider(
+            value = value,
+            onValueChange = onChange,
+            valueRange = range,
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.onSurface,
+                activeTrackColor = Color.Transparent,
+                inactiveTrackColor = Color.Transparent
+            )
+        )
     }
 }
 

@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 // Fixed brand roles that don't follow the accent: amber = energy/quick actions
 // (secondary), blue = hydration (tertiary, used for the water tracker). The primary
-// colour and the accent-tinted neutrals come from [AccentColor].
+// colour and the accent-tinted neutrals come from [AccentPalette].
 
 // Light
 val AmberSecondaryLight = Color(0xFF7A5900)
