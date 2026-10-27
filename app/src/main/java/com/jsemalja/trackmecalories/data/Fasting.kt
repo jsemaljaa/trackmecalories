@@ -13,6 +13,9 @@ const val DEFAULT_FASTING_HOURS = 16
 /** When the fast reaches its goal. */
 val Fast.goalTime: Long get() = startTime + targetHours * HOUR_MS
 
+/** A finished fast that lasted its planned hours. */
+val Fast.reachedGoal: Boolean get() = endTime.let { it != null && it >= goalTime }
+
 /** How far a running fast is at [now]. */
 data class FastProgress(val elapsedMs: Long, val targetMs: Long) {
     val remainingMs: Long get() = (targetMs - elapsedMs).coerceAtLeast(0)

@@ -13,6 +13,16 @@ import com.jsemalja.trackmecalories.data.WeeklyBudget
 import com.jsemalja.trackmecalories.data.UserPrefs
 import com.jsemalja.trackmecalories.data.Fast
 import com.jsemalja.trackmecalories.data.FastingSettings
+import com.jsemalja.trackmecalories.data.Badge
+import com.jsemalja.trackmecalories.data.GamificationCounts
+import com.jsemalja.trackmecalories.data.GamificationSettings
+import com.jsemalja.trackmecalories.data.GamificationState
+import com.jsemalja.trackmecalories.data.StreakHistory
+import com.jsemalja.trackmecalories.data.gamificationState
+import com.jsemalja.trackmecalories.data.newBadges
+import com.jsemalja.trackmecalories.data.reachedGoal
+import java.time.Instant
+import java.time.ZoneId
 import com.jsemalja.trackmecalories.fasting.FastingAccess
 import com.jsemalja.trackmecalories.fasting.FastingTimer
 import com.jsemalja.trackmecalories.data.suggestionHistoryStart
@@ -229,6 +239,78 @@ class MainViewModel(
     fun refreshFasting() {
         _fastingAccess.value = fasting.access()
         viewModelScope.launch { fasting.sync() }
+    }
+
+    // --- Streaks and badges ---
+
+    val gamificationSettings: StateFlow<GamificationSettings> = userPrefs.gamification
+
+    // Bumped on resume, so streaks move on to a new day without anything being logged.
+    private val gamificationDay = MutableStateFlow(LocalDate.now())
+
+    private val streakHistory: Flow<StreakHistory> = combine(
+        dao.getDailyTotalsBetween("", "9999-12-31"),
+        dao.getWaterTotals(),
+        dao.getDayLogsBetween("", "9999-12-31"),
+        dao.getFinishedFasts(),
+        dao.getWeightEntries()
+    ) { totals, water, logs, fasts, weights ->
+        val zone = ZoneId.systemDefault()
+        StreakHistory(
+            logged = totals.associateBy { LocalDate.parse(it.date) },
+            waterMl = water.associate { LocalDate.parse(it.date) to it.amountMl },
+            incompleteDays = logs.filter { !it.complete }.mapTo(mutableSetOf()) { LocalDate.parse(it.date) },
+            fastGoalDays = fasts.filter { it.reachedGoal }.mapTo(mutableSetOf()) { Instant.ofEpochMilli(it.endTime!!).atZone(zone).toLocalDate() },
+            weighInDays = weights.mapTo(mutableSetOf()) { LocalDate.parse(it.date) }
+        )
+    }
+
+    private val gamificationCounts: Flow<GamificationCounts> = combine(
+        dao.countWeighedEntries(),
+        dao.countScannedFoods(),
+        dao.countRecipes(),
+        dao.getFinishedFasts()
+    ) { weighed, scanned, recipes, fasts -> GamificationCounts(weighed, scanned, recipes, fasts.count { it.reachedGoal }) }
+
+    private fun gamificationFlow(settings: GamificationSettings): Flow<GamificationState> = combine(
+        combine(streakHistory, gamificationCounts, ::Pair),
+        userGoal,
+        combine(userPrefs.weeklyBudget, userPrefs.waterTracking, userPrefs.fasting, ::Triple),
+        gamificationDay
+    ) { (history, counts), goals, (weekly, water, fastingOn), today ->
+        gamificationState(settings.streaks, history, counts, goals, today, ::weekStartOf, weekly, water, fastingOn.enabled)
+    }.flowOn(Dispatchers.Default)
+
+    /** Streaks and badges; null while they're switched off (nothing is worked out then). */
+    val gamification: StateFlow<GamificationState?> = userPrefs.gamification
+        .flatMapLatest { settings -> if (settings.enabled) gamificationFlow(settings) else flowOf(null) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** Badges reached since they were last shown, to celebrate on Today. */
+    val pendingBadges: StateFlow<List<Badge>> = combine(gamification, userPrefs.seenBadges, userPrefs.gamification) { state, seen, settings ->
+        if (state == null || !settings.celebrations) emptyList() else newBadges(state.badges, seen)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun setGamification(value: GamificationSettings) {
+        val old = userPrefs.gamification.value
+        // Turning on (or turning celebrations back on) shouldn't bring a pile of old badges:
+        // what's already reached counts as seen.
+        if (!value.enabled || old.enabled && (old.celebrations || !value.celebrations)) {
+            userPrefs.setGamification(value)
+            return
+        }
+        viewModelScope.launch {
+            val state = gamificationFlow(value).first()
+            userPrefs.markBadgesSeen(state.badges.filter { it.unlocked }.map { it.badge })
+            userPrefs.setGamification(value)
+        }
+    }
+
+    fun markBadgesSeen(badges: List<Badge>) = userPrefs.markBadgesSeen(badges)
+
+    /** Called on resume: the day may have changed while the app was in the background. */
+    fun refreshGamification() {
+        gamificationDay.value = LocalDate.now()
     }
 
     /** This week's budget and today's flexible target; null when weekly budgeting is off. */

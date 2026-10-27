@@ -186,6 +186,13 @@ fun TrendsScreen(
             Spacer(Modifier.height(16.dp))
             MacroAverages(logged, goals.proteinGoal, goals.carbGoal, goals.fatGoal)
         }
+
+        // Optional (Settings > Streaks & badges).
+        val gamification by viewModel.gamification.collectAsState()
+        gamification?.let { state ->
+            Spacer(Modifier.height(16.dp))
+            ConsistencyCard(state, today)
+        }
     }
 }
 

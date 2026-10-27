@@ -237,6 +237,9 @@ data class Fast(
     val targetHours: Int
 )
 
+/** Water drunk on one day (a query result shape). */
+data class DayWater(val date: String, val amountMl: Double)
+
 /**
  * Aggregated per-day totals used by the weekly trends screen. Not an entity — just a
  * query result shape.
@@ -418,6 +421,23 @@ interface FoodDao {
 
     @Query("DELETE FROM day_logs WHERE date = :date")
     suspend fun clearDayLog(date: String)
+
+    // --- Streaks and badges (read only; see Streaks.kt) ---
+
+    @Query("SELECT date, SUM(amountMl) AS amountMl FROM water_entries GROUP BY date")
+    fun getWaterTotals(): Flow<List<DayWater>>
+
+    @Query("SELECT * FROM fasts WHERE endTime IS NOT NULL")
+    fun getFinishedFasts(): Flow<List<Fast>>
+
+    @Query("SELECT COUNT(*) FROM food_entries WHERE confidence = 'WEIGHED'")
+    fun countWeighedEntries(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM custom_foods WHERE barcode IS NOT NULL")
+    fun countScannedFoods(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM recipes")
+    fun countRecipes(): Flow<Int>
 
     // --- History for suggestions, "what fits" and satiety insights ---
 

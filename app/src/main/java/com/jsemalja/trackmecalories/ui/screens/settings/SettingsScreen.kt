@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
@@ -20,10 +21,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.HealthStatus
+import com.jsemalja.trackmecalories.data.StreakKind
 import com.jsemalja.trackmecalories.ui.screens.GoalsEditor
 import com.jsemalja.trackmecalories.ui.screens.ScreenHeader
 import com.jsemalja.trackmecalories.ui.theme.AccentColor
@@ -44,6 +47,7 @@ private enum class SettingsPage(@StringRes val title: Int, val parent: SettingsP
     GOALS(R.string.goals_title),
     FEATURES(R.string.settings_features),
     FASTING(R.string.fasting_timer, parent = FEATURES),
+    STREAKS(R.string.gamification_title),
     HEALTH(R.string.health_data),
     APPEARANCE(R.string.appearance),
     DATA(R.string.data),
@@ -99,10 +103,13 @@ fun SettingsScreen(
                 }
             }
             SettingsPage.FEATURES -> SettingsPageScaffold(stringResource(shown.title), goBack, pageModifier) {
-                FeaturesSettings(viewModel, onOpenFasting = { page = SettingsPage.FASTING })
+                FeaturesSettings(viewModel, onOpen = { page = it })
             }
             SettingsPage.FASTING -> SettingsPageScaffold(stringResource(shown.title), goBack, pageModifier) {
                 SettingsSectionCard { FastingSettingsSection(viewModel) }
+            }
+            SettingsPage.STREAKS -> SettingsPageScaffold(stringResource(shown.title), goBack, pageModifier) {
+                GamificationSettingsSection(viewModel)
             }
             SettingsPage.HEALTH -> SettingsPageScaffold(stringResource(shown.title), goBack, pageModifier) {
                 SettingsSectionCard { HealthSettings(viewModel) }
@@ -135,6 +142,7 @@ private fun SettingsList(
     val weeklyOn by viewModel.weeklyBudgetEnabled.collectAsState()
     val waterOn by viewModel.waterTrackingEnabled.collectAsState()
     val fasting by viewModel.fastingSettings.collectAsState()
+    val gamification by viewModel.gamificationSettings.collectAsState()
     val healthStatus by viewModel.healthStatus.collectAsState()
     var choosingLanguage by remember { mutableStateOf(false) }
     val language = rememberAppLanguage()
@@ -145,7 +153,7 @@ private fun SettingsList(
 
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             SettingsRow(
-                0, 3, Icons.Default.Flag, stringResource(SettingsPage.GOALS.title),
+                0, 4, Icons.Default.Flag, stringResource(SettingsPage.GOALS.title),
                 "%,d ".format(goals.calorieGoal) + stringResource(R.string.unit_kcal) + " · " +
                     stringResource(
                         R.string.macro_line,
@@ -160,11 +168,20 @@ private fun SettingsList(
                 stringResource(R.string.settings_fasting_plan, fastingPlanLabel(fasting.planHours)).takeIf { fasting.enabled }
             )
             SettingsRow(
-                1, 3, Icons.Default.Tune, stringResource(SettingsPage.FEATURES.title),
+                1, 4, Icons.Default.Tune, stringResource(SettingsPage.FEATURES.title),
                 if (features.isEmpty()) stringResource(R.string.settings_features_none) else features.joinToString(" · ")
             ) { onOpen(SettingsPage.FEATURES) }
+            // Water and fasting streaks only count while those features are on.
+            val tracked = gamification.streaks.count {
+                (it != StreakKind.WATER || waterOn) && (it != StreakKind.FASTING || fasting.enabled)
+            }
             SettingsRow(
-                2, 3, Icons.Default.MonitorHeart, stringResource(SettingsPage.HEALTH.title),
+                2, 4, Icons.Default.LocalFireDepartment, stringResource(SettingsPage.STREAKS.title),
+                if (gamification.enabled) pluralStringResource(R.plurals.gamification_on_summary, tracked, tracked)
+                else stringResource(R.string.settings_off)
+            ) { onOpen(SettingsPage.STREAKS) }
+            SettingsRow(
+                3, 4, Icons.Default.MonitorHeart, stringResource(SettingsPage.HEALTH.title),
                 stringResource(
                     when (healthStatus) {
                         HealthStatus.CONNECTED -> R.string.settings_health_connected
@@ -214,7 +231,7 @@ private fun SettingsList(
 
 /** Optional parts of Today that can be switched off. */
 @Composable
-private fun FeaturesSettings(viewModel: MainViewModel, onOpenFasting: () -> Unit) {
+private fun FeaturesSettings(viewModel: MainViewModel, onOpen: (SettingsPage) -> Unit) {
     val weeklyOn by viewModel.weeklyBudgetEnabled.collectAsState()
     val waterOn by viewModel.waterTrackingEnabled.collectAsState()
     val fasting by viewModel.fastingSettings.collectAsState()
@@ -226,9 +243,8 @@ private fun FeaturesSettings(viewModel: MainViewModel, onOpenFasting: () -> Unit
     }
     SettingsRow(
         0, 1, Icons.Default.Timer, stringResource(R.string.fasting_timer),
-        if (fasting.enabled) fastingPlanLabel(fasting.planHours) else stringResource(R.string.settings_off),
-        onClick = onOpenFasting
-    )
+        if (fasting.enabled) fastingPlanLabel(fasting.planHours) else stringResource(R.string.settings_off)
+    ) { onOpen(SettingsPage.FASTING) }
 }
 
 /** "16:8": fasting hours, then the eating window. */

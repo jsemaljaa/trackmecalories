@@ -61,6 +61,41 @@ class UserPrefs(context: Context) {
         _fasting.value = value
     }
 
+    private val _gamification = MutableStateFlow(
+        GamificationSettings(
+            enabled = prefs.getBoolean(KEY_GAMIFICATION, false),
+            streaks = prefs.getStringSet(KEY_GAMIFICATION_STREAKS, null)
+                ?.mapNotNullTo(mutableSetOf()) { name -> StreakKind.entries.firstOrNull { it.name == name } }
+                ?: StreakKind.DEFAULT,
+            showOnToday = prefs.getBoolean(KEY_GAMIFICATION_TODAY, true),
+            celebrations = prefs.getBoolean(KEY_GAMIFICATION_CELEBRATIONS, true)
+        )
+    )
+    /** Streaks and badges. Off hides them all; nothing about them is stored but [seenBadges]. */
+    val gamification: StateFlow<GamificationSettings> = _gamification.asStateFlow()
+
+    fun setGamification(value: GamificationSettings) {
+        prefs.edit()
+            .putBoolean(KEY_GAMIFICATION, value.enabled)
+            .putStringSet(KEY_GAMIFICATION_STREAKS, value.streaks.mapTo(mutableSetOf()) { it.name })
+            .putBoolean(KEY_GAMIFICATION_TODAY, value.showOnToday)
+            .putBoolean(KEY_GAMIFICATION_CELEBRATIONS, value.celebrations)
+            .apply()
+        _gamification.value = value
+    }
+
+    // getStringSet's set mustn't be changed, so it's copied.
+    private val _seenBadges = MutableStateFlow(prefs.getStringSet(KEY_SEEN_BADGES, null)?.toSet() ?: emptySet())
+    /** [Badge] names already celebrated (or reached before streaks were turned on), so each shows once. */
+    val seenBadges: StateFlow<Set<String>> = _seenBadges.asStateFlow()
+
+    fun markBadgesSeen(badges: Collection<Badge>) {
+        val seen = _seenBadges.value + badges.map { it.name }
+        if (seen.size == _seenBadges.value.size) return
+        prefs.edit().putStringSet(KEY_SEEN_BADGES, seen.toMutableSet()).apply()
+        _seenBadges.value = seen
+    }
+
     private companion object {
         const val KEY_WEEKLY_BUDGET = "weekly_budget"
         const val KEY_EAT_BACK = "eat_back"
@@ -70,6 +105,11 @@ class UserPrefs(context: Context) {
         const val KEY_FASTING_NOTIFY_ONGOING = "fasting_notify_ongoing"
         const val KEY_FASTING_NOTIFY_GOAL = "fasting_notify_goal"
         const val KEY_FASTING_NOTIFY_NEXT = "fasting_notify_next"
+        const val KEY_GAMIFICATION = "gamification"
+        const val KEY_GAMIFICATION_STREAKS = "gamification_streaks"
+        const val KEY_GAMIFICATION_TODAY = "gamification_today"
+        const val KEY_GAMIFICATION_CELEBRATIONS = "gamification_celebrations"
+        const val KEY_SEEN_BADGES = "seen_badges"
     }
 }
 
@@ -85,4 +125,18 @@ data class FastingSettings(
     val notifyOngoing: Boolean = true,
     val notifyGoal: Boolean = true,
     val notifyNextFast: Boolean = false
+)
+
+/**
+ * Streaks and badges (see Streaks.kt, Achievements.kt). Off by default.
+ *
+ * @property streaks which streaks are tracked.
+ * @property showOnToday the streak chip on Today.
+ * @property celebrations a short celebration when a badge is reached.
+ */
+data class GamificationSettings(
+    val enabled: Boolean = false,
+    val streaks: Set<StreakKind> = StreakKind.DEFAULT,
+    val showOnToday: Boolean = true,
+    val celebrations: Boolean = true
 )

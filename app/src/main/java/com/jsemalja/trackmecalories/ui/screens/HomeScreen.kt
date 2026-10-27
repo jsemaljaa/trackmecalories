@@ -123,6 +123,10 @@ fun HomeScreen(
     val eatBack by viewModel.eatBack.collectAsState()
     val history by viewModel.historyEntries.collectAsState()
     val savedFoods by viewModel.allCustomFoods.collectAsState()
+    val gamification by viewModel.gamification.collectAsState()
+    val gamificationSettings by viewModel.gamificationSettings.collectAsState()
+    val pendingBadges by viewModel.pendingBadges.collectAsState()
+    var showStreaks by remember { mutableStateOf(false) }
     var showWhatFits by remember { mutableStateOf(false) }
     val isToday = selectedDate == LocalDate.now()
     // Eaten-back activity counts for today only: past days keep the goal they were planned with.
@@ -208,6 +212,16 @@ fun HomeScreen(
             ) {
                 // The flexible target only applies to today.
                 item(key = "progress") { DailyProgressCard(entries, goals, if (isToday) weekly else null, activityBonus) }
+                // Optional (Settings > Streaks & badges); streaks run up to today, so today only.
+                val streaks = gamification?.streaks.orEmpty()
+                if (isToday && gamificationSettings.showOnToday && streaks.isNotEmpty()) {
+                    item(key = "streaks") {
+                        Column {
+                            Spacer(Modifier.height(8.dp))
+                            StreakStrip(streaks, onClick = { showStreaks = true })
+                        }
+                    }
+                }
                 item(key = "water") {
                     Column {
                         // Optional (Settings > Fasting); a fast runs in real time, so today only.
@@ -355,6 +369,16 @@ fun HomeScreen(
                 showPortionDialogFor = fit.food.copy(defaultAmount = fit.amount)
             }
         )
+    }
+
+    val streakState = gamification
+    if (showStreaks && streakState != null) {
+        StreaksSheet(streakState, onDismiss = { showStreaks = false })
+    }
+
+    // Each badge is celebrated once; closing the dialog marks them seen.
+    if (pendingBadges.isNotEmpty()) {
+        BadgeCelebrationDialog(pendingBadges, onDismiss = { viewModel.markBadgesSeen(pendingBadges) })
     }
 
     if (showLogWeight) {

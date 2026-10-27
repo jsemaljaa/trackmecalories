@@ -156,6 +156,7 @@ class MainActivity : ComponentActivity() {
         val viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         viewModel.refreshHealth()
         viewModel.refreshFasting()
+        viewModel.refreshGamification()
     }
 
     override fun onStop() {
