@@ -31,6 +31,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -96,6 +99,12 @@ import com.jsemalja.trackmecalories.ui.theme.predictiveBack
 import com.jsemalja.trackmecalories.ui.theme.rememberPredictiveBack
 import com.jsemalja.trackmecalories.ui.theme.glassBorder
 import com.jsemalja.trackmecalories.ui.theme.isGlass
+import com.jsemalja.trackmecalories.ui.theme.AppTheme
+import com.jsemalja.trackmecalories.ui.theme.LocalAppTheme
+import com.jsemalja.trackmecalories.ui.theme.raisedEdge
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.semantics.Role
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModelFactory
 
@@ -233,12 +242,11 @@ fun TrackmecaloriesApp(
                         viewModel,
                         modifier,
                         appearance = appearance,
-                        onStyleChange = appearancePrefs::setStyle,
+                        onThemeChange = appearancePrefs::setTheme,
                         onAccentChange = appearancePrefs::setAccent,
                         onFontChange = appearancePrefs::setFont,
                         onCornersChange = appearancePrefs::setCorners,
-                        onModeChange = appearancePrefs::setMode,
-                        onPaletteChange = appearancePrefs::setPalette
+                        onModeChange = appearancePrefs::setMode
                     )
                 }
             }
@@ -261,14 +269,22 @@ fun TrackmecaloriesApp(
 }
 
 /**
- * A floating pill with four icon-only tabs; the selected one expands to show its label.
- * Flat: a solid surface with a hairline outline. Glass: frosted with a light edge.
+ * The tab bar, in the current theme. Classic, Glass and Neon: a floating pill with four
+ * icon-only tabs, the selected one expanding to show its label (Neon's edge glows). Bold:
+ * the same, but a bordered block with a hard shadow and a solid selected tab. Paper: a
+ * docked bar under an ink rule with every label shown (see [DockedNavBar]).
  */
 @Composable
 private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) -> Unit) {
+    val theme = LocalAppTheme.current
+    if (theme == AppTheme.PAPER) {
+        DockedNavBar(current, onSelect)
+        return
+    }
     val colors = MaterialTheme.colorScheme
     val glass = isGlass
-    val shape = CircleShape
+    val shape = if (theme == AppTheme.BOLD) MaterialTheme.shapes.large else CircleShape
+    val (edge, raisedBorder) = raisedEdge(shape)
 
     BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding()) {
         // Tighter on narrow phones, and the selected label gets only the width that's left
@@ -287,9 +303,10 @@ private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) 
             contentAlignment = Alignment.Center
         ) {
             Surface(
+                modifier = edge,
                 shape = shape,
                 color = if (glass) colors.surfaceContainer else colors.surfaceContainerLow,
-                border = if (glass) glassBorder() else androidx.compose.foundation.BorderStroke(1.dp, colors.outlineVariant)
+                border = raisedBorder ?: if (glass) glassBorder() else androidx.compose.foundation.BorderStroke(1.dp, colors.outlineVariant)
             ) {
                 Row(
                     Modifier.padding(6.dp),
@@ -308,20 +325,30 @@ private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) 
 @Composable
 private fun NavItem(destination: AppDestinations, selected: Boolean, horizontalPadding: Dp, labelMaxWidth: Dp, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
+    val bold = LocalAppTheme.current == AppTheme.BOLD
     val background by animateColorAsState(
-        if (selected) colors.primary.copy(alpha = 0.16f) else Color.Transparent,
+        when {
+            !selected -> Color.Transparent
+            bold -> colors.primary
+            else -> colors.primary.copy(alpha = 0.16f)
+        },
         label = "navItemBackground"
     )
     val content by animateColorAsState(
-        if (selected) colors.primary else colors.onSurfaceVariant,
+        when {
+            !selected -> colors.onSurfaceVariant
+            bold -> colors.onPrimary
+            else -> colors.primary
+        },
         label = "navItemContent"
     )
 
     Surface(
         onClick = onClick,
-        shape = CircleShape,
+        shape = if (bold) MaterialTheme.shapes.medium else CircleShape,
         color = background,
-        contentColor = content
+        contentColor = content,
+        border = if (bold && selected) androidx.compose.foundation.BorderStroke(2.dp, colors.outline) else null
     ) {
         Row(
             Modifier
@@ -348,6 +375,53 @@ private fun NavItem(destination: AppDestinations, selected: Boolean, horizontalP
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.widthIn(max = labelMaxWidth)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Paper's tab bar: docked full width under an ink rule, like a page footer, with every
+ * tab labelled. The selected tab is inked and marked by a short rule on top.
+ */
+@Composable
+private fun DockedNavBar(current: AppDestinations, onSelect: (AppDestinations) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Column(Modifier.fillMaxWidth().background(colors.surface)) {
+        HorizontalDivider(thickness = 1.dp, color = colors.onSurface)
+        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp)) {
+            AppDestinations.entries.forEach { destination ->
+                val selected = destination == current
+                val content by animateColorAsState(
+                    if (selected) colors.onSurface else colors.onSurfaceVariant,
+                    label = "dockedNavContent"
+                )
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .selectable(selected = selected, onClick = { onSelect(destination) }, role = Role.Tab),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(Modifier.width(32.dp).height(3.dp).background(if (selected) colors.onSurface else Color.Transparent))
+                    Spacer(Modifier.height(8.dp))
+                    Icon(
+                        if (selected) destination.selectedIcon else destination.icon,
+                        contentDescription = null,
+                        tint = content,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        stringResource(destination.label),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        color = content,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 4.dp)
                     )
                 }
             }

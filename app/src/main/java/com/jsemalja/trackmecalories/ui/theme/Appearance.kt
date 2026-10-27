@@ -12,10 +12,24 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Visual style of surfaces: solid flat cards, or frosted glass over a colourful backdrop. */
-enum class DesignStyle(@StringRes val label: Int) {
-    FLAT(R.string.style_flat),
-    GLASS(R.string.style_glass)
+/**
+ * A whole design language, not just a palette: neutrals, cards, nav bar, headers, corner
+ * shapes, typefaces and progress marks change together. Accent and light/dark are picked
+ * separately and work with every theme.
+ * - [CLASSIC]: quiet filled cards, soft corners, a floating pill nav.
+ * - [GLASS]: frosted translucent cards over glows of the accent, smooth corners.
+ * - [PAPER]: editorial — serif headings, near-square outlined sheets on cream, ruled
+ *   headers, thin ink progress lines and a docked nav bar with labels.
+ * - [BOLD]: neo-brutalist — thick black borders, hard offset shadows, solid colour-block
+ *   cards, chunky square progress, uppercase headings in Space Grotesk.
+ * - [NEON]: true black with glowing accent edges, glowing rings and bars, big round corners.
+ */
+enum class AppTheme(@StringRes val label: Int) {
+    CLASSIC(R.string.theme_classic),
+    GLASS(R.string.theme_glass),
+    PAPER(R.string.theme_paper),
+    BOLD(R.string.theme_bold),
+    NEON(R.string.theme_neon)
 }
 
 /** Light or dark: follow the phone, or pin one regardless of the system setting. */
@@ -23,20 +37,6 @@ enum class ThemeMode(@StringRes val label: Int) {
     SYSTEM(R.string.mode_system),
     LIGHT(R.string.mode_light),
     DARK(R.string.mode_dark)
-}
-
-/**
- * The neutral family behind the accent: backgrounds, cards, outlines and text greys.
- * [CLASSIC] is grey faintly tinted with the accent; the others have a character of their
- * own — [BLACK] true black for OLED screens (pure white in light mode), [PAPER] warm
- * cream and sepia, [SLATE] cool navy and blue-grey. [outlinedCards] gives flat cards a
- * hairline edge, for themes where the card and the page are close in tone.
- */
-enum class ThemePalette(@StringRes val label: Int, val outlinedCards: Boolean) {
-    CLASSIC(R.string.palette_classic, outlinedCards = false),
-    BLACK(R.string.palette_black, outlinedCards = true),
-    PAPER(R.string.palette_paper, outlinedCards = true),
-    SLATE(R.string.palette_slate, outlinedCards = false)
 }
 
 /**
@@ -120,13 +120,13 @@ private fun weights(regular: Int, medium: Int, semiBold: Int, bold: Int) = FontF
     Font(bold, FontWeight.Bold)
 )
 
+/** [font] and [corners] are overrides; null means the [theme]'s own. */
 data class Appearance(
-    val style: DesignStyle = DesignStyle.FLAT,
+    val theme: AppTheme = AppTheme.CLASSIC,
     val accent: AccentColor = AccentColor.GREEN,
-    val font: AppFont = AppFont.SYSTEM,
-    val corners: CornerStyle = CornerStyle.ROUNDED,
-    val mode: ThemeMode = ThemeMode.SYSTEM,
-    val palette: ThemePalette = ThemePalette.CLASSIC
+    val font: AppFont? = null,
+    val corners: CornerStyle? = null,
+    val mode: ThemeMode = ThemeMode.SYSTEM
 )
 
 /**
@@ -139,51 +139,52 @@ class AppearancePrefs(context: Context) {
     private val _appearance = MutableStateFlow(read())
     val appearance: StateFlow<Appearance> = _appearance.asStateFlow()
 
-    fun setStyle(style: DesignStyle) = update(_appearance.value.copy(style = style))
+    /** A new theme brings its own font and corners, so earlier overrides are dropped. */
+    fun setTheme(theme: AppTheme) = update(_appearance.value.copy(theme = theme, font = null, corners = null))
 
     fun setAccent(accent: AccentColor) = update(_appearance.value.copy(accent = accent))
 
-    fun setFont(font: AppFont) = update(_appearance.value.copy(font = font))
+    fun setFont(font: AppFont?) = update(_appearance.value.copy(font = font))
 
-    fun setCorners(corners: CornerStyle) = update(_appearance.value.copy(corners = corners))
+    fun setCorners(corners: CornerStyle?) = update(_appearance.value.copy(corners = corners))
 
     fun setMode(mode: ThemeMode) = update(_appearance.value.copy(mode = mode))
 
-    fun setPalette(palette: ThemePalette) = update(_appearance.value.copy(palette = palette))
-
     private fun update(value: Appearance) {
         prefs.edit()
-            .putString(KEY_STYLE, value.style.name)
+            .putString(KEY_THEME, value.theme.name)
             .putString(KEY_ACCENT, value.accent.name)
-            .putString(KEY_FONT, value.font.name)
-            .putString(KEY_CORNERS, value.corners.name)
+            .putString(KEY_FONT, value.font?.name ?: THEME_DEFAULT)
+            .putString(KEY_CORNERS, value.corners?.name ?: THEME_DEFAULT)
             .putString(KEY_MODE, value.mode.name)
-            .putString(KEY_PALETTE, value.palette.name)
+            .remove(KEY_STYLE)
             .apply()
         _appearance.value = value
     }
 
     private fun read() = Appearance(
-        style = prefs.getString(KEY_STYLE, null)
-            ?.let { name -> DesignStyle.entries.firstOrNull { it.name == name } } ?: DesignStyle.FLAT,
+        // Before themes there was only Flat or Glass ("style").
+        theme = prefs.getString(KEY_THEME, null)
+            ?.let { name -> AppTheme.entries.firstOrNull { it.name == name } }
+            ?: if (prefs.getString(KEY_STYLE, null) == "GLASS") AppTheme.GLASS else AppTheme.CLASSIC,
         accent = prefs.getString(KEY_ACCENT, null)
             ?.let { name -> AccentColor.entries.firstOrNull { it.name == name } } ?: AccentColor.GREEN,
+        // A font or corners saved before themes stays as an override, so nothing changes on update.
         font = prefs.getString(KEY_FONT, null)
-            ?.let { name -> AppFont.entries.firstOrNull { it.name == name } } ?: AppFont.SYSTEM,
+            ?.let { name -> AppFont.entries.firstOrNull { it.name == name } },
         corners = prefs.getString(KEY_CORNERS, null)
-            ?.let { name -> CornerStyle.entries.firstOrNull { it.name == name } } ?: CornerStyle.ROUNDED,
+            ?.let { name -> CornerStyle.entries.firstOrNull { it.name == name } },
         mode = prefs.getString(KEY_MODE, null)
-            ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: ThemeMode.SYSTEM,
-        palette = prefs.getString(KEY_PALETTE, null)
-            ?.let { name -> ThemePalette.entries.firstOrNull { it.name == name } } ?: ThemePalette.CLASSIC
+            ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: ThemeMode.SYSTEM
     )
 
     private companion object {
+        const val KEY_THEME = "theme"
         const val KEY_STYLE = "style"
         const val KEY_ACCENT = "accent"
         const val KEY_FONT = "font"
         const val KEY_CORNERS = "corners"
         const val KEY_MODE = "mode"
-        const val KEY_PALETTE = "palette"
+        const val THEME_DEFAULT = "THEME"
     }
 }

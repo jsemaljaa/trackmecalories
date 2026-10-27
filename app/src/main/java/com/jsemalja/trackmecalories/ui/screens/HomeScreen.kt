@@ -18,7 +18,21 @@ import kotlin.math.roundToInt
 import com.jsemalja.trackmecalories.data.kcalUncertainty
 import com.jsemalja.trackmecalories.data.Confidence
 import com.jsemalja.trackmecalories.ui.theme.AppCard
-import com.jsemalja.trackmecalories.ui.theme.isGlass
+import com.jsemalja.trackmecalories.ui.theme.AppTheme
+import com.jsemalja.trackmecalories.ui.theme.LocalAppTheme
+import com.jsemalja.trackmecalories.ui.theme.boldShadowColor
+import com.jsemalja.trackmecalories.ui.theme.glow
+import com.jsemalja.trackmecalories.ui.theme.hardShadow
+import com.jsemalja.trackmecalories.ui.theme.neonGlowColor
+import com.jsemalja.trackmecalories.ui.theme.raisedEdge
+import com.jsemalja.trackmecalories.ui.theme.tintedCards
+import android.graphics.BlurMaskFilter
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.PaintingStyle
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.unit.sp
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
@@ -164,10 +178,16 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(undo.hostState) },
         floatingActionButton = {
             // One entry point for every way of adding food (see AddFoodSheet).
+            // Paper inks it; Bold and Neon give it the same edge as their cards.
+            val fabShape = MaterialTheme.shapes.large
+            val (fabEdge, fabBorder) = raisedEdge(fabShape)
+            val ink = LocalAppTheme.current == AppTheme.PAPER
             FloatingActionButton(
                 onClick = { showAddMenu = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = fabEdge.then(if (fabBorder != null) Modifier.border(fabBorder, fabShape) else Modifier),
+                shape = fabShape,
+                containerColor = if (ink) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
+                contentColor = if (ink) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onPrimary,
                 elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_food))
@@ -390,20 +410,59 @@ fun MealSectionHeader(
     // Null hides the rating chip.
     onRate: (() -> Unit)? = null
 ) {
+    val colors = MaterialTheme.colorScheme
+    val theme = LocalAppTheme.current
+    val label = mealLabel(meal)
+    Column(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 4.dp)) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 4.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            mealLabel(meal),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false)
-        )
+        val labelModifier = Modifier.weight(1f, fill = false)
+        // Paper: spaced small capitals. Bold: an ink-bordered tag. Neon: wide-spaced accent capitals.
+        when (theme) {
+            AppTheme.PAPER -> Text(
+                label.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = labelModifier
+            )
+            AppTheme.BOLD -> Text(
+                label.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = colors.onPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = labelModifier
+                    .background(colors.primary, MaterialTheme.shapes.extraSmall)
+                    .border(2.dp, colors.outline, MaterialTheme.shapes.extraSmall)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            )
+            AppTheme.NEON -> Text(
+                label.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 2.sp,
+                color = colors.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = labelModifier
+            )
+            else -> Text(
+                label,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = colors.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = labelModifier
+            )
+        }
         // The chip takes whatever is left between the name and the total, and ellipsizes
         // there, so the total never gets pushed off a narrow screen.
         Box(Modifier.weight(1f).padding(horizontal = 8.dp)) {
@@ -416,6 +475,11 @@ fun MealSectionHeader(
             maxLines = 1,
             softWrap = false
         )
+    }
+    if (theme == AppTheme.PAPER) {
+        Spacer(Modifier.height(4.dp))
+        HorizontalDivider(thickness = 1.dp, color = colors.onSurface)
+    }
     }
 }
 
@@ -440,7 +504,7 @@ fun WaterCard(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.LocalDrink, contentDescription = null, tint = if (isGlass) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.tertiary)
+            Icon(Icons.Default.LocalDrink, contentDescription = null, tint = if (tintedCards) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.tertiary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.water), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
@@ -501,8 +565,8 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
     val remaining = goal - eaten
     val isOver = remaining < 0
     val statusColor = if (isOver) colors.error else colors.primary
-    // Glass tints the card with primaryContainer; flat keeps it neutral.
-    val onCard = if (isGlass) colors.onPrimaryContainer else colors.onSurface
+    // Glass and Bold tint the card with primaryContainer; the others keep it neutral.
+    val onCard = if (tintedCards) colors.onPrimaryContainer else colors.onSurface
 
     AppCard(
         modifier = Modifier.fillMaxWidth(),
@@ -636,19 +700,50 @@ private fun CalorieRing(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val animated by animateFloatAsState(progress.coerceIn(0f, 2f), label = "calorieRing")
+    val theme = LocalAppTheme.current
+    val ink = MaterialTheme.colorScheme.outline
+    // Paper: a thin ink line on a hairline. Bold: a thick square-ended band between two ink
+    // circles. Neon: a slim round line that glows. Classic and Glass: the soft round band.
+    val strokeWidth = when (theme) {
+        AppTheme.PAPER -> 5.dp
+        AppTheme.BOLD -> 16.dp
+        AppTheme.NEON -> 7.dp
+        else -> 12.dp
+    }
+    val cap = if (theme == AppTheme.PAPER || theme == AppTheme.BOLD) StrokeCap.Butt else StrokeCap.Round
     Box(modifier, contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
-            val stroke = 12.dp.toPx()
-            val style = Stroke(width = stroke, cap = StrokeCap.Round)
-            val inset = stroke / 2
-            val arcSize = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke)
+            val stroke = strokeWidth.toPx()
+            val style = Stroke(width = stroke, cap = cap)
+            // Bold's ink circles sit on the band's edges, so the band starts inside them.
+            val edge = if (theme == AppTheme.BOLD) 1.dp.toPx() else 0f
+            val inset = stroke / 2 + edge
+            val arcSize = androidx.compose.ui.geometry.Size(size.width - inset * 2, size.height - inset * 2)
             val topLeft = androidx.compose.ui.geometry.Offset(inset, inset)
-            drawArc(trackColor, 0f, 360f, false, topLeft, arcSize, style = Stroke(width = stroke))
-            if (animated > 0f) {
-                drawArc(color, -90f, 360f * animated.coerceAtMost(1f), false, topLeft, arcSize, style = style)
+            if (theme == AppTheme.PAPER) {
+                drawArc(trackColor.copy(alpha = (trackColor.alpha * 3f).coerceAtMost(1f)), 0f, 360f, false, topLeft, arcSize, style = Stroke(width = 1.dp.toPx()))
+            } else {
+                drawArc(trackColor, 0f, 360f, false, topLeft, arcSize, style = Stroke(width = stroke))
             }
-            if (animated > 1f) {
-                drawArc(overColor, -90f, 360f * (animated - 1f).coerceAtMost(1f), false, topLeft, arcSize, style = style)
+            fun arc(arcColor: Color, sweep: Float) {
+                if (theme == AppTheme.NEON) drawIntoCanvas { canvas ->
+                    val glow = Paint().apply {
+                        this.color = arcColor
+                        this.style = PaintingStyle.Stroke
+                        this.strokeWidth = stroke * 2f
+                        this.strokeCap = StrokeCap.Round
+                        asFrameworkPaint().maskFilter = BlurMaskFilter(14.dp.toPx(), BlurMaskFilter.Blur.NORMAL)
+                    }
+                    canvas.drawArc(topLeft.x, topLeft.y, topLeft.x + arcSize.width, topLeft.y + arcSize.height, -90f, sweep, false, glow)
+                }
+                drawArc(arcColor, -90f, sweep, false, topLeft, arcSize, style = style)
+            }
+            if (animated > 0f) arc(color, 360f * animated.coerceAtMost(1f))
+            if (animated > 1f) arc(overColor, 360f * (animated - 1f).coerceAtMost(1f))
+            if (theme == AppTheme.BOLD) {
+                val ring = Stroke(width = 2.dp.toPx())
+                drawCircle(ink, radius = size.minDimension / 2 - 1.dp.toPx(), style = ring)
+                drawCircle(ink, radius = size.minDimension / 2 - stroke - 1.dp.toPx(), style = ring)
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, content = content)
@@ -665,7 +760,7 @@ private fun NutrientProgress(
     isLimit: Boolean = false,
     decimals: Boolean = false
 ) {
-    val onCard = if (isGlass) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+    val onCard = if (tintedCards) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     val overLimit = isLimit && value > goal
     val fmt: (Double) -> String = { if (decimals) "%.1f".format(it).removeSuffix(".0").removeSuffix(",0") else "${it.toInt()}" }
 
@@ -687,17 +782,50 @@ private fun NutrientProgress(
             style = MaterialTheme.typography.bodyMedium
         )
         Spacer(Modifier.height(4.dp))
+        ProgressBar(
+            fraction = if (goal > 0) (value / goal).toFloat().coerceIn(0f, 1f) else 0f,
+            color = if (overLimit) MaterialTheme.colorScheme.error else color,
+            onCard = onCard
+        )
+    }
+}
+
+/**
+ * A macro bar in the current theme: Paper a 2dp ink-thin rule, Bold a thick square bar in
+ * an ink box, Neon a slim glowing line, Classic and Glass the soft rounded bar.
+ */
+@Composable
+private fun ProgressBar(fraction: Float, color: Color, onCard: Color) {
+    val theme = LocalAppTheme.current
+    val height = when (theme) {
+        AppTheme.PAPER -> 2.dp
+        AppTheme.BOLD -> 10.dp
+        AppTheme.NEON -> 4.dp
+        else -> 5.dp
+    }
+    val shape = when (theme) {
+        AppTheme.PAPER -> RectangleShape
+        AppTheme.BOLD -> MaterialTheme.shapes.extraSmall
+        else -> CircleShape
+    }
+    val track = when (theme) {
+        AppTheme.PAPER -> onCard.copy(alpha = 0.15f)
+        AppTheme.BOLD -> Color.Transparent
+        AppTheme.NEON -> color.copy(alpha = 0.15f)
+        else -> color.copy(alpha = 0.22f)
+    }
+    val inkBorder = if (theme == AppTheme.BOLD) Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, shape) else Modifier
+    Box(Modifier.fillMaxWidth().height(height).clip(shape).background(track).then(inkBorder)) {
         Box(
-            modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(color.copy(alpha = 0.22f))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(if (goal > 0) (value / goal).toFloat().coerceIn(0f, 1f) else 0f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(if (overLimit) MaterialTheme.colorScheme.error else color)
-            )
-        }
+            Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                // Neon's glow spills past the bar, so it's drawn before the clip.
+                .then(if (theme == AppTheme.NEON && fraction > 0f) Modifier.glow(shape, color, 7.dp) else Modifier)
+                .clip(shape)
+                .background(color)
+                .then(inkBorder)
+        )
     }
 }
 
@@ -707,6 +835,7 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
     AppCard(
         onClick = onClick,
         shape = shape,
+        grouped = true,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -753,9 +882,14 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
 }
 
 /** Corner shape for row [index] of [count] in a grouped list: rounded only at the block's ends. */
+@Composable
 private fun groupedShape(index: Int, count: Int): Shape {
-    val outer = 18.dp
-    val inner = 4.dp
+    val (outer, inner) = when (LocalAppTheme.current) {
+        AppTheme.PAPER -> 4.dp to 0.dp
+        AppTheme.BOLD -> 10.dp to 4.dp
+        AppTheme.NEON -> 22.dp to 6.dp
+        else -> 18.dp to 4.dp
+    }
     return RoundedCornerShape(
         topStart = if (index == 0) outer else inner,
         topEnd = if (index == 0) outer else inner,
@@ -942,19 +1076,46 @@ private fun DayCell(
     onClick: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
+    val theme = LocalAppTheme.current
     val shape = MaterialTheme.shapes.medium
+    // The selected day: Paper inks it, Bold blocks it with a border and shadow, Neon outlines
+    // it in glowing accent; Classic and Glass fill it with the accent.
+    val selectedFill = when (theme) {
+        AppTheme.PAPER -> colors.onSurface
+        // Opaque, so the glow behind it doesn't wash out the date.
+        AppTheme.NEON -> androidx.compose.ui.graphics.lerp(colors.background, colors.primary, 0.18f)
+        else -> colors.primary
+    }
     val contentColor = when {
-        isSelected -> colors.onPrimary
+        isSelected -> when (theme) {
+            AppTheme.PAPER -> colors.surface
+            AppTheme.NEON -> colors.primary
+            else -> colors.onPrimary
+        }
         isToday -> colors.primary
         isFuture -> colors.onSurface.copy(alpha = 0.45f)
         else -> colors.onSurface
+    }
+    val selectedEdge = when {
+        !isSelected -> Modifier
+        theme == AppTheme.BOLD -> Modifier.hardShadow(shape, boldShadowColor, 3.dp)
+        theme == AppTheme.NEON -> Modifier.glow(shape, neonGlowColor, 10.dp)
+        else -> Modifier
+    }
+    val selectedBorder = when {
+        !isSelected -> Modifier
+        theme == AppTheme.BOLD -> Modifier.border(2.dp, colors.outline, shape)
+        theme == AppTheme.NEON -> Modifier.border(1.5.dp, colors.primary, shape)
+        else -> Modifier
     }
 
     Column(
         modifier = modifier
             .padding(horizontal = 3.dp)
+            .then(selectedEdge)
             .clip(shape)
-            .background(if (isSelected) colors.primary else Color.Transparent)
+            .background(if (isSelected) selectedFill else Color.Transparent)
+            .then(selectedBorder)
             .then(if (isToday && !isSelected) Modifier.border(1.5.dp, colors.primary, shape) else Modifier)
             .clickable(onClick = onClick)
             .padding(vertical = 10.dp),

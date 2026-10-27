@@ -24,7 +24,7 @@ import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.DayActivity
 import com.jsemalja.trackmecalories.data.Workout
 import com.jsemalja.trackmecalories.ui.theme.AppCard
-import com.jsemalja.trackmecalories.ui.theme.isGlass
+import com.jsemalja.trackmecalories.ui.theme.tintedCards
 
 /** The day's steps, active calories and workouts, as synced to Health Connect by a watch. */
 @Composable
@@ -39,7 +39,7 @@ fun ActivityCard(activity: DayActivity) {
             Icon(
                 Icons.AutoMirrored.Filled.DirectionsWalk,
                 contentDescription = null,
-                tint = if (isGlass) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.secondary
+                tint = if (tintedCards) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.secondary
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {

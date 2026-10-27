@@ -27,11 +27,8 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 
-/** The active [DesignStyle], for components that draw differently in glass mode. */
-val LocalDesignStyle = staticCompositionLocalOf { DesignStyle.FLAT }
-
-/** The active [ThemePalette], for components that adapt to it (e.g. outlined cards). */
-val LocalThemePalette = staticCompositionLocalOf { ThemePalette.CLASSIC }
+/** The active [AppTheme], for components that draw differently per theme (cards, nav, headers). */
+val LocalAppTheme = staticCompositionLocalOf { AppTheme.CLASSIC }
 
 /** Whether the app draws dark; differs from the system when [ThemeMode] pins light or dark. */
 val LocalDarkTheme = staticCompositionLocalOf { false }
@@ -47,33 +44,29 @@ fun TrackmecaloriesTheme(
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
-    val glass = appearance.style == DesignStyle.GLASS
+    val theme = appearance.theme
+    val glass = theme == AppTheme.GLASS
     val solidScheme = remember(appearance, darkTheme) {
         if (appearance.accent == AccentColor.WALLPAPER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val scheme = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            // Classic keeps the wallpaper's own neutrals; the other themes bring theirs.
-            if (appearance.palette == ThemePalette.CLASSIC) scheme
-            else scheme.withNeutrals(neutrals(appearance.palette, scheme.primary, darkTheme))
+            // Classic and Glass keep the wallpaper's own neutrals; the other themes bring theirs.
+            if (theme == AppTheme.CLASSIC || glass) scheme
+            else scheme.withNeutrals(neutrals(theme, scheme.primary, darkTheme))
         } else {
             accentScheme(appearance.accent, darkTheme)
-                .withNeutrals(neutrals(appearance.palette, appearance.accent.primaryLight, darkTheme))
+                .withNeutrals(neutrals(theme, appearance.accent.primaryLight, darkTheme))
         }
     }
     val colorScheme = if (glass) solidScheme.toGlass(darkTheme) else solidScheme
-    val backdrop = when (appearance.palette) {
-        ThemePalette.CLASSIC ->
-            if (darkTheme) lerp(Color(0xFF07090A), solidScheme.primary, 0.06f)
-            else lerp(Color(0xFFF2F5F3), solidScheme.primary, 0.05f)
-        else -> solidScheme.background
-    }
-    val typography = remember(appearance.font) { appTypography(appearance.font.family) }
-    val shapes = remember(appearance.corners) { appShapes(appearance.corners) }
+    val backdrop = if (darkTheme) lerp(Color(0xFF07090A), solidScheme.primary, 0.06f)
+    else lerp(Color(0xFFF2F5F3), solidScheme.primary, 0.05f)
+    val typography = remember(theme, appearance.font) { appearance.font?.let { appTypography(it.family) } ?: themeTypography(theme) }
+    val shapes = remember(theme, appearance.corners) { appearance.corners?.let { appShapes(it) } ?: themeShapes(theme) }
 
     SystemBarsFollow(darkTheme)
 
     CompositionLocalProvider(
-        LocalDesignStyle provides appearance.style,
-        LocalThemePalette provides appearance.palette,
+        LocalAppTheme provides theme,
         LocalDarkTheme provides darkTheme
     ) {
         MaterialTheme(
@@ -119,7 +112,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 
 /**
  * A full scheme from an accent: its primary tones and the fixed amber/blue brand roles.
- * The neutrals are filled in by [withNeutrals] from the chosen [ThemePalette].
+ * The neutrals are filled in by [withNeutrals] from the chosen [AppTheme].
  */
 private fun accentScheme(accent: AccentColor, dark: Boolean): ColorScheme = if (dark) {
     darkColorScheme(
@@ -197,18 +190,18 @@ private fun ColorScheme.withNeutrals(n: Neutrals) = copy(
 )
 
 /**
- * The neutrals of [palette], faintly tinted with the accent ([tint]) so the whole UI reads
+ * The neutrals of [theme], faintly tinted with the accent ([tint]) so the whole UI reads
  * as one colour family instead of accent-on-grey. Classic is grey nudged toward the accent;
- * the other palettes start from their own hue and take only a trace of it.
+ * the other themes start from their own hue and take only a trace of it (Bold more).
  */
-internal fun neutrals(palette: ThemePalette, tint: Color, dark: Boolean): Neutrals {
+internal fun neutrals(theme: AppTheme, tint: Color, dark: Boolean): Neutrals {
     // Classic: grey level (0-255) nudged toward the accent.
     fun n(level: Int, amount: Float = 0.06f) = lerp(Color(level, level, level), tint, amount)
     // The rest: a fixed colour with a trace of the accent.
-    fun h(argb: Long) = lerp(Color(argb), tint, 0.03f)
+    fun h(argb: Long, amount: Float = 0.03f) = lerp(Color(argb), tint, amount)
 
-    return when (palette) {
-        ThemePalette.CLASSIC -> if (dark) Neutrals(
+    return when (theme) {
+        AppTheme.CLASSIC, AppTheme.GLASS -> if (dark) Neutrals(
             background = n(0x10), onBackground = n(0xE0, 0.04f),
             surfaceVariant = n(0x3D), onSurfaceVariant = n(0xC2, 0.05f),
             surfaceDim = n(0x10), surfaceBright = n(0x36),
@@ -225,34 +218,15 @@ internal fun neutrals(palette: ThemePalette, tint: Color, dark: Boolean): Neutra
             outline = n(0x72), outlineVariant = n(0xC1, 0.04f),
             inverseSurface = n(0x2D), inverseOnSurface = n(0xEE, 0.04f)
         )
-        // True black page (OLED pixels off) with cards a step above it and a hairline edge;
-        // in light mode, pure white with crisp greys.
-        ThemePalette.BLACK -> if (dark) Neutrals(
-            background = Color.Black, onBackground = h(0xFFE8E8E8),
-            surfaceVariant = h(0xFF303030), onSurfaceVariant = h(0xFFBDBDBD),
-            surfaceDim = Color.Black, surfaceBright = h(0xFF2A2A2A),
-            containerLowest = Color.Black, containerLow = h(0xFF0F0F0F), container = h(0xFF151515),
-            containerHigh = h(0xFF1C1C1C), containerHighest = h(0xFF262626),
-            outline = h(0xFF7E7E7E), outlineVariant = h(0xFF2C2C2C),
-            inverseSurface = h(0xFFE8E8E8), inverseOnSurface = h(0xFF222222)
-        ) else Neutrals(
-            background = Color.White, onBackground = h(0xFF0B0B0B),
-            surfaceVariant = h(0xFFE6E6E6), onSurfaceVariant = h(0xFF3C3C3C),
-            surfaceDim = h(0xFFDCDCDC), surfaceBright = Color.White,
-            containerLowest = Color.White, containerLow = h(0xFFF6F6F6), container = h(0xFFF0F0F0),
-            containerHigh = h(0xFFEAEAEA), containerHighest = h(0xFFE3E3E3),
-            outline = h(0xFF6E6E6E), outlineVariant = h(0xFFD6D6D6),
-            inverseSurface = h(0xFF1B1B1B), inverseOnSurface = h(0xFFF3F3F3)
-        )
         // Warm cream and sepia, softer contrast; in light mode cards are lighter sheets on
         // the page rather than darker wells.
-        ThemePalette.PAPER -> if (dark) Neutrals(
+        AppTheme.PAPER -> if (dark) Neutrals(
             background = h(0xFF1B1814), onBackground = h(0xFFECE4D7),
             surfaceVariant = h(0xFF403A31), onSurfaceVariant = h(0xFFCDC1AF),
             surfaceDim = h(0xFF1B1814), surfaceBright = h(0xFF3C362E),
             containerLowest = h(0xFF14120F), containerLow = h(0xFF23201B), container = h(0xFF28241F),
             containerHigh = h(0xFF312C26), containerHighest = h(0xFF3B352E),
-            outline = h(0xFF978B7A), outlineVariant = h(0xFF3A342C),
+            outline = h(0xFF978B7A), outlineVariant = h(0xFF4A4339),
             inverseSurface = h(0xFFECE4D7), inverseOnSurface = h(0xFF302B25)
         ) else Neutrals(
             background = h(0xFFF4EEE3), onBackground = h(0xFF2B251D),
@@ -260,26 +234,46 @@ internal fun neutrals(palette: ThemePalette, tint: Color, dark: Boolean): Neutra
             surfaceDim = h(0xFFDDD3C2), surfaceBright = h(0xFFF8F3EA),
             containerLowest = h(0xFFFFFCF7), containerLow = h(0xFFFBF7F0), container = h(0xFFEFE8DB),
             containerHigh = h(0xFFE9E1D3), containerHighest = h(0xFFE2D9CA),
-            outline = h(0xFF8B7F6F), outlineVariant = h(0xFFDDD2C0),
+            outline = h(0xFF8B7F6F), outlineVariant = h(0xFFCFC3AF),
             inverseSurface = h(0xFF36302A), inverseOnSurface = h(0xFFF6F0E6)
         )
-        // Cool navy and blue-grey.
-        ThemePalette.SLATE -> if (dark) Neutrals(
-            background = h(0xFF0E131B), onBackground = h(0xFFE0E6EF),
-            surfaceVariant = h(0xFF364152), onSurfaceVariant = h(0xFFBAC4D3),
-            surfaceDim = h(0xFF0E131B), surfaceBright = h(0xFF323C4B),
-            containerLowest = h(0xFF090D13), containerLow = h(0xFF151B25), container = h(0xFF19202B),
-            containerHigh = h(0xFF212937), containerHighest = h(0xFF2B3443),
-            outline = h(0xFF8591A3), outlineVariant = h(0xFF333D4D),
-            inverseSurface = h(0xFFE0E6EF), inverseOnSurface = h(0xFF283040)
+        // A page washed with the accent, white (or charcoal) blocks and black (or white) ink:
+        // outlines are full-strength so every border reads as a drawn line.
+        AppTheme.BOLD -> if (dark) Neutrals(
+            background = h(0xFF141414, 0.08f), onBackground = Color(0xFFF2F2F2),
+            surfaceVariant = h(0xFF3A3A3A), onSurfaceVariant = Color(0xFFC8C8C8),
+            surfaceDim = h(0xFF141414, 0.08f), surfaceBright = h(0xFF3A3A3A),
+            containerLowest = h(0xFF0E0E0E), containerLow = h(0xFF222222), container = h(0xFF272727),
+            containerHigh = h(0xFF2E2E2E), containerHighest = h(0xFF383838),
+            outline = Color(0xFFF2F2F2), outlineVariant = Color(0xFF6A6A6A),
+            inverseSurface = Color(0xFFF2F2F2), inverseOnSurface = Color(0xFF141414)
         ) else Neutrals(
-            background = h(0xFFF0F3F8), onBackground = h(0xFF141A24),
-            surfaceVariant = h(0xFFDAE1EB), onSurfaceVariant = h(0xFF424B59),
-            surfaceDim = h(0xFFD3D9E3), surfaceBright = h(0xFFF5F7FB),
-            containerLowest = Color.White, containerLow = h(0xFFE8EDF4), container = h(0xFFE2E8F0),
-            containerHigh = h(0xFFDCE2EB), containerHighest = h(0xFFD5DCE6),
-            outline = h(0xFF6F7A8A), outlineVariant = h(0xFFC3CAD6),
-            inverseSurface = h(0xFF283040), inverseOnSurface = h(0xFFECF0F6)
+            background = h(0xFFF6F2EA, 0.16f), onBackground = Color(0xFF111111),
+            surfaceVariant = h(0xFFE9E4DA, 0.1f), onSurfaceVariant = Color(0xFF3A3A3A),
+            surfaceDim = h(0xFFDDD8CE, 0.1f), surfaceBright = Color.White,
+            containerLowest = Color.White, containerLow = Color.White, container = Color(0xFFFAFAFA),
+            containerHigh = Color(0xFFF2F2F2), containerHighest = Color(0xFFEAEAEA),
+            outline = Color(0xFF111111), outlineVariant = Color(0xFF111111),
+            inverseSurface = Color(0xFF111111), inverseOnSurface = Color(0xFFF5F5F5)
+        )
+        // True black page (OLED pixels off) with cards a step above it; in light mode, pure
+        // white with crisp greys. The glow on edges comes from AppCard, not the palette.
+        AppTheme.NEON -> if (dark) Neutrals(
+            background = Color.Black, onBackground = h(0xFFE8E8E8),
+            surfaceVariant = h(0xFF303030), onSurfaceVariant = h(0xFFBDBDBD),
+            surfaceDim = Color.Black, surfaceBright = h(0xFF2A2A2A),
+            containerLowest = Color.Black, containerLow = h(0xFF0B0B0B), container = h(0xFF131313),
+            containerHigh = h(0xFF1A1A1A), containerHighest = h(0xFF242424),
+            outline = h(0xFF7E7E7E), outlineVariant = h(0xFF2C2C2C),
+            inverseSurface = h(0xFFE8E8E8), inverseOnSurface = h(0xFF222222)
+        ) else Neutrals(
+            background = Color.White, onBackground = h(0xFF0B0B0B),
+            surfaceVariant = h(0xFFE6E6E6), onSurfaceVariant = h(0xFF3C3C3C),
+            surfaceDim = h(0xFFDCDCDC), surfaceBright = Color.White,
+            containerLowest = Color.White, containerLow = h(0xFFFAFAFA), container = h(0xFFF2F2F2),
+            containerHigh = h(0xFFEAEAEA), containerHighest = h(0xFFE3E3E3),
+            outline = h(0xFF6E6E6E), outlineVariant = h(0xFFD6D6D6),
+            inverseSurface = h(0xFF1B1B1B), inverseOnSurface = h(0xFFF3F3F3)
         )
     }
 }

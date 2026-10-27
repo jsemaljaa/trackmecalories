@@ -62,6 +62,36 @@ fun appShapes(style: CornerStyle): Shapes = when (style) {
 }
 
 /**
+ * Each [AppTheme]'s own corner scale, used unless the user picks a [CornerStyle]: Paper is
+ * near-square like print, Bold small and blocky, Neon big and soft.
+ */
+fun themeShapes(theme: AppTheme): Shapes = when (theme) {
+    AppTheme.CLASSIC -> appShapes(CornerStyle.ROUNDED)
+    AppTheme.GLASS -> appShapes(CornerStyle.CONTINUOUS)
+    AppTheme.PAPER -> Shapes(
+        extraSmall = RoundedCornerShape(2.dp),
+        small = RoundedCornerShape(2.dp),
+        medium = RoundedCornerShape(3.dp),
+        large = RoundedCornerShape(4.dp),
+        extraLarge = RoundedCornerShape(6.dp)
+    )
+    AppTheme.BOLD -> Shapes(
+        extraSmall = RoundedCornerShape(4.dp),
+        small = RoundedCornerShape(6.dp),
+        medium = RoundedCornerShape(8.dp),
+        large = RoundedCornerShape(10.dp),
+        extraLarge = RoundedCornerShape(12.dp)
+    )
+    AppTheme.NEON -> Shapes(
+        extraSmall = RoundedCornerShape(10.dp),
+        small = RoundedCornerShape(14.dp),
+        medium = RoundedCornerShape(18.dp),
+        large = RoundedCornerShape(24.dp),
+        extraLarge = RoundedCornerShape(32.dp)
+    )
+}
+
+/**
  * Rounded rectangle with continuous ("smoothed") corners, after Figma's corner smoothing:
  * each corner is a short circular arc with a cubic Bézier on either side that blends it
  * into the edge, so the curvature ramps up instead of jumping from straight to round.

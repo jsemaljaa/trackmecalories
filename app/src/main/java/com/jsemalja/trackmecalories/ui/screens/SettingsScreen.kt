@@ -35,11 +35,16 @@ import androidx.compose.ui.graphics.Color
 import com.jsemalja.trackmecalories.ui.theme.AccentColor
 import com.jsemalja.trackmecalories.ui.theme.AppFont
 import com.jsemalja.trackmecalories.ui.theme.Appearance
-import com.jsemalja.trackmecalories.ui.theme.DesignStyle
+import com.jsemalja.trackmecalories.ui.theme.AppTheme
+import com.jsemalja.trackmecalories.ui.theme.glow
+import com.jsemalja.trackmecalories.ui.theme.hardShadow
+import com.jsemalja.trackmecalories.ui.theme.themeShapes
+import com.jsemalja.trackmecalories.ui.theme.themeTypography
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.graphics.RectangleShape
 import com.jsemalja.trackmecalories.ui.theme.CornerStyle
 import com.jsemalja.trackmecalories.ui.theme.LocalDarkTheme
 import com.jsemalja.trackmecalories.ui.theme.ThemeMode
-import com.jsemalja.trackmecalories.ui.theme.ThemePalette
 import com.jsemalja.trackmecalories.ui.theme.neutrals
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -70,12 +75,11 @@ fun SettingsScreen(
     viewModel: MainViewModel,
     modifier: Modifier = Modifier,
     appearance: Appearance,
-    onStyleChange: (DesignStyle) -> Unit,
+    onThemeChange: (AppTheme) -> Unit,
     onAccentChange: (AccentColor) -> Unit,
-    onFontChange: (AppFont) -> Unit,
-    onCornersChange: (CornerStyle) -> Unit,
-    onModeChange: (ThemeMode) -> Unit,
-    onPaletteChange: (ThemePalette) -> Unit
+    onFontChange: (AppFont?) -> Unit,
+    onCornersChange: (CornerStyle?) -> Unit,
+    onModeChange: (ThemeMode) -> Unit
 ) {
     val currentGoals by viewModel.userGoal.collectAsState()
     
@@ -93,7 +97,7 @@ fun SettingsScreen(
         Spacer(Modifier.height(24.dp))
 
         SettingsSectionCard(title = stringResource(R.string.appearance), titleColor = MaterialTheme.colorScheme.primary) {
-            AppearanceSettings(appearance, onModeChange, onPaletteChange, onStyleChange, onAccentChange, onFontChange, onCornersChange)
+            AppearanceSettings(appearance, onThemeChange, onModeChange, onAccentChange, onFontChange, onCornersChange)
             LanguageSettings()
         }
 
@@ -441,15 +445,33 @@ private fun SettingsSectionCard(
 @Composable
 private fun AppearanceSettings(
     appearance: Appearance,
+    onThemeChange: (AppTheme) -> Unit,
     onModeChange: (ThemeMode) -> Unit,
-    onPaletteChange: (ThemePalette) -> Unit,
-    onStyleChange: (DesignStyle) -> Unit,
     onAccentChange: (AccentColor) -> Unit,
-    onFontChange: (AppFont) -> Unit,
-    onCornersChange: (CornerStyle) -> Unit
+    onFontChange: (AppFont?) -> Unit,
+    onCornersChange: (CornerStyle?) -> Unit
 ) {
     val dark = LocalDarkTheme.current
 
+    Text(stringResource(R.string.theme), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(10.dp))
+    // Scrolls sideways on narrow phones; the padding leaves room for Bold's shadow and Neon's glow.
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        AppTheme.entries.forEach { theme ->
+            ThemeTile(
+                theme = theme,
+                accent = appearance.accent,
+                dark = dark,
+                selected = appearance.theme == theme,
+                onClick = { onThemeChange(theme) }
+            )
+        }
+    }
+
+    Spacer(Modifier.height(20.dp))
     Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -460,50 +482,6 @@ private fun AppearanceSettings(
                 shape = SegmentedButtonDefaults.itemShape(i, ThemeMode.entries.size),
                 colors = appSegmentedColors()
             ) { FitText(stringResource(mode.label)) }
-        }
-    }
-
-    Spacer(Modifier.height(20.dp))
-    Text(stringResource(R.string.theme), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Spacer(Modifier.height(8.dp))
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        ThemePalette.entries.forEach { palette ->
-            PaletteTile(
-                palette = palette,
-                accent = appearance.accent,
-                dark = dark,
-                selected = appearance.palette == palette,
-                onClick = { onPaletteChange(palette) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-
-    Spacer(Modifier.height(20.dp))
-    Text(stringResource(R.string.style), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Spacer(Modifier.height(8.dp))
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        DesignStyle.entries.forEachIndexed { i, style ->
-            SegmentedButton(
-                selected = appearance.style == style,
-                onClick = { onStyleChange(style) },
-                shape = SegmentedButtonDefaults.itemShape(i, DesignStyle.entries.size),
-                colors = appSegmentedColors()
-            ) { FitText(stringResource(style.label)) }
-        }
-    }
-
-    Spacer(Modifier.height(20.dp))
-    Text(stringResource(R.string.corners), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Spacer(Modifier.height(8.dp))
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        CornerStyle.entries.forEachIndexed { i, corners ->
-            SegmentedButton(
-                selected = appearance.corners == corners,
-                onClick = { onCornersChange(corners) },
-                shape = SegmentedButtonDefaults.itemShape(i, CornerStyle.entries.size),
-                colors = appSegmentedColors()
-            ) { FitText(stringResource(corners.label)) }
         }
     }
 
@@ -524,10 +502,31 @@ private fun AppearanceSettings(
         }
     }
 
+    // Corners and font follow the theme until overridden here; picking a theme resets them.
+    Spacer(Modifier.height(20.dp))
+    Text(stringResource(R.string.corners), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    val cornerOptions = listOf<CornerStyle?>(null) + CornerStyle.entries
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        cornerOptions.forEachIndexed { i, corners ->
+            SegmentedButton(
+                selected = appearance.corners == corners,
+                onClick = { onCornersChange(corners) },
+                shape = SegmentedButtonDefaults.itemShape(i, cornerOptions.size),
+                colors = appSegmentedColors()
+            ) { FitText(stringResource(corners?.label ?: R.string.from_theme)) }
+        }
+    }
+
     Spacer(Modifier.height(20.dp))
     Text(stringResource(R.string.font), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(
+            selected = appearance.font == null,
+            onClick = { onFontChange(null) },
+            label = { Text(stringResource(R.string.from_theme), fontFamily = themeTypography(appearance.theme).titleMedium.fontFamily) }
+        )
         AppFont.entries.forEach { font ->
             FilterChip(
                 selected = appearance.font == font,
@@ -540,62 +539,100 @@ private fun AppearanceSettings(
 }
 
 /**
- * A miniature page in [palette] (its background, a card with a title, a subtitle and an
- * accent progress bar) so the themes can be compared at a glance rather than by name.
+ * A miniature of [theme] on its own page colour: a card drawn the theme's way (Glass
+ * frosted, Paper a ruled sheet, Bold ink-bordered with a hard shadow, Neon glowing) with
+ * "Aa" in the theme's heading typeface and a progress bar in its style, so the themes can
+ * be compared at a glance rather than by name.
  */
 @Composable
-private fun PaletteTile(
-    palette: ThemePalette,
+private fun ThemeTile(
+    theme: AppTheme,
     accent: AccentColor,
     dark: Boolean,
     selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
-    val n = remember(palette, accent, dark) { neutrals(palette, accent.primaryLight, dark) }
+    val n = remember(theme, accent, dark) { neutrals(theme, accent.primaryLight, dark) }
+    val shapes = remember(theme) { themeShapes(theme) }
+    val headingFont = remember(theme) { themeTypography(theme).titleLarge.fontFamily }
     val colors = MaterialTheme.colorScheme
-    val shape = MaterialTheme.shapes.medium
-    val cardShape = MaterialTheme.shapes.small
+    val primary = colors.primary
+    val frame = MaterialTheme.shapes.medium
+    val card = shapes.medium
+
+    val cardModifier = when (theme) {
+        AppTheme.CLASSIC -> Modifier.background(n.containerLow, card)
+        AppTheme.GLASS -> Modifier
+            .background(Color.White.copy(alpha = if (dark) 0.1f else 0.55f), card)
+            .border(1.dp, Color.White.copy(alpha = if (dark) 0.3f else 0.9f), card)
+        AppTheme.PAPER -> Modifier.background(n.containerLow, card).border(1.dp, n.outlineVariant, card)
+        AppTheme.BOLD -> Modifier
+            .hardShadow(card, if (dark) primary else n.outline, 3.dp)
+            .background(n.containerLow, card)
+            .border(2.dp, n.outline, card)
+        AppTheme.NEON -> Modifier
+            .glow(card, primary.copy(alpha = if (dark) 0.5f else 0.3f), 8.dp)
+            .background(n.containerLow, card)
+            .border(1.dp, primary.copy(alpha = 0.7f), card)
+    }
+    val barHeight = when (theme) {
+        AppTheme.PAPER -> 2.dp
+        AppTheme.BOLD -> 7.dp
+        AppTheme.NEON -> 3.dp
+        else -> 5.dp
+    }
+    val barShape = if (theme == AppTheme.PAPER) RectangleShape else shapes.extraSmall
 
     Column(
-        modifier.selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
+        Modifier.width(92.dp).selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(72.dp)
-                .clip(shape)
+                .height(96.dp)
+                .clip(frame)
                 .background(n.background)
+                .then(
+                    if (theme == AppTheme.GLASS) Modifier.background(
+                        Brush.linearGradient(listOf(primary.copy(alpha = 0.5f), colors.tertiary.copy(alpha = 0.3f), colors.secondary.copy(alpha = 0.35f)))
+                    ) else Modifier
+                )
                 .border(
                     width = if (selected) 2.dp else 1.dp,
-                    color = if (selected) colors.primary else colors.outlineVariant,
-                    shape = shape
+                    color = if (selected) primary else colors.outlineVariant,
+                    shape = frame
                 )
-                .padding(if (selected) 8.dp else 7.dp)
+                .padding(start = 10.dp, top = 10.dp, end = 13.dp, bottom = 13.dp)
         ) {
             Column(
-                Modifier
-                    .fillMaxSize()
-                    .clip(cardShape)
-                    .background(n.containerLow)
-                    .then(if (palette.outlinedCards) Modifier.border(1.dp, n.outlineVariant, cardShape) else Modifier)
-                    .padding(7.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                Modifier.fillMaxSize().then(cardModifier).padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(Modifier.fillMaxWidth(0.7f).height(5.dp).clip(CircleShape).background(n.onBackground))
-                Box(Modifier.fillMaxWidth(0.45f).height(4.dp).clip(CircleShape).background(n.onSurfaceVariant))
-                Spacer(Modifier.weight(1f))
-                Box(Modifier.fillMaxWidth().height(5.dp).clip(CircleShape).background(n.surfaceVariant)) {
-                    Box(Modifier.fillMaxWidth(0.6f).fillMaxHeight().clip(CircleShape).background(colors.primary))
+                Text(
+                    "Aa",
+                    fontFamily = headingFont,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = n.onBackground
+                )
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(barHeight)
+                        .clip(barShape)
+                        .background(if (theme == AppTheme.BOLD) Color.Transparent else primary.copy(alpha = 0.2f))
+                        .then(if (theme == AppTheme.BOLD) Modifier.border(1.5.dp, n.outline, barShape) else Modifier)
+                ) {
+                    Box(Modifier.fillMaxWidth(0.6f).fillMaxHeight().clip(barShape).background(primary))
                 }
             }
         }
         Spacer(Modifier.height(6.dp))
         FitText(
-            stringResource(palette.label),
+            stringResource(theme.label),
             style = MaterialTheme.typography.labelMedium,
-            color = if (selected) colors.primary else colors.onSurfaceVariant,
+            color = if (selected) primary else colors.onSurfaceVariant,
             fontWeight = if (selected) FontWeight.SemiBold else null
         )
     }

@@ -44,7 +44,7 @@ import com.jsemalja.trackmecalories.data.formatStopwatch
 import com.jsemalja.trackmecalories.data.goalTime
 import com.jsemalja.trackmecalories.data.nextFastDue
 import com.jsemalja.trackmecalories.ui.theme.AppCard
-import com.jsemalja.trackmecalories.ui.theme.isGlass
+import com.jsemalja.trackmecalories.ui.theme.tintedCards
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.LocalTime
@@ -92,7 +92,7 @@ fun FastingCard(
                 Icon(
                     Icons.Outlined.Timer,
                     contentDescription = null,
-                    tint = if (isGlass) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                    tint = if (tintedCards) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
                 )
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
