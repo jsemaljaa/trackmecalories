@@ -1,0 +1,65 @@
+# Builds the iOS app on a GitHub macOS runner and packages it as an .ipa for SideStore/AltStore,
+# which sign it with the user's own Apple ID. The .ipa is only ad-hoc signed here (that carries
+# the HealthKit entitlement through to SideStore's re-signing); it won't install as-is.
+#
+# Every run uploads the .ipa as a workflow artifact; pushing a tag like v2.2 also attaches it
+# to a GitHub Release.
+name: iOS build
+
+on:
+  push:
+    branches: [main, feature/kmp-shared]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Kotlin/Native's compilers and the iOS dependencies (~1 GB) are downloaded on first use.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Generate the Xcode project
+        run: |
+          brew install xcodegen
+          cd iosApp && xcodegen generate
+
+      - name: Build (unsigned)
+        run: |
+          xcodebuild -project iosApp/TrackMeCalories.xcodeproj -target TrackMeCalories \
+            -configuration Release -sdk iphoneos SYMROOT="$PWD/iosApp/build" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+
+      - name: Package the .ipa
+        run: |
+          mkdir -p dist/Payload
+          cp -R iosApp/build/Release-iphoneos/TrackMeCalories.app dist/Payload/
+          codesign --force --sign - --entitlements iosApp/TrackMeCalories/TrackMeCalories.entitlements dist/Payload/TrackMeCalories.app
+          cd dist && zip -qry TrackMeCalories.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TrackMeCalories-ipa
+          path: dist/TrackMeCalories.ipa
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/TrackMeCalories.ipa
