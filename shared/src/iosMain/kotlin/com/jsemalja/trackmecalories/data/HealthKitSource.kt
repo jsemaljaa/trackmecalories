@@ -39,7 +39,6 @@ import platform.HealthKit.HKWorkoutActivityTypeYoga
 import platform.HealthKit.countUnit
 import platform.HealthKit.kilocalorieUnit
 import platform.HealthKit.predicateForSamplesWithStartDate
-import platform.HealthKit.workoutType
 import kotlin.coroutines.resume
 import kotlin.math.roundToInt
 import kotlin.time.ExperimentalTime
@@ -99,6 +98,8 @@ class HealthKitSource(private val prefs: KeyValueStore) : HealthSource {
         cont.invokeOnCancellation { store.stopQuery(query) }
     }
 
+    // totalEnergyBurned is deprecated from iOS 18 but still filled in, and works back to 16.
+    @Suppress("DEPRECATION")
     private suspend fun workouts(predicate: NSPredicate?): List<Workout> = suspendCancellableCoroutine { cont ->
         val sort = NSSortDescriptor(key = HKSampleSortIdentifierStartDate, ascending = true)
         val query = HKSampleQuery(HKObjectType.workoutType(), predicate, HKObjectQueryNoLimit, listOf(sort)) { _, samples, _ ->
@@ -107,7 +108,6 @@ class HealthKitSource(private val prefs: KeyValueStore) : HealthSource {
                     title = null,
                     kind = kindOf(w.workoutActivityType),
                     minutes = (w.duration / 60).toInt(),
-                    @Suppress("DEPRECATION")
                     activeKcal = w.totalEnergyBurned?.doubleValueForUnit(HKUnit.kilocalorieUnit())?.roundToInt()
                 )
             })

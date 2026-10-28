@@ -44,7 +44,7 @@ import platform.AVFoundation.AVMetadataObjectTypeEAN8Code
 import platform.AVFoundation.AVMetadataObjectTypeUPCECode
 import platform.AVFoundation.authorizationStatusForMediaType
 import platform.AVFoundation.requestAccessForMediaType
-import platform.CoreGraphics.CGRectZero
+import platform.CoreGraphics.CGRectMake
 import platform.Foundation.NSBundle
 import platform.Foundation.NSString
 import platform.Foundation.NSTemporaryDirectory
@@ -108,7 +108,7 @@ private class BarcodeDelegate(private val onCode: (String) -> Unit) : NSObject()
 }
 
 /** A view whose preview layer follows its size. */
-private class CameraPreviewView(session: AVCaptureSession) : UIView(frame = CGRectZero.readValue()) {
+private class CameraPreviewView(session: AVCaptureSession) : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
     private val preview = AVCaptureVideoPreviewLayer(session = session).apply { videoGravity = AVLayerVideoGravityResizeAspectFill }
 
     init {
