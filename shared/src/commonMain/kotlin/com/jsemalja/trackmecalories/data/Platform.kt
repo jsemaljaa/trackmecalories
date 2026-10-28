@@ -37,3 +37,11 @@ fun parseDate(iso: String): LocalDate = LocalDate.parse(iso)
 
 /** Unicode canonical decomposition (NFD): "é" becomes "e" plus a combining accent. */
 internal expect fun String.decomposed(): String
+
+/** The device's language code ("en", "ru", "cs"), or "" when unknown. */
+internal expect fun deviceLanguage(): String
+
+// Logcat on Android, the console on iOS.
+internal expect fun logDebug(tag: String, message: String)
+internal expect fun logWarning(tag: String, message: String)
+internal expect fun logError(tag: String, message: String, error: Throwable? = null)

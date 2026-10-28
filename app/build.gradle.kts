@@ -102,12 +102,6 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.camera2)
 
-    // Network requests
-    implementation("io.ktor:ktor-client-android:2.3.0")
-    implementation("io.ktor:ktor-client-serialization:2.3.0")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.0")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
-
     implementation("androidx.compose.material:material-icons-extended")
 
     // Health Connect: steps, workouts and active calories synced by Zepp (Amazfit) etc.

@@ -1,7 +1,5 @@
 package com.jsemalja.trackmecalories.data
 
-import android.content.res.AssetManager
-import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.HttpTimeout
@@ -17,9 +15,9 @@ import kotlinx.serialization.json.*
  * Restaurant menus bundled with the app (JSON files in assets/restaurants): McDonald's ČR from the
  * official nutrition tables (tools/scrape_mcdonalds_cz.py) and other Czech chains from
  * Kalorické tabulky (tools/scrape_kaloricke_chains.py). Searching them is offline, instant,
- * accent-insensitive and works on half-typed words.
+ * accent-insensitive and works on half-typed words. [readMenus] returns the JSON of each file.
  */
-class RestaurantMenu(private val assets: AssetManager) {
+class RestaurantMenu(private val readMenus: () -> List<String>) {
     // [name] is the item alone ("Big Mac"); [food]'s name also carries the chain for the log.
     private class Item(val food: CustomFood, val name: String, val chain: String, val aliases: String, val detail: String?)
 
@@ -51,8 +49,8 @@ class RestaurantMenu(private val assets: AssetManager) {
     }
 
     private fun load(): List<Item> = try {
-        assets.list("restaurants").orEmpty().filter { it.endsWith(".json") }.flatMap { file ->
-            val root = assets.open("restaurants/$file").bufferedReader().use { Json.parseToJsonElement(it.readText()) }.jsonObject
+        readMenus().flatMap { text ->
+            val root = Json.parseToJsonElement(text).jsonObject
             val chain = root.getValue("chain").jsonPrimitive.content
             val aliases = CHAIN_ALIASES[chain].orEmpty()
             root.getValue("items").jsonArray.map { element ->
@@ -88,7 +86,7 @@ class RestaurantMenu(private val assets: AssetManager) {
             }
         }
     } catch (e: Exception) {
-        Log.e("RestaurantMenu", "Couldn't load bundled menus", e)
+        logError("RestaurantMenu", "Couldn't load bundled menus", e)
         emptyList()
     }
 
@@ -122,11 +120,9 @@ class KalorickeTabulkyRepository {
         }
     }
 
-    private val searchCache = object : LinkedHashMap<String, List<KtHit>>() {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<KtHit>>) = size > 40
-    }
-    private val macrosCache = HashMap<String, KtMacros>()
-    private val resolved = HashMap<String, FoodInfo>()
+    private val searchCache = MemoryCache<String, List<KtHit>>(maxSize = 40)
+    private val macrosCache = MemoryCache<String, KtMacros>()
+    private val resolved = MemoryCache<String, FoodInfo>()
     // Be polite to KT when prefetching macros for a page of results.
     private val detailPermits = Semaphore(4)
 
@@ -148,7 +144,7 @@ class KalorickeTabulkyRepository {
 
     private suspend fun searchVariant(query: String): List<KtHit> {
         val key = query.lowercase()
-        synchronized(searchCache) { searchCache[key] }?.let { return it }
+        searchCache.get(key)?.let { return it }
 
         val response: String = client.get("$base/autocomplete/foodstuff-activity-meal") {
             parameter("query", query)
@@ -168,13 +164,13 @@ class KalorickeTabulkyRepository {
                 unit = if (obj.str("unit") == "ml") "ml" else "g"
             )
         }
-        synchronized(searchCache) { searchCache[key] = hits }
+        searchCache.put(key, hits)
         return hits
     }
 
     /** Per-100 macros for [hit], cached. Used to show P/C/F in the result list. */
     suspend fun macros(hit: KtHit): KtMacros {
-        synchronized(macrosCache) { macrosCache[hit.id] }?.let { return it }
+        macrosCache.get(hit.id)?.let { return it }
         return detailPermits.withPermit {
             val detail = Json.parseToJsonElement(
                 client.get("$base/foodstuff/detail/${hit.id}/100/${hit.unit}") { parameter("format", "json") }.body<String>()
@@ -192,7 +188,7 @@ class KalorickeTabulkyRepository {
                 saturatedFat = food.str("saturatedFattyAcid")?.czechNumber(),
                 typeUrl = food.str("foodstuffTypeUrl")
             )
-            synchronized(macrosCache) { macrosCache[hit.id] = macros }
+            macrosCache.put(hit.id, macros)
             macros
         }
     }
@@ -203,7 +199,7 @@ class KalorickeTabulkyRepository {
      * restaurant meals are actually logged; otherwise per 100 g/ml.
      */
     suspend fun resolve(hit: KtHit): FoodInfo {
-        synchronized(resolved) { resolved[hit.id] }?.let { return it }
+        resolved.get(hit.id)?.let { return it }
 
         val (macros, portion) = coroutineScope {
             val macros = async { macros(hit) }
@@ -230,7 +226,7 @@ class KalorickeTabulkyRepository {
             brand = hit.brand,
             quantity = portion?.first
         )
-        synchronized(resolved) { resolved[hit.id] = info }
+        resolved.put(hit.id, info)
         return info
     }
 
@@ -248,7 +244,7 @@ class KalorickeTabulkyRepository {
             ?.let { (it.str("title") ?: "") to (it["multiplier"]?.jsonPrimitive?.doubleOrNull ?: 0.0) }
             ?.takeIf { it.second > 0 }
     } catch (e: Exception) {
-        Log.w(TAG, "No portion info for ${hit.title}: ${e.message}")
+        logWarning(TAG, "No portion info for ${hit.title}: ${e.message}")
         null
     }
 

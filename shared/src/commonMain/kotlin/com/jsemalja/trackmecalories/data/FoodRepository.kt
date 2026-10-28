@@ -1,6 +1,5 @@
 package com.jsemalja.trackmecalories.data
 
-import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.HttpTimeout
@@ -10,7 +9,6 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.json.*
-import java.util.Locale
 
 /**
  * Repository for fetching food data from Open Food Facts.
@@ -22,10 +20,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
 
     // Lightweight in-memory cache for repeated identical searches within this process's
     // lifetime. Persistent caching only applies to individual (barcode-keyed) products.
-    private val searchCache = object : LinkedHashMap<String, List<FoodInfo>>() {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<FoodInfo>>) =
-            size > 40
-    }
+    private val searchCache = MemoryCache<String, List<FoodInfo>>(maxSize = 40)
 
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -47,8 +42,8 @@ class FoodRepository(private val dao: FoodDao? = null) {
      */
     suspend fun getProductInfo(barcode: String, onStale: () -> Unit = {}): FoodInfo? {
         dao?.getCachedProduct(barcode)?.let {
-            Log.d(TAG, "Cache hit for barcode: $barcode")
-            if (System.currentTimeMillis() - it.cachedAt > STALE_AFTER_MS) onStale()
+            logDebug(TAG, "Cache hit for barcode: $barcode")
+            if (currentTimeMillis() - it.cachedAt > STALE_AFTER_MS) onStale()
             return it.toFoodInfo()
         }
         return fetchProductInfo(barcode)
@@ -60,7 +55,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
      * them), then the world one if that fails.
      */
     suspend fun fetchProductInfo(barcode: String): FoodInfo? {
-        Log.d(TAG, "Fetching product info for barcode: $barcode")
+        logDebug(TAG, "Fetching product info for barcode: $barcode")
         for (host in OFF_PRODUCT_HOSTS) {
             try {
                 val response: String = client.get("https://$host/api/v2/product/$barcode.json").body()
@@ -68,7 +63,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
 
                 if (json["status"]?.jsonPrimitive?.intOrNull != 1) {
                     // Both instances share one database: "not found" on one is final.
-                    Log.w(TAG, "Product not found for barcode: $barcode")
+                    logWarning(TAG, "Product not found for barcode: $barcode")
                     return null
                 }
 
@@ -77,7 +72,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
                 info.toCache()?.let { dao?.upsertCachedProduct(it) }
                 return info
             } catch (e: Exception) {
-                Log.e(TAG, "Error fetching product info from $host: ${e.message}", e)
+                logError(TAG, "Error fetching product info from $host: ${e.message}", e)
             }
         }
         return null
@@ -114,7 +109,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
 
     private suspend fun searchVariant(query: String, czechOnly: Boolean): List<FoodInfo> {
         val key = "${if (czechOnly) "cz" else "all"}|${query.lowercase()}"
-        synchronized(searchCache) { searchCache[key] }?.let { return it }
+        searchCache.get(key)?.let { return it }
 
         val langs = PREFERRED_LANGS
         val response: String = client.get("https://search.openfoodfacts.org/search") {
@@ -133,8 +128,8 @@ class FoodRepository(private val dao: FoodDao? = null) {
             val obj = hit.jsonObject
             parseProduct(obj, obj.string("code"), requireNutrition = true, langs = langs)
         }
-        Log.d(TAG, "Search '$query' (cz=$czechOnly): ${hits.size} hits, ${results.size} usable")
-        synchronized(searchCache) { searchCache[key] = results }
+        logDebug(TAG, "Search '$query' (cz=$czechOnly): ${hits.size} hits, ${results.size} usable")
+        searchCache.put(key, results)
         return results
     }
 
@@ -207,7 +202,7 @@ class FoodRepository(private val dao: FoodDao? = null) {
         val OFF_PRODUCT_HOSTS = listOf("cz.openfoodfacts.org", "world.openfoodfacts.org")
 
         // Czech names first so "Jogurt bílý" isn't shown as its English/German label.
-        val PREFERRED_LANGS = listOf("cs", Locale.getDefault().language.ifBlank { "en" }, "en").distinct()
+        val PREFERRED_LANGS = listOf("cs", deviceLanguage().ifBlank { "en" }, "en").distinct()
 
         // A cached product older than this is still shown, then re-fetched in the background.
         const val STALE_AFTER_MS = 30L * 24 * 60 * 60 * 1000
