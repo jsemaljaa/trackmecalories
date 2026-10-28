@@ -12,7 +12,7 @@ import sys
 import time
 
 BUNDLE_ID = 'com.jsemalja.trackmecalories'
-WAIT_S = 45
+WAIT_S = 30
 report = []
 step = 'start'
 
@@ -50,11 +50,24 @@ try:
     step = 'installing'
     run('xcrun', 'simctl', 'install', udid, 'iosApp/build/Debug-iphonesimulator/TrackMeCalories.app')
 
+    # A just-booted simulator can still be starting SpringBoard; launching then can stall or
+    # fail, so it's retried. The app's own output goes to app.log.
     step = 'launching'
-    console = open('app.log', 'w')
-    subprocess.Popen(['xcrun', 'simctl', 'launch', '--console-pty', udid, BUNDLE_ID], stdout=console, stderr=subprocess.STDOUT)
+    log_path = os.path.join(os.getcwd(), 'app.log')
+    for attempt in range(1, 4):
+        try:
+            out = subprocess.run(['xcrun', 'simctl', 'launch', f'--stdout={log_path}', f'--stderr={log_path}', udid, BUNDLE_ID],
+                                 capture_output=True, text=True, timeout=120)
+            report.append(f'launch attempt {attempt}: exit {out.returncode} {(out.stdout + out.stderr).strip()[-500:]}')
+            if out.returncode == 0:
+                break
+        except subprocess.TimeoutExpired:
+            report.append(f'launch attempt {attempt}: timed out after 120 s')
+        time.sleep(15)
+    else:
+        raise RuntimeError('simctl launch never succeeded')
 
-    step = f'running for {WAIT_S} s'
+    step = f'running for {WAIT_S} s after launch'
     time.sleep(WAIT_S)
     run('xcrun', 'simctl', 'io', udid, 'screenshot', 'smoke.png', check=False)
     ok = BUNDLE_ID in run('xcrun', 'simctl', 'spawn', udid, 'launchctl', 'list', check=False)
