@@ -16,6 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import kotlin.math.abs
+import com.jsemalja.trackmecalories.intent
 
 /**
  * Home-screen widget: today's calories (eaten / left) with buttons to add food, quick-add

@@ -43,6 +43,16 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.android)
+            // The Android sides of the platform hooks in ui/Platform.kt: camera + barcode
+            // scanning, Health Connect, permission launchers, edge-to-edge.
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.camera.camera2)
+            implementation(libs.androidx.camera.lifecycle)
+            implementation(libs.androidx.camera.view)
+            implementation(libs.androidx.camera.mlkit.vision)
+            implementation(libs.mlkit.barcode.scanning)
+            implementation(libs.androidx.health.connect.client)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

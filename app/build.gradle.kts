@@ -97,5 +97,5 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
 
     // Health Connect: steps, workouts and active calories synced by Zepp (Amazfit) etc.
-    implementation("androidx.health.connect:connect-client:1.1.0")
+    implementation(libs.androidx.health.connect.client)
 }

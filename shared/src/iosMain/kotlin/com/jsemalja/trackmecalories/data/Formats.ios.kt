@@ -80,3 +80,9 @@ actual fun rememberTimeFormat(): (LocalTime) -> String = remember {
     }
     formatTime
 }
+
+/** The locale's hour format has no AM/PM marker when the clock is 24-hour. */
+@Composable
+actual fun rememberIs24Hour(): Boolean = remember {
+    NSDateFormatter.dateFormatFromTemplate("j", 0u, NSLocale.currentLocale)?.contains("a") != true
+}

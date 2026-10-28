@@ -43,3 +43,9 @@ actual fun rememberTimeFormat(): (LocalTime) -> String {
         formatTime
     }
 }
+
+@Composable
+actual fun rememberIs24Hour(): Boolean {
+    val context = LocalContext.current
+    return remember(context) { DateFormat.is24HourFormat(context) }
+}

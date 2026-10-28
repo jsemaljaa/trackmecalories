@@ -8,6 +8,13 @@ import kotlinx.datetime.LocalTime
 // Locale-aware formatting in the app's language (what String.format / DateTimeFormatter with
 // the default locale gave before the screens moved to :shared): "1 234" and "1,5" in Russian.
 
+/**
+ * Fills the %1$s / %1$d placeholders of a string resource resolved ahead of time (e.g. outside
+ * composition), the way stringResource(res, args) does.
+ */
+fun String.withArgs(vararg args: Any?): String =
+    Regex("""%(\d+)\$[ds]""").replace(this) { args[it.groupValues[1].toInt() - 1].toString() }
+
 /** A whole number with grouping, like "%,d": "1,234". */
 expect fun Long.grouped(): String
 
@@ -33,3 +40,7 @@ expect fun DayOfWeek.shortName(): String
 /** A clock time in the phone's 12/24-hour setting (needs the platform context, hence composable). */
 @Composable
 expect fun rememberTimeFormat(): (LocalTime) -> String
+
+/** Whether the phone shows 24-hour clock times (for time pickers). */
+@Composable
+expect fun rememberIs24Hour(): Boolean
