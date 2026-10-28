@@ -42,9 +42,18 @@ jobs:
 
       - name: Build (unsigned)
         run: |
+          set -o pipefail
           xcodebuild -project iosApp/TrackMeCalories.xcodeproj -target TrackMeCalories \
             -configuration Release -sdk iphoneos SYMROOT="$PWD/iosApp/build" \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build.log
+
+      # The first compiler errors as one annotation, readable on the run page without opening the log.
+      - name: Report build errors
+        if: failure()
+        run: |
+          grep -E '^e: |error:|\* What went wrong|^> ' build.log | grep -v '^> Task' | head -60 \
+            | sed -e 's#file://[^ ]*/trackmecalories/##' > errors.txt || true
+          echo "::error title=Build errors::$(sed -e ':a' -e 'N' -e '$!ba' -e 's/%/%25/g' -e 's/\n/%0A/g' errors.txt)"
 
       - name: Package the .ipa
         run: |
