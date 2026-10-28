@@ -1,31 +1,29 @@
 package com.jsemalja.trackmecalories.data
 
-import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Behaviour preferences (SharedPreferences; not part of the logged data). */
-class UserPrefs(context: Context) {
-    private val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+/** Behaviour preferences (the "user_prefs" store; not part of the logged data). */
+class UserPrefs(private val prefs: KeyValueStore) {
 
     private val _weeklyBudget = MutableStateFlow(prefs.getBoolean(KEY_WEEKLY_BUDGET, false))
     /** Let daily targets flex across the week (see [weeklyBudget]). */
     val weeklyBudget: StateFlow<Boolean> = _weeklyBudget.asStateFlow()
 
     fun setWeeklyBudget(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_WEEKLY_BUDGET, enabled).apply()
+        prefs.edit { putBoolean(KEY_WEEKLY_BUDGET, enabled) }
         _weeklyBudget.value = enabled
     }
 
     private val _eatBack = MutableStateFlow(
-        EatBack.entries.firstOrNull { it.name == prefs.getString(KEY_EAT_BACK, null) } ?: EatBack.OFF
+        EatBack.entries.firstOrNull { it.name == prefs.getString(KEY_EAT_BACK) } ?: EatBack.OFF
     )
     /** Share of today's active calories added to today's goal. */
     val eatBack: StateFlow<EatBack> = _eatBack.asStateFlow()
 
     fun setEatBack(value: EatBack) {
-        prefs.edit().putString(KEY_EAT_BACK, value.name).apply()
+        prefs.edit { putString(KEY_EAT_BACK, value.name) }
         _eatBack.value = value
     }
 
@@ -34,7 +32,7 @@ class UserPrefs(context: Context) {
     val waterTracking: StateFlow<Boolean> = _waterTracking.asStateFlow()
 
     fun setWaterTracking(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_WATER_TRACKING, enabled).apply()
+        prefs.edit { putBoolean(KEY_WATER_TRACKING, enabled) }
         _waterTracking.value = enabled
     }
 
@@ -51,20 +49,20 @@ class UserPrefs(context: Context) {
     val fasting: StateFlow<FastingSettings> = _fasting.asStateFlow()
 
     fun setFasting(value: FastingSettings) {
-        prefs.edit()
-            .putBoolean(KEY_FASTING, value.enabled)
-            .putInt(KEY_FASTING_HOURS, value.planHours)
-            .putBoolean(KEY_FASTING_NOTIFY_ONGOING, value.notifyOngoing)
-            .putBoolean(KEY_FASTING_NOTIFY_GOAL, value.notifyGoal)
-            .putBoolean(KEY_FASTING_NOTIFY_NEXT, value.notifyNextFast)
-            .apply()
+        prefs.edit {
+            putBoolean(KEY_FASTING, value.enabled)
+            putInt(KEY_FASTING_HOURS, value.planHours)
+            putBoolean(KEY_FASTING_NOTIFY_ONGOING, value.notifyOngoing)
+            putBoolean(KEY_FASTING_NOTIFY_GOAL, value.notifyGoal)
+            putBoolean(KEY_FASTING_NOTIFY_NEXT, value.notifyNextFast)
+        }
         _fasting.value = value
     }
 
     private val _gamification = MutableStateFlow(
         GamificationSettings(
             enabled = prefs.getBoolean(KEY_GAMIFICATION, false),
-            streaks = prefs.getStringSet(KEY_GAMIFICATION_STREAKS, null)
+            streaks = prefs.getStringSet(KEY_GAMIFICATION_STREAKS)
                 ?.mapNotNullTo(mutableSetOf()) { name -> StreakKind.entries.firstOrNull { it.name == name } }
                 ?: StreakKind.DEFAULT,
             showOnToday = prefs.getBoolean(KEY_GAMIFICATION_TODAY, true),
@@ -75,24 +73,23 @@ class UserPrefs(context: Context) {
     val gamification: StateFlow<GamificationSettings> = _gamification.asStateFlow()
 
     fun setGamification(value: GamificationSettings) {
-        prefs.edit()
-            .putBoolean(KEY_GAMIFICATION, value.enabled)
-            .putStringSet(KEY_GAMIFICATION_STREAKS, value.streaks.mapTo(mutableSetOf()) { it.name })
-            .putBoolean(KEY_GAMIFICATION_TODAY, value.showOnToday)
-            .putBoolean(KEY_GAMIFICATION_CELEBRATIONS, value.celebrations)
-            .apply()
+        prefs.edit {
+            putBoolean(KEY_GAMIFICATION, value.enabled)
+            putStringSet(KEY_GAMIFICATION_STREAKS, value.streaks.mapTo(mutableSetOf()) { it.name })
+            putBoolean(KEY_GAMIFICATION_TODAY, value.showOnToday)
+            putBoolean(KEY_GAMIFICATION_CELEBRATIONS, value.celebrations)
+        }
         _gamification.value = value
     }
 
-    // getStringSet's set mustn't be changed, so it's copied.
-    private val _seenBadges = MutableStateFlow(prefs.getStringSet(KEY_SEEN_BADGES, null)?.toSet() ?: emptySet())
+    private val _seenBadges = MutableStateFlow(prefs.getStringSet(KEY_SEEN_BADGES) ?: emptySet())
     /** [Badge] names already celebrated (or reached before streaks were turned on), so each shows once. */
     val seenBadges: StateFlow<Set<String>> = _seenBadges.asStateFlow()
 
     fun markBadgesSeen(badges: Collection<Badge>) {
         val seen = _seenBadges.value + badges.map { it.name }
         if (seen.size == _seenBadges.value.size) return
-        prefs.edit().putStringSet(KEY_SEEN_BADGES, seen.toMutableSet()).apply()
+        prefs.edit { putStringSet(KEY_SEEN_BADGES, seen) }
         _seenBadges.value = seen
     }
 

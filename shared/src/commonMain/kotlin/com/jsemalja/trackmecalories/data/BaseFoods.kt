@@ -133,3 +133,29 @@ fun czechQueryFor(foods: List<BaseFood>, query: String): String? {
 }
 
 private const val BASE_FOOD_BOOST = 2.0
+
+/**
+ * The bundled base-food list, parsed on first use (callers run on Dispatchers.Default).
+ * [readJson] returns assets/base_foods.json.
+ */
+class BaseFoods(private val readJson: () -> String) {
+    private val foods: List<BaseFood> by lazy {
+        try {
+            parseBaseFoods(readJson())
+        } catch (e: Exception) {
+            logError("BaseFoods", "Couldn't load base foods", e)
+            emptyList()
+        }
+    }
+
+    // Names follow the app's language; Czech isn't a UI language, so those users get English.
+    private fun language() = deviceLanguage().takeIf { it == "ru" } ?: "en"
+
+    fun search(query: String): List<SearchHit> = searchBaseFoods(foods, query, language())
+
+    fun czechQuery(query: String): String? = czechQueryFor(foods, query)
+
+    /** The bundled food behind a saved "base:<key>" food, if it's still in the list. */
+    fun byBarcode(barcode: String): BaseFood? =
+        barcode.removePrefix("base:").takeIf { it != barcode }?.let { key -> foods.firstOrNull { it.key == key } }
+}

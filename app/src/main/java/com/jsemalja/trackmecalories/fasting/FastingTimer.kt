@@ -16,6 +16,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.Fast
+import com.jsemalja.trackmecalories.data.FastingAccess
+import com.jsemalja.trackmecalories.data.FastingControls
 import com.jsemalja.trackmecalories.data.FastingSettings
 import com.jsemalja.trackmecalories.data.FoodDao
 import com.jsemalja.trackmecalories.data.HOUR_MS
@@ -26,50 +28,44 @@ import com.jsemalja.trackmecalories.data.goalTime
 import com.jsemalja.trackmecalories.data.nextFastDue
 import java.util.Date
 
-/** Whether fasting alerts can be shown at all, and on time. */
-data class FastingAccess(val notifications: Boolean, val exactAlarms: Boolean)
-
 /**
  * The fasting timer's side effects: starting and ending fasts, and keeping its notifications and
  * alarms in step with the running fast and [FastingSettings]. Shared by the app and
  * [FastingReceiver] (notification buttons, alarms, reboot); every change ends with [sync].
  */
-class FastingTimer(context: Context, private val dao: FoodDao, private val prefs: UserPrefs) {
+class FastingTimer(context: Context, private val dao: FoodDao, private val prefs: UserPrefs) : FastingControls {
     private val context = context.applicationContext
     private val notifications = NotificationManagerCompat.from(this.context)
     private val alarms = this.context.getSystemService(AlarmManager::class.java)
 
-    suspend fun start(at: Long = System.currentTimeMillis()) {
+    override suspend fun start(at: Long) {
         if (dao.getActiveFastOnce() == null) {
             dao.insertFast(Fast(startTime = at, targetHours = prefs.fasting.value.planHours))
         }
         sync()
     }
 
-    suspend fun end(at: Long = System.currentTimeMillis()) {
+    override suspend fun end(at: Long) {
         dao.getActiveFastOnce()?.let { dao.updateFast(it.copy(endTime = at.coerceAtLeast(it.startTime))) }
         sync()
     }
 
-    /** "I actually stopped eating at 20:30": moves the running fast's start (never into the future). */
-    suspend fun moveStart(at: Long) {
+    override suspend fun moveStart(at: Long) {
         dao.getActiveFastOnce()?.let { dao.updateFast(it.copy(startTime = at.coerceAtMost(System.currentTimeMillis()))) }
         sync()
     }
 
-    /** A new plan applies to the running fast too; finished fasts keep theirs. */
-    suspend fun retarget(planHours: Int) {
+    override suspend fun retarget(planHours: Int) {
         dao.getActiveFastOnce()?.let { if (it.targetHours != planHours) dao.updateFast(it.copy(targetHours = planHours)) }
         sync()
     }
 
-    fun access() = FastingAccess(
+    override fun access() = FastingAccess(
         notifications = notifications.areNotificationsEnabled(),
         exactAlarms = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarms.canScheduleExactAlarms()
     )
 
-    /** Shows, updates or removes the notifications and (re)schedules the alarms; safe to call any time. */
-    suspend fun sync() {
+    override suspend fun sync() {
         val settings = prefs.fasting.value
         val active = dao.getActiveFastOnce()
         val now = System.currentTimeMillis()

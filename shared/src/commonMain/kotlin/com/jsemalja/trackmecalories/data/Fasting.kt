@@ -64,3 +64,27 @@ fun formatStopwatch(ms: Long): String {
 }
 
 private fun Long.twoDigits(): String = toString().padStart(2, '0')
+
+/** Whether fasting alerts can be shown at all, and on time. */
+data class FastingAccess(val notifications: Boolean, val exactAlarms: Boolean)
+
+/**
+ * Starting and ending fasts, and keeping the platform's notifications and alarms in step
+ * with the running fast and [FastingSettings] (FastingTimer on Android). Every change ends
+ * with [sync].
+ */
+interface FastingControls {
+    suspend fun start(at: Long = currentTimeMillis())
+    suspend fun end(at: Long = currentTimeMillis())
+
+    /** "I actually stopped eating at 20:30": moves the running fast's start (never into the future). */
+    suspend fun moveStart(at: Long)
+
+    /** A new plan applies to the running fast too; finished fasts keep theirs. */
+    suspend fun retarget(planHours: Int)
+
+    fun access(): FastingAccess
+
+    /** Shows, updates or removes the notifications and (re)schedules the alarms; safe to call any time. */
+    suspend fun sync()
+}

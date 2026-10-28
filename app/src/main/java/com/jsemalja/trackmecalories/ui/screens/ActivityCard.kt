@@ -19,7 +19,7 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.health.connect.client.records.ExerciseSessionRecord
+import com.jsemalja.trackmecalories.data.WorkoutKind
 import com.jsemalja.trackmecalories.data.DayActivity
 import com.jsemalja.trackmecalories.data.Workout
 import com.jsemalja.trackmecalories.ui.theme.AppCard
@@ -57,7 +57,7 @@ fun ActivityCard(activity: DayActivity) {
                         Spacer(Modifier.height(2.dp))
                         Text(
                             listOfNotNull(
-                                w.title ?: workoutTypeLabel(w.exerciseType),
+                                w.title ?: workoutTypeLabel(w.kind),
                                 "${w.minutes} ${stringResource(Res.string.unit_min)}",
                                 w.activeKcal?.takeIf { it > 0 }?.let { "$it $kcal" }
                             ).joinToString(" · "),
@@ -73,23 +73,18 @@ fun ActivityCard(activity: DayActivity) {
 
 /** A readable name for a workout the tracker didn't title; the common types only. */
 @Composable
-private fun workoutTypeLabel(type: Int): String = stringResource(
-    when (type) {
-        ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> Res.string.workout_walking
-        ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
-        ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> Res.string.workout_running
-        ExerciseSessionRecord.EXERCISE_TYPE_BIKING,
-        ExerciseSessionRecord.EXERCISE_TYPE_BIKING_STATIONARY -> Res.string.workout_biking
-        ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL,
-        ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_OPEN_WATER -> Res.string.workout_swimming
-        ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING,
-        ExerciseSessionRecord.EXERCISE_TYPE_WEIGHTLIFTING -> Res.string.workout_strength
-        ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> Res.string.workout_hiking
-        ExerciseSessionRecord.EXERCISE_TYPE_YOGA -> Res.string.workout_yoga
-        ExerciseSessionRecord.EXERCISE_TYPE_ELLIPTICAL -> Res.string.workout_elliptical
-        ExerciseSessionRecord.EXERCISE_TYPE_ROWING,
-        ExerciseSessionRecord.EXERCISE_TYPE_ROWING_MACHINE -> Res.string.workout_rowing
-        ExerciseSessionRecord.EXERCISE_TYPE_HIGH_INTENSITY_INTERVAL_TRAINING -> Res.string.workout_hiit
-        else -> Res.string.workout_other
+private fun workoutTypeLabel(kind: WorkoutKind): String = stringResource(
+    when (kind) {
+        WorkoutKind.WALKING -> Res.string.workout_walking
+        WorkoutKind.RUNNING -> Res.string.workout_running
+        WorkoutKind.BIKING -> Res.string.workout_biking
+        WorkoutKind.SWIMMING -> Res.string.workout_swimming
+        WorkoutKind.STRENGTH -> Res.string.workout_strength
+        WorkoutKind.HIKING -> Res.string.workout_hiking
+        WorkoutKind.YOGA -> Res.string.workout_yoga
+        WorkoutKind.ELLIPTICAL -> Res.string.workout_elliptical
+        WorkoutKind.ROWING -> Res.string.workout_rowing
+        WorkoutKind.HIIT -> Res.string.workout_hiit
+        WorkoutKind.OTHER -> Res.string.workout_other
     }
 )

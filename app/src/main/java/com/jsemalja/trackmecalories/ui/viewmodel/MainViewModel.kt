@@ -10,7 +10,7 @@ import com.jsemalja.trackmecalories.data.DayActivity
 import com.jsemalja.trackmecalories.data.SatietyInsights
 import com.jsemalja.trackmecalories.data.satietyInsights
 import com.jsemalja.trackmecalories.data.EatBack
-import com.jsemalja.trackmecalories.data.HealthData
+import com.jsemalja.trackmecalories.data.HealthSource
 import com.jsemalja.trackmecalories.data.HealthStatus
 import com.jsemalja.trackmecalories.data.WeeklyBudget
 import com.jsemalja.trackmecalories.data.UserPrefs
@@ -24,8 +24,8 @@ import com.jsemalja.trackmecalories.data.StreakHistory
 import com.jsemalja.trackmecalories.data.gamificationState
 import com.jsemalja.trackmecalories.data.newBadges
 import com.jsemalja.trackmecalories.data.reachedGoal
-import com.jsemalja.trackmecalories.fasting.FastingAccess
-import com.jsemalja.trackmecalories.fasting.FastingTimer
+import com.jsemalja.trackmecalories.data.FastingAccess
+import com.jsemalja.trackmecalories.data.FastingControls
 import com.jsemalja.trackmecalories.data.suggestionHistoryStart
 import com.jsemalja.trackmecalories.data.DayLog
 import androidx.lifecycle.ViewModel
@@ -87,8 +87,8 @@ class MainViewModel(
     private val baseFoods: BaseFoods,
     private val restaurantMenu: RestaurantMenu,
     private val userPrefs: UserPrefs,
-    private val health: HealthData,
-    private val fasting: FastingTimer
+    private val health: HealthSource,
+    private val fasting: FastingControls
 ) : ViewModel() {
 
     private val repository = FoodRepository(dao)
@@ -361,7 +361,7 @@ class MainViewModel(
     val dayActivity: StateFlow<DayActivity?> = combine(selectedDate, healthTick) { date, _ -> date }
         .mapLatest { date ->
             if (_healthStatus.value != HealthStatus.CONNECTED || date.isAfter(LocalDate.now())) null
-            else health.activityFor(date)
+            else health.activityFor(date.toKotlinLocalDate())
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -999,8 +999,8 @@ class MainViewModelFactory(
     private val baseFoods: BaseFoods,
     private val restaurantMenu: RestaurantMenu,
     private val userPrefs: UserPrefs,
-    private val health: HealthData,
-    private val fasting: FastingTimer
+    private val health: HealthSource,
+    private val fasting: FastingControls
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
