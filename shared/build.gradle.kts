@@ -18,8 +18,13 @@ kotlin {
         androidResources.enable = true
     }
     // iOS targets only compile on a Mac (or a macOS CI runner); on Windows they're skipped.
-    iosArm64()
-    iosSimulatorArm64()
+    // The iOS app (iosApp/) links them as the static framework "Shared".
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
@@ -56,6 +61,7 @@ kotlin {
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation(libs.androidx.sqlite.bundled)
         }
     }
 }

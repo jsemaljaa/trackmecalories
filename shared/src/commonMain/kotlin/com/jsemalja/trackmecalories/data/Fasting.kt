@@ -88,3 +88,31 @@ interface FastingControls {
     /** Shows, updates or removes the notifications and (re)schedules the alarms; safe to call any time. */
     suspend fun sync()
 }
+
+/**
+ * Starting, ending and adjusting fasts in the database; the platform subclass keeps its
+ * notifications and alarms in step in [sync], which every change ends with.
+ */
+abstract class FastingTimerBase(protected val dao: FoodDao, protected val prefs: UserPrefs) : FastingControls {
+    final override suspend fun start(at: Long) {
+        if (dao.getActiveFastOnce() == null) {
+            dao.insertFast(Fast(startTime = at, targetHours = prefs.fasting.value.planHours))
+        }
+        sync()
+    }
+
+    final override suspend fun end(at: Long) {
+        dao.getActiveFastOnce()?.let { dao.updateFast(it.copy(endTime = at.coerceAtLeast(it.startTime))) }
+        sync()
+    }
+
+    final override suspend fun moveStart(at: Long) {
+        dao.getActiveFastOnce()?.let { dao.updateFast(it.copy(startTime = at.coerceAtMost(currentTimeMillis()))) }
+        sync()
+    }
+
+    final override suspend fun retarget(planHours: Int) {
+        dao.getActiveFastOnce()?.let { if (it.targetHours != planHours) dao.updateFast(it.copy(targetHours = planHours)) }
+        sync()
+    }
+}

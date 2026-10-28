@@ -17,7 +17,9 @@ cmpLifecycle = "2.9.6"
 camerax = "1.5.3"
 # 17.3.0+ ships libbarhopper_v3.so with 16 KB-aligned LOAD segments (required on Android 15+ 16 KB devices).
 mlkitBarcode = "17.3.0"
-room = "2.7.0-alpha13"
+room = "2.8.4"
+# The SQLite build Room 2.8.4 uses; iOS bundles its own copy (sqlite-bundled).
+sqlite = "2.6.2"
 ksp = "2.3.9"
 kotlinxDatetime = "0.7.1"
 kotlinxSerialization = "1.9.0"
@@ -43,6 +45,7 @@ mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning"
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqlite" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
