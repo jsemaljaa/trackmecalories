@@ -67,32 +67,10 @@ jobs:
           name: TrackMeCalories-ipa
           path: dist/TrackMeCalories.ipa
 
-      # Launches a debug build in an iPhone simulator: reports whether it's still running after
-      # 25 s and the end of its console output (as annotations), and keeps a screenshot.
+      # Launches a debug build in an iPhone simulator and checks it keeps running; the details
+      # (and any crash report) go into an annotation. Keeps a screenshot.
       - name: Smoke test in the simulator
-        run: |
-          set -o pipefail
-          xcodebuild -project iosApp/TrackMeCalories.xcodeproj -target TrackMeCalories \
-            -configuration Debug -sdk iphonesimulator ARCHS=arm64 ONLY_ACTIVE_ARCH=YES SYMROOT="$PWD/iosApp/build" \
-            CODE_SIGNING_ALLOWED=NO build 2>&1 | tail -3
-          UDID=$(xcrun simctl list devices available -j | python3 -c '
-          import json, sys
-          devices = json.load(sys.stdin)["devices"]
-          print(next(d["udid"] for runtime, ds in sorted(devices.items(), reverse=True) if "iOS" in runtime for d in ds if d["name"].startswith("iPhone")))')
-          xcrun simctl boot "$UDID"
-          xcrun simctl bootstatus "$UDID"
-          xcrun simctl install "$UDID" iosApp/build/Debug-iphonesimulator/TrackMeCalories.app
-          xcrun simctl launch --console-pty "$UDID" com.jsemalja.trackmecalories > app.log 2>&1 &
-          sleep 25
-          xcrun simctl io "$UDID" screenshot smoke.png
-          log=$(tail -40 app.log | sed -e ':a' -e 'N' -e '$!ba' -e 's/%/%25/g' -e 's/\r//g' -e 's/\n/%0A/g')
-          # (No ':' or ',' in titles: they'd end the annotation's properties.)
-          if xcrun simctl spawn "$UDID" launchctl list | grep -q 'com.jsemalja.trackmecalories'; then
-            echo "::notice title=Simulator - running after 25 s::$log"
-          else
-            echo "::error title=Simulator - app not running::$log"
-            exit 1
-          fi
+        run: python3 iosApp/smoke_test.py
 
       - uses: actions/upload-artifact@v7
         if: always()
