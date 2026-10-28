@@ -45,6 +45,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jsemalja.trackmecalories
         TARGETED_DEVICE_FAMILY: "1"
+        # Rendered from the Android icon by tools/render_ios_icon.py.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # The Gradle build phase writes outside the sandboxed paths.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         FRAMEWORK_SEARCH_PATHS: $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
