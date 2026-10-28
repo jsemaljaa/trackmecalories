@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import com.jsemalja.trackmecalories.R
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.data.label
 
 /**
  * The Food tab. One search box over everything: your saved foods first, then a single list
@@ -362,9 +363,12 @@ private fun SearchMessage(
 
 @Composable
 private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit) {
+    val protein = hit.protein
+    val carbs = hit.carbs
+    val fat = hit.fat
     val macros = when {
         isLoading -> stringResource(R.string.loading_serving)
-        hit.protein != null && hit.carbs != null && hit.fat != null -> macroLine(hit.protein, hit.carbs, hit.fat)
+        protein != null && carbs != null && fat != null -> macroLine(protein, carbs, fat)
         else -> stringResource(R.string.tap_for_macros)
     }
     // Base foods show their usual portion ("Medium · 51 g") so it's clear they can be logged that way.

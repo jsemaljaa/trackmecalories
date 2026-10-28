@@ -1,7 +1,11 @@
 package com.jsemalja.trackmecalories.data
 
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlin.math.roundToInt
 
 /**
@@ -39,7 +43,7 @@ fun weeklyBudget(
     incompleteDays: Set<LocalDate> = emptySet()
 ): WeeklyBudget {
     val weekBudget = dailyGoal * 7
-    val earlierDays = (0 until ChronoUnit.DAYS.between(weekStart, today)).map { weekStart.plusDays(it) }
+    val earlierDays = (0 until weekStart.daysUntil(today)).map { weekStart.plus(it, DateTimeUnit.DAY) }
     val used = earlierDays.sumOf { d ->
         val logged = intakeByDate[d] ?: 0
         // A day with nothing logged is unknown, not a fast: count it as on-goal.
@@ -53,3 +57,6 @@ fun weeklyBudget(
     val target = share.coerceIn(min, max)
     return WeeklyBudget(weekBudget, used, daysLeft, target.roundToInt(), weekLeft, capped = share < min || share > max)
 }
+
+/** First day of [date]'s week. Weeks always start on Monday, whatever the device locale. */
+fun weekStartOf(date: LocalDate): LocalDate = date.minus(date.dayOfWeek.isoDayNumber - 1, DateTimeUnit.DAY)

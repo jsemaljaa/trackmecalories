@@ -5,10 +5,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 class WeeklyBudgetTest {
-    private val monday = LocalDate.of(2026, 10, 19)
+    private val monday = LocalDate(2026, 10, 19)
 
     @Test
     fun `monday gets the plain goal`() {

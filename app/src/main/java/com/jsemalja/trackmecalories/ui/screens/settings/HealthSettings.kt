@@ -20,6 +20,7 @@ import com.jsemalja.trackmecalories.data.HealthStatus
 import com.jsemalja.trackmecalories.ui.screens.FitText
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import com.jsemalja.trackmecalories.data.label
 
 /**
  * Health Connect: connection status, the button to grant access (or fix why it can't be),

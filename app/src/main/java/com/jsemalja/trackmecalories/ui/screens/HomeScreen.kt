@@ -94,6 +94,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
+import com.jsemalja.trackmecalories.data.currentDateTime
+import com.jsemalja.trackmecalories.data.label
 
 // Section order for the daily log; anything else (custom meal types) is appended alphabetically.
 private val MEAL_ORDER = listOf("Breakfast", "Lunch", "Dinner", "Snack", "Quick Add")
@@ -135,7 +137,7 @@ fun HomeScreen(
     val todayGoal = ((if (isToday) weekly?.todayTarget else null) ?: goals.calorieGoal) + activityBonus
     // Recomputed when the history changes; the clock moving a few minutes doesn't matter.
     val suggestions = remember(history, savedFoods, isToday) {
-        if (isToday) timeSuggestions(history, savedFoods, LocalDateTime.now()) else emptyList()
+        if (isToday) timeSuggestions(history, savedFoods, currentDateTime()) else emptyList()
     }
 
     var showManualDialog by remember { mutableStateOf(false) }

@@ -50,6 +50,7 @@ import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.data.label
 
 /**
  * Create or edit a recipe the way you cook it: add the ingredients as weighed raw, optionally

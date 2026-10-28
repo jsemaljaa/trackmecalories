@@ -12,9 +12,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 
 class FastingTest {
     private val fast = Fast(startTime = 1_000_000L, targetHours = 16)
@@ -61,16 +60,16 @@ class FastingTest {
 
     @Test
     fun clockTimeEarlierTodayIsToday() {
-        val now = ZonedDateTime.of(2026, 10, 27, 9, 15, 30, 0, ZoneId.of("Europe/Prague"))
-        val start = fastStartFromClock(LocalTime.of(7, 0), now)
-        assertEquals(ZonedDateTime.of(2026, 10, 27, 7, 0, 0, 0, now.zone), start)
+        val now = LocalDateTime(2026, 10, 27, 9, 15, 30)
+        val start = fastStartFromClock(LocalTime(7, 0), now)
+        assertEquals(LocalDateTime(2026, 10, 27, 7, 0), start)
     }
 
     @Test
     fun clockTimeLaterThanNowIsYesterday() {
-        val now = ZonedDateTime.of(2026, 10, 27, 9, 15, 30, 0, ZoneId.of("Europe/Prague"))
-        val start = fastStartFromClock(LocalTime.of(20, 30), now)
-        assertEquals(ZonedDateTime.of(2026, 10, 26, 20, 30, 0, 0, now.zone), start)
+        val now = LocalDateTime(2026, 10, 27, 9, 15, 30)
+        val start = fastStartFromClock(LocalTime(20, 30), now)
+        assertEquals(LocalDateTime(2026, 10, 26, 20, 30), start)
     }
 
     @Test

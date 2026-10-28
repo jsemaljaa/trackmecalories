@@ -13,35 +13,6 @@ import kotlinx.serialization.json.*
 import java.util.Locale
 
 /**
- * Data class representing food nutritional information per 100g.
- */
-data class FoodInfo(
-    val name: String,
-    val kcalPer100: Double,
-    val proteinPer100: Double,
-    val carbsPer100: Double,
-    val fatPer100: Double,
-    val fiberPer100: Double,
-    val saltPer100: Double,
-    val barcode: String? = null,
-    val unit: String = "g",
-    // The amount kcalPer100 etc. are relative to: 100 for g/ml, 1 for "pcs".
-    val referenceAmount: Double = 100.0,
-    val brand: String? = null,
-    val quantity: String? = null,
-    // Sold in Czechia per Open Food Facts; ranked higher, but nothing else is hidden.
-    val isCzech: Boolean = false,
-    // For the nutrition rating; null when the source doesn't say.
-    val sugarPer100: Double? = null,
-    val saturatedFatPer100: Double? = null,
-    // Official Nutri-Score grade (a-e) from Open Food Facts.
-    val nutriScore: String? = null,
-    // Nutri-Score food group ([FoodCategory.key]) and % fruit/vegetables/legumes, if known.
-    val category: String? = null,
-    val fvlPercent: Double? = null
-)
-
-/**
  * Repository for fetching food data from Open Food Facts.
  * Optionally backed by a [FoodDao] to cache barcode lookups offline, so repeat scans
  * don't always hit the network.

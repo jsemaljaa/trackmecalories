@@ -3,6 +3,9 @@
 package com.jsemalja.trackmecalories.ui.viewmodel
 
 import com.jsemalja.trackmecalories.data.weeklyBudget
+import com.jsemalja.trackmecalories.data.currentDate
+import com.jsemalja.trackmecalories.data.dateOfMillis
+import com.jsemalja.trackmecalories.data.parseDate
 import com.jsemalja.trackmecalories.data.DayActivity
 import com.jsemalja.trackmecalories.data.SatietyInsights
 import com.jsemalja.trackmecalories.data.satietyInsights
@@ -21,8 +24,6 @@ import com.jsemalja.trackmecalories.data.StreakHistory
 import com.jsemalja.trackmecalories.data.gamificationState
 import com.jsemalja.trackmecalories.data.newBadges
 import com.jsemalja.trackmecalories.data.reachedGoal
-import java.time.Instant
-import java.time.ZoneId
 import com.jsemalja.trackmecalories.fasting.FastingAccess
 import com.jsemalja.trackmecalories.fasting.FastingTimer
 import com.jsemalja.trackmecalories.data.suggestionHistoryStart
@@ -71,9 +72,10 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.TemporalAdjusters
+import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toKotlinLocalDate
+import com.jsemalja.trackmecalories.data.weekStartOf as sharedWeekStartOf
 import kotlin.math.roundToInt
 
 /**
@@ -246,7 +248,7 @@ class MainViewModel(
     val gamificationSettings: StateFlow<GamificationSettings> = userPrefs.gamification
 
     // Bumped on resume, so streaks move on to a new day without anything being logged.
-    private val gamificationDay = MutableStateFlow(LocalDate.now())
+    private val gamificationDay = MutableStateFlow(currentDate())
 
     private val streakHistory: Flow<StreakHistory> = combine(
         dao.getDailyTotalsBetween("", "9999-12-31"),
@@ -255,13 +257,12 @@ class MainViewModel(
         dao.getFinishedFasts(),
         dao.getWeightEntries()
     ) { totals, water, logs, fasts, weights ->
-        val zone = ZoneId.systemDefault()
         StreakHistory(
-            logged = totals.associateBy { LocalDate.parse(it.date) },
-            waterMl = water.associate { LocalDate.parse(it.date) to it.amountMl },
-            incompleteDays = logs.filter { !it.complete }.mapTo(mutableSetOf()) { LocalDate.parse(it.date) },
-            fastGoalDays = fasts.filter { it.reachedGoal }.mapTo(mutableSetOf()) { Instant.ofEpochMilli(it.endTime!!).atZone(zone).toLocalDate() },
-            weighInDays = weights.mapTo(mutableSetOf()) { LocalDate.parse(it.date) }
+            logged = totals.associateBy { parseDate(it.date) },
+            waterMl = water.associate { parseDate(it.date) to it.amountMl },
+            incompleteDays = logs.filter { !it.complete }.mapTo(mutableSetOf()) { parseDate(it.date) },
+            fastGoalDays = fasts.filter { it.reachedGoal }.mapTo(mutableSetOf()) { dateOfMillis(it.endTime!!) },
+            weighInDays = weights.mapTo(mutableSetOf()) { parseDate(it.date) }
         )
     }
 
@@ -278,7 +279,7 @@ class MainViewModel(
         combine(userPrefs.weeklyBudget, userPrefs.waterTracking, userPrefs.fasting, ::Triple),
         gamificationDay
     ) { (history, counts), goals, (weekly, water, fastingOn), today ->
-        gamificationState(settings.streaks, history, counts, goals, today, ::weekStartOf, weekly, water, fastingOn.enabled)
+        gamificationState(settings.streaks, history, counts, goals, today, ::sharedWeekStartOf, weekly, water, fastingOn.enabled)
     }.flowOn(Dispatchers.Default)
 
     /** Streaks and badges; null while they're switched off (nothing is worked out then). */
@@ -310,13 +311,13 @@ class MainViewModel(
 
     /** Called on resume: the day may have changed while the app was in the background. */
     fun refreshGamification() {
-        gamificationDay.value = LocalDate.now()
+        gamificationDay.value = currentDate()
     }
 
     /** This week's budget and today's flexible target; null when weekly budgeting is off. */
     val weeklyBudget: StateFlow<WeeklyBudget?> = run {
-        val today = LocalDate.now()
-        val start = weekStartOf(today)
+        val today = currentDate()
+        val start = sharedWeekStartOf(today)
         combine(
             userPrefs.weeklyBudget,
             userGoal,
@@ -328,8 +329,8 @@ class MainViewModel(
                 dailyGoal = goal.calorieGoal,
                 weekStart = start,
                 today = today,
-                intakeByDate = totals.associate { LocalDate.parse(it.date) to it.totalKcal },
-                incompleteDays = logs.filter { !it.complete }.map { LocalDate.parse(it.date) }.toSet()
+                intakeByDate = totals.associate { parseDate(it.date) to it.totalKcal },
+                incompleteDays = logs.filter { !it.complete }.map { parseDate(it.date) }.toSet()
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -406,8 +407,8 @@ class MainViewModel(
         ) { points, totals, dayLogs ->
             val incomplete = dayLogs.filter { !it.complete }.map { it.date }.toSet()
             val intake = totals.filter { it.date !in incomplete }
-                .associate { LocalDate.parse(it.date) to it.totalKcal }
-            adaptiveMaintenance(points, intake, end)
+                .associate { parseDate(it.date) to it.totalKcal }
+            adaptiveMaintenance(points, intake, end.toKotlinLocalDate())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -989,9 +990,8 @@ private const val CZECH_BOOST = 0.7
 // Results found through a translated query rank below ones matching what was typed.
 private const val TRANSLATED_QUERY_PENALTY = 0.3
 
-/** First day of [date]'s week. Weeks always start on Monday, whatever the device locale. */
-fun weekStartOf(date: LocalDate): LocalDate =
-    date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+/** [com.jsemalja.trackmecalories.data.weekStartOf] for the screens, which still use java.time. */
+fun weekStartOf(date: LocalDate): LocalDate = sharedWeekStartOf(date.toKotlinLocalDate()).toJavaLocalDate()
 
 class MainViewModelFactory(
     private val dao: FoodDao,

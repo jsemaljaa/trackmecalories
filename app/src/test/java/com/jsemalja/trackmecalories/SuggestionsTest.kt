@@ -7,13 +7,14 @@ import com.jsemalja.trackmecalories.data.whatFits
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import com.jsemalja.trackmecalories.data.toEpochMillis
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
 
 class SuggestionsTest {
-    private val zone = ZoneOffset.UTC
+    private val zone = TimeZone.UTC
     // A Monday morning.
-    private val now = LocalDateTime.of(2026, 10, 26, 8, 0)
+    private val now = LocalDateTime(2026, 10, 26, 8, 0)
 
     private fun food(id: Int, name: String, kcal: Double, protein: Double, fiber: Double = 0.0) = CustomFood(
         id = id, name = name, kcalPer100 = kcal, proteinPer100 = protein, carbsPer100 = 0.0,
@@ -22,7 +23,7 @@ class SuggestionsTest {
 
     private fun eaten(food: CustomFood, at: LocalDateTime, amount: Double = 100.0) = FoodEntry(
         name = food.name, kcal = 0, protein = 0.0, carbs = 0.0, fat = 0.0, fiber = 0.0, salt = 0.0,
-        amount = amount, date = at.toLocalDate().toString(), time = at.toInstant(zone).toEpochMilli(),
+        amount = amount, date = at.toLocalDate().toString(), time = at.toEpochMillis(zone),
         foodId = food.id
     )
 

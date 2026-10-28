@@ -38,7 +38,9 @@ import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.Fast
 import com.jsemalja.trackmecalories.data.HOUR_MS
 import com.jsemalja.trackmecalories.data.fastProgress
+import com.jsemalja.trackmecalories.data.currentDateTime
 import com.jsemalja.trackmecalories.data.fastStartFromClock
+import com.jsemalja.trackmecalories.data.toEpochMillis
 import com.jsemalja.trackmecalories.data.formatFastDuration
 import com.jsemalja.trackmecalories.data.formatStopwatch
 import com.jsemalja.trackmecalories.data.goalTime
@@ -47,9 +49,8 @@ import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.theme.tintedCards
 import kotlinx.coroutines.delay
 import java.time.Instant
-import java.time.LocalTime
+import kotlinx.datetime.LocalTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.util.Date
 
 /**
@@ -112,8 +113,8 @@ fun FastingCard(
                         )
                     } else {
                         Text(
-                            if (last?.endTime != null) stringResource(R.string.fasting_since_last, duration(now - last.endTime))
-                            else stringResource(R.string.fasting_not_fasting),
+                            last?.endTime?.let { stringResource(R.string.fasting_since_last, duration(now - it)) }
+                                ?: stringResource(R.string.fasting_not_fasting),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         last?.endTime?.let { end ->
@@ -196,7 +197,7 @@ private fun FastStartDialog(start: Long, onDismiss: () -> Unit, onSave: (Long) -
         text = { TimePicker(state) },
         confirmButton = {
             Button(onClick = {
-                onSave(fastStartFromClock(LocalTime.of(state.hour, state.minute), ZonedDateTime.now()).toInstant().toEpochMilli())
+                onSave(fastStartFromClock(LocalTime(state.hour, state.minute), currentDateTime()).toEpochMillis())
             }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }

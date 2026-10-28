@@ -9,15 +9,15 @@ import com.jsemalja.trackmecalories.data.dailyStreak
 import com.jsemalja.trackmecalories.data.streakDays
 import com.jsemalja.trackmecalories.data.streaks
 import com.jsemalja.trackmecalories.data.weeklyStreak
-import com.jsemalja.trackmecalories.ui.viewmodel.weekStartOf
+import com.jsemalja.trackmecalories.data.weekStartOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 class StreaksTest {
-    private val today = LocalDate.of(2026, 10, 21) // a Wednesday
+    private val today = LocalDate(2026, 10, 21) // a Wednesday
 
     /** Days counted back from [today]: 0 is today, 1 yesterday. */
     private fun days(vararg ago: Long) = ago.mapTo(mutableSetOf()) { today.minusDays(it) }

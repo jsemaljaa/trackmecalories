@@ -10,12 +10,12 @@ import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.badgeProgress
 import com.jsemalja.trackmecalories.data.gamificationState
 import com.jsemalja.trackmecalories.data.newBadges
-import com.jsemalja.trackmecalories.ui.viewmodel.weekStartOf
+import com.jsemalja.trackmecalories.data.weekStartOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 class AchievementsTest {
     @Test
@@ -40,7 +40,7 @@ class AchievementsTest {
         assertEquals(1f, weighed.fraction, 0f)
     }
 
-    private val today = LocalDate.of(2026, 10, 21)
+    private val today = LocalDate(2026, 10, 21)
 
     private fun state(tracked: Set<StreakKind>, waterOn: Boolean, fastingOn: Boolean, counts: GamificationCounts = GamificationCounts()) =
         gamificationState(

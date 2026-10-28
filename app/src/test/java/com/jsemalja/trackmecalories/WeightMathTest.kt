@@ -9,10 +9,10 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 class WeightMathTest {
-    private val today = LocalDate.of(2026, 10, 25)
+    private val today = LocalDate(2026, 10, 25)
 
     private fun entries(vararg kgByDaysAgo: Pair<Long, Double>) =
         kgByDaysAgo.map { (ago, kg) -> WeightEntry(date = today.minusDays(ago).toString(), weightKg = kg) }

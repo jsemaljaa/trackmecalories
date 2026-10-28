@@ -103,7 +103,7 @@ const val TBSP_ML = 15.0
 fun amountIn(amount: Double, portion: Portion?, counting: Boolean): Double {
     val count = portion?.let { amount / it.grams } ?: amount
     val step = if (counting) 0.1 else 1.0
-    return maxOf(step, Math.round(count / step) * step).let { Math.round(it * 10) / 10.0 }
+    return maxOf(step, (count / step).roundToLong() * step).let { (it * 10).roundToLong() / 10.0 }
 }
 
 /**

@@ -45,6 +45,7 @@ import com.jsemalja.trackmecalories.data.StreakKind
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.viewmodel.weekStartOf
 import java.time.LocalDate
+import kotlinx.datetime.toKotlinLocalDate
 
 val StreakKind.icon: ImageVector
     get() = when (this) {
@@ -345,7 +346,7 @@ fun ConsistencyCard(state: GamificationState, today: LocalDate) {
     val none = colors.surfaceContainerHighest
     val firstWeek = weekStartOf(today).minusWeeks(CONSISTENCY_WEEKS - 1L)
     val shown = (0 until CONSISTENCY_WEEKS * 7).map { firstWeek.plusDays(it.toLong()) }.filter { !it.isAfter(today) }
-    val logged = shown.count { it in state.loggedDays }
+    val logged = shown.count { it.toKotlinLocalDate() in state.loggedDays }
     val bestLogging = state.streaks[StreakKind.LOGGING]?.best
 
     AppCard(modifier = Modifier.fillMaxWidth()) {
@@ -364,8 +365,8 @@ fun ConsistencyCard(state: GamificationState, today: LocalDate) {
                                 val day = firstWeek.plusDays(week * 7L + dow)
                                 val fill = when {
                                     day.isAfter(today) -> Color.Transparent
-                                    day in state.completeDays -> complete
-                                    day in state.loggedDays -> incomplete
+                                    day.toKotlinLocalDate() in state.completeDays -> complete
+                                    day.toKotlinLocalDate() in state.loggedDays -> incomplete
                                     else -> none
                                 }
                                 Box(

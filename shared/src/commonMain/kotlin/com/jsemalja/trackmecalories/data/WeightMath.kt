@@ -1,7 +1,10 @@
 package com.jsemalja.trackmecalories.data
 
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -22,10 +25,11 @@ fun weightTrend(entries: List<WeightEntry>, smoothing: Double = 0.1): List<Weigh
     return sorted.map { e ->
         val date = LocalDate.parse(e.date)
         val t = trend
-        val next = if (t == null || lastDate == null) {
+        val prev = lastDate
+        val next = if (t == null || prev == null) {
             e.weightKg
         } else {
-            val days = ChronoUnit.DAYS.between(lastDate, date).coerceAtLeast(1)
+            val days = prev.daysUntil(date).coerceAtLeast(1)
             val alpha = 1 - (1 - smoothing).pow(days.toDouble())
             t + alpha * (e.weightKg - t)
         }
@@ -51,17 +55,17 @@ data class WeightStats(
     val projectedGoalDate: LocalDate?
 )
 
-fun weightStats(points: List<WeightPoint>, goalKg: Double?, today: LocalDate = LocalDate.now()): WeightStats? {
+fun weightStats(points: List<WeightPoint>, goalKg: Double?, today: LocalDate = currentDate()): WeightStats? {
     if (points.isEmpty()) return null
     val last = points.last()
     val first = points.first()
 
-    val window = points.filter { !it.date.isBefore(today.minusDays(28)) }
+    val window = points.filter { it.date >= today.minus(28, DateTimeUnit.DAY) }
     val rate = trendSlopePerDay(window)?.let { it * 7 }
 
     val toGoal = goalKg?.let { it - last.trend }
     val projected = if (toGoal != null && rate != null && rate != 0.0 && toGoal / rate > 0) {
-        today.plusDays(ceil(toGoal / rate * 7).toLong())
+        today.plus(ceil(toGoal / rate * 7).toLong(), DateTimeUnit.DAY)
     } else null
 
     return WeightStats(
@@ -86,7 +90,7 @@ fun weightStats(points: List<WeightPoint>, goalKg: Double?, today: LocalDate = L
 private fun trendSlopePerDay(points: List<WeightPoint>): Double? {
     if (points.size < 2) return null
     val origin = points.first().date
-    val x = points.map { ChronoUnit.DAYS.between(origin, it.date).toDouble() }
+    val x = points.map { origin.daysUntil(it.date).toDouble() }
     if (x.last() - x.first() < 7) return null
     val y = points.map { it.weight }
     val mx = x.average()
@@ -105,15 +109,15 @@ data class AdaptiveMaintenance(val kcal: Int, val loggedDays: Int, val spanDays:
 fun adaptiveMaintenance(
     points: List<WeightPoint>,
     dailyIntake: Map<LocalDate, Int>,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate = currentDate(),
     windowDays: Long = 28
 ): AdaptiveMaintenance? {
-    val from = today.minusDays(windowDays)
-    val window = points.filter { !it.date.isBefore(from) && !it.date.isAfter(today) }
+    val from = today.minus(windowDays, DateTimeUnit.DAY)
+    val window = points.filter { it.date in from..today }
     val slope = trendSlopePerDay(window) ?: return null
-    val span = ChronoUnit.DAYS.between(window.first().date, window.last().date).toInt()
+    val span = window.first().date.daysUntil(window.last().date)
     // Only days that were actually logged; today is still in progress.
-    val intake = dailyIntake.filterKeys { !it.isBefore(from) && it.isBefore(today) }.values.filter { it > 0 }
+    val intake = dailyIntake.filterKeys { it >= from && it < today }.values.filter { it > 0 }
     if (span < 14 || window.size < 4 || intake.size < 10) return null
     val tdee = intake.average() - slope * 7700
     return AdaptiveMaintenance(tdee.roundToInt(), intake.size, span)

@@ -1,6 +1,6 @@
 package com.jsemalja.trackmecalories.data
 
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 
 /*
@@ -118,14 +118,14 @@ fun streakDays(
 
 /** A daily streak, with one miss forgiven per [STREAK_GRACE_DAYS] days. */
 fun dailyStreak(days: Set<LocalDate>, today: LocalDate): Streak =
-    streakOver(days.mapTo(mutableSetOf()) { it.toEpochDay() }, today.toEpochDay(), STREAK_GRACE_DAYS)
+    streakOver(days.mapTo(mutableSetOf()) { it.toEpochDays() }, today.toEpochDays(), STREAK_GRACE_DAYS)
 
 /** A weekly streak (no misses forgiven: a week is already lenient). */
 fun weeklyStreak(days: Set<LocalDate>, today: LocalDate, weekStart: (LocalDate) -> LocalDate): Streak =
     streakOver(days.mapTo(mutableSetOf()) { weekIndex(weekStart(it)) }, weekIndex(weekStart(today)), graceGap = null)
 
 // Week starts all fall on the same weekday, so they're 7 epoch days apart.
-private fun weekIndex(weekStart: LocalDate): Long = Math.floorDiv(weekStart.toEpochDay(), 7L)
+private fun weekIndex(weekStart: LocalDate): Long = weekStart.toEpochDays().floorDiv(7L)
 
 /**
  * The streak over consecutively numbered periods (days or weeks) up to [now]. A missed period

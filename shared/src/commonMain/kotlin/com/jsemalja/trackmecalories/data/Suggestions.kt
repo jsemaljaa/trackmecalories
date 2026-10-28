@@ -1,11 +1,17 @@
 package com.jsemalja.trackmecalories.data
 
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.minus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.ln
@@ -28,8 +34,9 @@ data class FitSuggestion(
 private fun matchFood(entry: FoodEntry, byId: Map<Int, CustomFood>, byName: Map<Pair<String, String>, CustomFood>): CustomFood? =
     entry.foodId?.let(byId::get) ?: byName[entry.name.lowercase() to entry.unit]
 
-private fun FoodEntry.localTime(zone: ZoneId): LocalDateTime =
-    LocalDateTime.ofInstant(Instant.ofEpochMilli(time), zone)
+@OptIn(ExperimentalTime::class)
+private fun FoodEntry.localTime(zone: TimeZone): LocalDateTime =
+    Instant.fromEpochMilliseconds(time).toLocalDateTime(zone)
 
 private fun isWeekend(d: DayOfWeek) = d == DayOfWeek.SATURDAY || d == DayOfWeek.SUNDAY
 
@@ -38,20 +45,21 @@ private fun isWeekend(d: DayOfWeek) = d == DayOfWeek.SATURDAY || d == DayOfWeek.
  * day, weighted toward the same kind of day (weekday vs weekend) and recent weeks. Foods
  * logged in the last 3 hours are skipped — you probably don't want the same thing again.
  */
+@OptIn(ExperimentalTime::class)
 fun timeSuggestions(
     entries: List<FoodEntry>,
     foods: List<CustomFood>,
     now: LocalDateTime,
-    zone: ZoneId = ZoneId.systemDefault(),
+    zone: TimeZone = TimeZone.currentSystemDefault(),
     windowMinutes: Int = 90,
     limit: Int = 4
 ): List<FoodHabit> {
     val byId = foods.associateBy { it.id }
     val byName = foods.associateBy { it.name.lowercase() to it.unit }
     val nowMinute = now.hour * 60 + now.minute
-    val recentCutoff = now.minusHours(3)
+    val recentCutoff = now.toInstant(zone).minus(3.hours).toLocalDateTime(zone)
 
-    val justHad = entries.filter { it.localTime(zone).isAfter(recentCutoff) }
+    val justHad = entries.filter { it.localTime(zone) > recentCutoff }
         .mapNotNull { matchFood(it, byId, byName)?.id }.toSet()
 
     val scores = HashMap<Int, Double>()
@@ -64,11 +72,11 @@ fun timeSuggestions(
         val minute = t.hour * 60 + t.minute
         val diff = abs(minute - nowMinute).let { min(it, 1440 - it) }
         if (diff > windowMinutes) continue
-        val daysAgo = ChronoUnit.DAYS.between(t.toLocalDate(), now.toLocalDate()).coerceAtLeast(0)
+        val daysAgo = t.date.daysUntil(now.date).coerceAtLeast(0)
         val dayType = if (isWeekend(t.dayOfWeek) == isWeekend(now.dayOfWeek)) 1.0 else 0.4
         val closeness = 1.0 - diff / (windowMinutes * 2.0)
-        scores.merge(food.id, dayType * closeness * exp(-daysAgo / 30.0), Double::plus)
-        counts.merge(food.id, 1, Int::plus)
+        scores[food.id] = (scores[food.id] ?: 0.0) + dayType * closeness * exp(-daysAgo / 30.0)
+        counts[food.id] = (counts[food.id] ?: 0) + 1
         amounts.getOrPut(food.id) { mutableListOf() }.add(e.amount)
     }
 
@@ -102,7 +110,7 @@ fun whatFits(
     for (e in entries) {
         if (e.mealType == "Quick Add") continue
         val food = matchFood(e, byId, byName) ?: continue
-        counts.merge(food.id, 1, Int::plus)
+        counts[food.id] = (counts[food.id] ?: 0) + 1
         amounts.getOrPut(food.id) { mutableListOf() }.add(e.amount)
     }
 
@@ -127,4 +135,4 @@ private fun median(values: List<Double>): Double {
 }
 
 /** Start of the history window used for suggestions. */
-fun suggestionHistoryStart(today: LocalDate = LocalDate.now()): LocalDate = today.minusDays(90)
+fun suggestionHistoryStart(today: LocalDate = currentDate()): LocalDate = today.minus(90, DateTimeUnit.DAY)

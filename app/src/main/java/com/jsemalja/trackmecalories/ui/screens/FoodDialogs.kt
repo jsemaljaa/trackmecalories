@@ -61,6 +61,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.em
 import com.jsemalja.trackmecalories.data.stepAmount
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
+import com.jsemalja.trackmecalories.data.label
 
 private val MEAL_TYPES = listOf("Breakfast", "Lunch", "Dinner", "Snack")
 

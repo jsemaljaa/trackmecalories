@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "trackmecalories"
 include(":app")
+include(":shared")

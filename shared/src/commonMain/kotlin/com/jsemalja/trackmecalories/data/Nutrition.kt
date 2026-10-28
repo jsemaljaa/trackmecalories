@@ -1,8 +1,6 @@
 package com.jsemalja.trackmecalories.data
 
-import androidx.annotation.StringRes
-import com.jsemalja.trackmecalories.R
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 import kotlin.math.roundToInt
 
 /**
@@ -10,19 +8,17 @@ import kotlin.math.roundToInt
  * gram goals from the calorie goal (4/4/9 kcal per gram); [CUSTOM] keeps hand-entered grams.
  */
 enum class Diet(
-    @StringRes val label: Int,
-    @StringRes val description: Int,
     val proteinPct: Int,
     val carbsPct: Int,
     val fatPct: Int
 ) {
-    BALANCED(R.string.diet_balanced, R.string.diet_balanced_desc, 25, 50, 25),
-    HIGH_PROTEIN(R.string.diet_high_protein, R.string.diet_high_protein_desc, 35, 40, 25),
-    LOW_CARB(R.string.diet_low_carb, R.string.diet_low_carb_desc, 30, 20, 50),
-    KETO(R.string.diet_keto, R.string.diet_keto_desc, 20, 5, 75),
-    MEDITERRANEAN(R.string.diet_mediterranean, R.string.diet_mediterranean_desc, 20, 45, 35),
-    ZONE(R.string.diet_zone, R.string.diet_zone_desc, 30, 40, 30),
-    CUSTOM(R.string.diet_custom, R.string.diet_custom_desc, 0, 0, 0);
+    BALANCED(25, 50, 25),
+    HIGH_PROTEIN(35, 40, 25),
+    LOW_CARB(30, 20, 50),
+    KETO(20, 5, 75),
+    MEDITERRANEAN(20, 45, 35),
+    ZONE(30, 40, 30),
+    CUSTOM(0, 0, 0);
 
     /** Gram goals for [kcal] under this diet, or null for [CUSTOM]. */
     fun macrosFor(kcal: Int): Macros? {
@@ -49,26 +45,26 @@ fun UserGoal.withDietMacros(): UserGoal {
     return copy(proteinGoal = macros.protein, carbGoal = macros.carbs, fatGoal = macros.fat, fiberGoal = macros.fiber)
 }
 
-enum class Sex(@StringRes val label: Int) {
-    FEMALE(R.string.sex_female),
-    MALE(R.string.sex_male)
+enum class Sex {
+    FEMALE,
+    MALE
 }
 
-enum class ActivityLevel(@StringRes val label: Int, @StringRes val description: Int, val factor: Double) {
-    SEDENTARY(R.string.activity_sedentary, R.string.activity_sedentary_desc, 1.2),
-    LIGHT(R.string.activity_light, R.string.activity_light_desc, 1.375),
-    MODERATE(R.string.activity_moderate, R.string.activity_moderate_desc, 1.55),
-    ACTIVE(R.string.activity_active, R.string.activity_active_desc, 1.725),
-    VERY_ACTIVE(R.string.activity_very_active, R.string.activity_very_active_desc, 1.9)
+enum class ActivityLevel(val factor: Double) {
+    SEDENTARY(1.2),
+    LIGHT(1.375),
+    MODERATE(1.55),
+    ACTIVE(1.725),
+    VERY_ACTIVE(1.9)
 }
 
 /** Weekly weight change the calorie target aims for. */
-enum class WeightPace(@StringRes val label: Int, val kgPerWeek: Double) {
-    LOSE_FAST(R.string.pace_lose_fast, -0.75),
-    LOSE(R.string.pace_lose, -0.5),
-    LOSE_SLOW(R.string.pace_lose_slow, -0.25),
-    MAINTAIN(R.string.pace_maintain, 0.0),
-    GAIN(R.string.pace_gain, 0.25)
+enum class WeightPace(val kgPerWeek: Double) {
+    LOSE_FAST(-0.75),
+    LOSE(-0.5),
+    LOSE_SLOW(-0.25),
+    MAINTAIN(0.0),
+    GAIN(0.25)
 }
 
 /**
@@ -88,29 +84,30 @@ object CalorieCalculator {
     fun target(maintenance: Int, pace: WeightPace): Int =
         (maintenance + pace.kgPerWeek * KCAL_PER_KG / 7).roundToInt().coerceAtLeast(MIN_KCAL)
 
-    fun age(birthYear: Int, today: LocalDate = LocalDate.now()): Int = today.year - birthYear
+    fun age(birthYear: Int, today: LocalDate = currentDate()): Int = today.year - birthYear
 }
 
 /** Body-mass index, or null without a height. */
 fun bmi(weightKg: Double, heightCm: Double?): Double? =
     heightCm?.takeIf { it > 0 }?.let { weightKg / ((it / 100) * (it / 100)) }
 
-@StringRes
-fun bmiCategory(bmi: Double): Int = when {
-    bmi < 18.5 -> R.string.bmi_under
-    bmi < 25 -> R.string.bmi_normal
-    bmi < 30 -> R.string.bmi_over
-    else -> R.string.bmi_obese
+enum class BmiClass { UNDER, NORMAL, OVER, OBESE }
+
+fun bmiClass(bmi: Double): BmiClass = when {
+    bmi < 18.5 -> BmiClass.UNDER
+    bmi < 25 -> BmiClass.NORMAL
+    bmi < 30 -> BmiClass.OVER
+    else -> BmiClass.OBESE
 }
 
 /**
  * How sure an entry's amount is. Weekly totals get an error band from these: a weighed
  * chicken breast is close to exact, a restaurant meal can easily be 25% off either way.
  */
-enum class Confidence(@StringRes val label: Int, val relativeError: Double) {
-    WEIGHED(R.string.confidence_weighed, 0.05),
-    ESTIMATED(R.string.confidence_estimated, 0.15),
-    GUESSED(R.string.confidence_guessed, 0.30);
+enum class Confidence(val relativeError: Double) {
+    WEIGHED(0.05),
+    ESTIMATED(0.15),
+    GUESSED(0.30);
 
     companion object {
         fun from(name: String?): Confidence = entries.firstOrNull { it.name == name } ?: ESTIMATED

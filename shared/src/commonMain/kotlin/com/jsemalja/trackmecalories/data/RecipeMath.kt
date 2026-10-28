@@ -1,6 +1,7 @@
 package com.jsemalja.trackmecalories.data
 
 import kotlin.math.abs
+import kotlin.math.roundToLong
 
 /** Nutrient amounts (not per-100). */
 data class NutrientTotals(
@@ -52,22 +53,22 @@ fun RecipeIngredient.inPieces(): Boolean {
     if (unit != "pcs") return false
     if (gramsPerUnit <= 0.0) return true
     val halves = amount * 2
-    return amount >= 0.5 && abs(halves - Math.round(halves)) < 0.01
+    return amount >= 0.5 && abs(halves - halves.roundToLong()) < 0.01
 }
 
 /** Nutrients per 100 g of a dish weighing [weightG]; null while the weight is unknown. */
 fun NutrientTotals.per100g(weightG: Double): NutrientTotals? = if (weightG > 0) this * (100.0 / weightG) else null
 
 /** Typical raw -> cooked weight factors (water absorbed or lost in cooking). */
-enum class CookFactor(@androidx.annotation.StringRes val label: Int, val factor: Double) {
-    NONE(com.jsemalja.trackmecalories.R.string.cook_none, 1.0),
-    RICE(com.jsemalja.trackmecalories.R.string.cook_rice, 2.5),
-    PASTA(com.jsemalja.trackmecalories.R.string.cook_pasta, 2.2),
-    GRAINS(com.jsemalja.trackmecalories.R.string.cook_grains, 2.6),
-    LEGUMES(com.jsemalja.trackmecalories.R.string.cook_legumes, 2.4),
-    MEAT(com.jsemalja.trackmecalories.R.string.cook_meat, 0.75),
-    FISH(com.jsemalja.trackmecalories.R.string.cook_fish, 0.8),
-    VEGETABLES(com.jsemalja.trackmecalories.R.string.cook_vegetables, 0.8)
+enum class CookFactor(val factor: Double) {
+    NONE(1.0),
+    RICE(2.5),
+    PASTA(2.2),
+    GRAINS(2.6),
+    LEGUMES(2.4),
+    MEAT(0.75),
+    FISH(0.8),
+    VEGETABLES(0.8)
 }
 
 /** Makes an ingredient (snapshot of [food]) of [amount] in the food's unit. */
@@ -113,6 +114,6 @@ fun Recipe.toCustomFood(ingredients: List<RecipeIngredient>, existing: CustomFoo
         referenceAmount = if (perServing) 1.0 else 100.0,
         // A serving's weight, when the dish's is known, so it can also be logged in grams.
         pieceGrams = dishWeightG(ingredients).takeIf { perServing && it > 0 }?.div(servings.coerceAtLeast(0.01)) ?: base.pieceGrams,
-        lastUsedAt = base.lastUsedAt.takeIf { it > 0 } ?: System.currentTimeMillis()
+        lastUsedAt = base.lastUsedAt.takeIf { it > 0 } ?: currentTimeMillis()
     )
 }

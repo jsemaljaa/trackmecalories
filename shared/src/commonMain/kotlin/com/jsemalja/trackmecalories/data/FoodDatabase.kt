@@ -12,6 +12,8 @@ import androidx.room.Delete
 import androidx.room.Update
 import androidx.room.Index
 import androidx.room.Transaction
+import androidx.room.ConstructedBy
+import androidx.room.RoomDatabaseConstructor
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -31,7 +33,7 @@ data class FoodEntry(
     val unit: String = "g",
     val date: String, // ISO-8601 string (e.g., "2026-03-09")
     val mealType: String = "Snack", // Breakfast, Lunch, Dinner, Snack
-    val time: Long = System.currentTimeMillis(),
+    val time: Long = currentTimeMillis(),
     // The amount the per-100-style macros below are relative to (100 for g/ml, 1 for "pcs").
     val referenceAmount: Double = 100.0,
     // How sure the amount is: WEIGHED, ESTIMATED or GUESSED (see [Confidence]).
@@ -123,7 +125,7 @@ data class WeightEntry(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val date: String,
     val weightKg: Double,
-    val time: Long = System.currentTimeMillis()
+    val time: Long = currentTimeMillis()
 )
 
 /**
@@ -140,7 +142,7 @@ data class Recipe(
     // "pcs" = logged per serving, "g" = per 100 g of the finished dish.
     val logBy: String = "pcs",
     val customFoodId: Int? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = currentTimeMillis()
 )
 
 /**
@@ -181,7 +183,7 @@ data class WaterEntry(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val amountMl: Double,
     val date: String,
-    val time: Long = System.currentTimeMillis()
+    val time: Long = currentTimeMillis()
 )
 
 /**
@@ -205,7 +207,7 @@ data class FoodCache(
     val saltPer100: Double,
     val unit: String = "g",
     val referenceAmount: Double = 100.0,
-    val cachedAt: Long = System.currentTimeMillis(),
+    val cachedAt: Long = currentTimeMillis(),
     val quantity: String? = null,
     val sugarPer100: Double? = null,
     val saturatedFatPer100: Double? = null,
@@ -345,7 +347,7 @@ interface FoodDao {
     )
 
     @Query("UPDATE custom_foods SET lastUsedAt = :timestamp WHERE id = :id")
-    suspend fun touchLastUsed(id: Int, timestamp: Long = System.currentTimeMillis())
+    suspend fun touchLastUsed(id: Int, timestamp: Long = currentTimeMillis())
 
     @Query("UPDATE custom_foods SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun setFavorite(id: Int, isFavorite: Boolean)
@@ -548,6 +550,13 @@ interface FoodDao {
     version = 12,
     exportSchema = true
 )
+@ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun foodDao(): FoodDao
+}
+
+// Room generates the actual for each platform (needed for non-Android targets).
+@Suppress("NO_ACTUAL_FOR_EXPECT", "KotlinNoActualForExpect")
+expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
+    override fun initialize(): AppDatabase
 }

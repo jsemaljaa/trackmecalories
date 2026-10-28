@@ -1,6 +1,6 @@
 package com.jsemalja.trackmecalories.data
 
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 /** Counts for badges that aren't per day. */
 data class GamificationCounts(

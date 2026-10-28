@@ -1,7 +1,9 @@
 package com.jsemalja.trackmecalories.data
 
-import java.time.LocalTime
-import java.time.ZonedDateTime
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.minus
 
 const val HOUR_MS = 3_600_000L
 private const val MINUTE_MS = 60_000L
@@ -37,9 +39,10 @@ fun nextFastDue(lastFastEnd: Long, planHours: Int): Long =
  * A fast's start picked as a clock time ("I stopped eating at 20:30"): today, or yesterday when
  * that time hasn't come yet today. Never in the future.
  */
-fun fastStartFromClock(time: LocalTime, now: ZonedDateTime): ZonedDateTime {
-    val today = now.with(time).withSecond(0).withNano(0)
-    return if (today.isAfter(now)) today.minusDays(1) else today
+fun fastStartFromClock(time: LocalTime, now: LocalDateTime): LocalDateTime {
+    val clock = LocalTime(time.hour, time.minute)
+    val today = LocalDateTime(now.date, clock)
+    return if (today > now) LocalDateTime(now.date.minus(1, DateTimeUnit.DAY), clock) else today
 }
 
 /** "16 h", "12 h 5 min" or "45 min"; the unit words are passed in so they can be localized. */
@@ -57,5 +60,7 @@ fun formatFastDuration(ms: Long, hourUnit: String, minuteUnit: String): String {
 /** A stopwatch reading, "12:04:09"; hours keep counting past 24. */
 fun formatStopwatch(ms: Long): String {
     val totalSeconds = ms.coerceAtLeast(0) / 1000
-    return "%d:%02d:%02d".format(totalSeconds / 3600, totalSeconds / 60 % 60, totalSeconds % 60)
+    return "${totalSeconds / 3600}:${(totalSeconds / 60 % 60).twoDigits()}:${(totalSeconds % 60).twoDigits()}"
 }
+
+private fun Long.twoDigits(): String = toString().padStart(2, '0')

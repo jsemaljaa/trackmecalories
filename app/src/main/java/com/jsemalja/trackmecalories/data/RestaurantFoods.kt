@@ -108,33 +108,6 @@ class RestaurantMenu(private val assets: AssetManager) {
 }
 
 /**
- * A search hit from kaloricketabulky.cz. The search endpoint only returns kcal/100; macros
- * come from [KalorickeTabulkyRepository.macros] and the serving size from
- * [KalorickeTabulkyRepository.resolve].
- */
-data class KtHit(
-    val id: String,
-    val title: String,
-    val brand: String?,
-    val kcalPer100: Double,
-    val unit: String
-)
-
-/** Per-100 g/ml macros of a KT food. */
-data class KtMacros(
-    val kcal: Double,
-    val protein: Double,
-    val carbs: Double,
-    val fat: Double,
-    val fiber: Double,
-    val salt: Double,
-    val sugar: Double?,
-    val saturatedFat: Double?,
-    // KT's food type, e.g. "vareni-a-peceni/oleje-olivove" (see [ktCategory]).
-    val typeUrl: String? = null
-)
-
-/**
  * Live lookups against kaloricketabulky.cz, the largest Czech food database (Czech brands,
  * supermarket products, restaurant meals).
  */

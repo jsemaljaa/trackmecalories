@@ -39,6 +39,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlinx.datetime.toJavaLocalDate
 import kotlin.math.abs
 
 private enum class WeightRange(@androidx.annotation.StringRes val label: Int, val days: Long?) {
@@ -100,12 +101,12 @@ fun WeightSection(
                         unitStyle = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        stringResource(R.string.weight_last_reading, kg(stats.latest), stats.latestDate.format(dateFormat)),
+                        stringResource(R.string.weight_last_reading, kg(stats.latest), stats.latestDate.toJavaLocalDate().format(dateFormat)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        stringResource(R.string.weight_since_start, signedKg(stats.change), stats.startDate.format(dateFormat)),
+                        stringResource(R.string.weight_since_start, signedKg(stats.change), stats.startDate.toJavaLocalDate().format(dateFormat)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -131,7 +132,7 @@ fun WeightSection(
                         stats.projectedGoalDate != null -> stringResource(
                             R.string.weight_goal_eta,
                             signedKg(stats.toGoal!!),
-                            stats.projectedGoalDate.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
+                            stats.projectedGoalDate!!.toJavaLocalDate().format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
                         )
                         else -> stringResource(R.string.weight_goal_to_go, signedKg(stats.toGoal!!))
                     },
@@ -181,7 +182,7 @@ fun WeightSection(
                     }
                     Spacer(Modifier.height(12.dp))
                     val from = range.days?.let { LocalDate.now().minusDays(it) }
-                    WeightChart(points.filter { from == null || !it.date.isBefore(from) }, goalKg)
+                    WeightChart(points.filter { from == null || !it.date.toJavaLocalDate().isBefore(from) }, goalKg)
                     Spacer(Modifier.height(6.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         LegendItem(MaterialTheme.colorScheme.primary, stringResource(R.string.weight_trend))
@@ -270,8 +271,8 @@ private fun WeightChart(points: List<WeightPoint>, goalKg: Double?) {
     })
     val min = values.min() - 0.5
     val max = values.max() + 0.5
-    val firstDay = points.first().date
-    val spanDays = ChronoUnit.DAYS.between(firstDay, points.last().date).coerceAtLeast(1).toFloat()
+    val firstDay = points.first().date.toJavaLocalDate()
+    val spanDays = ChronoUnit.DAYS.between(firstDay, points.last().date.toJavaLocalDate()).coerceAtLeast(1).toFloat()
     val fmt = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
 
     Row {
@@ -291,17 +292,18 @@ private fun WeightChart(points: List<WeightPoint>, goalKg: Double?) {
                     )
                 }
                 points.forEach { p ->
-                    drawCircle(colors.onSurfaceVariant.copy(alpha = 0.45f), radius = 3.dp.toPx(), center = Offset(x(p.date), y(p.weight)))
+                    drawCircle(colors.onSurfaceVariant.copy(alpha = 0.45f), radius = 3.dp.toPx(), center = Offset(x(p.date.toJavaLocalDate()), y(p.weight)))
                 }
                 val path = Path()
                 points.forEachIndexed { i, p ->
-                    if (i == 0) path.moveTo(x(p.date), y(p.trend)) else path.lineTo(x(p.date), y(p.trend))
+                    val px = x(p.date.toJavaLocalDate())
+                    if (i == 0) path.moveTo(px, y(p.trend)) else path.lineTo(px, y(p.trend))
                 }
                 drawPath(path, colors.primary, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(points.first().date.format(fmt), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
-                Text(points.last().date.format(fmt), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text(points.first().date.toJavaLocalDate().format(fmt), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text(points.last().date.toJavaLocalDate().format(fmt), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
         }
     }

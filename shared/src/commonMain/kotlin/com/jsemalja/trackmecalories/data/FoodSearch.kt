@@ -1,13 +1,12 @@
 package com.jsemalja.trackmecalories.data
 
-import java.text.Normalizer
 
 /** Where a search result came from; shown on the result so you know how far to trust it. */
-enum class SearchSource(@androidx.annotation.StringRes val label: Int) {
-    BASIC(com.jsemalja.trackmecalories.R.string.source_basic),
-    MENU(com.jsemalja.trackmecalories.R.string.source_menu),
-    KALORICKE(com.jsemalja.trackmecalories.R.string.source_kaloricke),
-    OPEN_FOOD_FACTS(com.jsemalja.trackmecalories.R.string.source_off)
+enum class SearchSource {
+    BASIC,
+    MENU,
+    KALORICKE,
+    OPEN_FOOD_FACTS
 }
 
 /**
@@ -117,7 +116,7 @@ object SearchMatcher {
  * stripping its marks folds "ё" into "е" and "й" into "и", which is how people often type them.
  */
 fun String.normalizedForSearch(): String =
-    Normalizer.normalize(this, Normalizer.Form.NFD)
+    decomposed()
         .replace(DIACRITICS, "")
         .lowercase()
         .replace(NON_ALNUM, " ")

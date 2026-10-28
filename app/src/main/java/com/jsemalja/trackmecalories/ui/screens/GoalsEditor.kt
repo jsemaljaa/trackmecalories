@@ -32,6 +32,8 @@ import com.jsemalja.trackmecalories.ui.theme.MacroFiber
 import com.jsemalja.trackmecalories.ui.theme.MacroProtein
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.data.label
+import com.jsemalja.trackmecalories.data.description
 
 /**
  * Goals: pick a diet and enter calories — protein, carbs, fat and fiber follow
