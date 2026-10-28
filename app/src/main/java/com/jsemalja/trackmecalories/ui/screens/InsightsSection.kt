@@ -22,18 +22,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.FoodSatiety
 import com.jsemalja.trackmecalories.data.MIN_RATED_MEALS
 import com.jsemalja.trackmecalories.data.SatietyInsights
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Trends > Insights: which foods keep you full, from the meal ratings on Today. Every row
@@ -51,20 +52,20 @@ fun InsightsSection(insights: SatietyInsights) {
 
     AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.insights_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(Res.string.insights_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             Text(
-                stringResource(R.string.insights_desc, MIN_RATED_MEALS),
+                stringResource(Res.string.insights_desc, MIN_RATED_MEALS),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(12.dp))
 
             if (insights.foods.isEmpty()) {
-                Text(stringResource(R.string.insights_empty, MIN_RATED_MEALS), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.insights_empty, MIN_RATED_MEALS), style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.insights_so_far, pluralStringResource(R.plurals.rated_meals, insights.ratedMeals, insights.ratedMeals)),
+                    stringResource(Res.string.insights_so_far, pluralStringResource(Res.plurals.rated_meals, insights.ratedMeals, insights.ratedMeals)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -72,7 +73,7 @@ fun InsightsSection(insights: SatietyInsights) {
             }
 
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                listOf(R.string.fullness, R.string.insights_per_100_kcal).forEachIndexed { i, label ->
+                listOf(Res.string.fullness, Res.string.insights_per_100_kcal).forEachIndexed { i, label ->
                     SegmentedButton(
                         selected = perKcal == (i == 1),
                         onClick = { perKcal = i == 1 },
@@ -89,7 +90,7 @@ fun InsightsSection(insights: SatietyInsights) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                pluralStringResource(R.plurals.rated_meals, insights.ratedMeals, insights.ratedMeals),
+                pluralStringResource(Res.plurals.rated_meals, insights.ratedMeals, insights.ratedMeals),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -104,9 +105,9 @@ private fun InsightRow(food: FoodSatiety, perKcal: Boolean) {
             Text(food.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 listOfNotNull(
-                    pluralStringResource(R.plurals.meals_count, food.meals, food.meals),
-                    stringResource(R.string.insights_meal_kcal, "%,d".format(food.avgMealKcal.roundToInt())),
-                    food.avgEnergy?.let { stringResource(R.string.insights_energy, "%.1f".format(it)) }
+                    pluralStringResource(Res.plurals.meals_count, food.meals, food.meals),
+                    stringResource(Res.string.insights_meal_kcal, "%,d".format(food.avgMealKcal.roundToInt())),
+                    food.avgEnergy?.let { stringResource(Res.string.insights_energy, "%.1f".format(it)) }
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -116,10 +117,10 @@ private fun InsightRow(food: FoodSatiety, perKcal: Boolean) {
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
             if (perKcal) {
                 Text("%.2f".format(food.fullnessPer100Kcal ?: 0.0), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text(stringResource(R.string.insights_per_100_kcal), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.insights_per_100_kcal), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 Text("%.1f".format(food.avgFullness), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text(stringResource(R.string.insights_out_of_5), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.insights_out_of_5), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

@@ -60,7 +60,11 @@ fun TrackmecaloriesTheme(
     val colorScheme = if (glass) solidScheme.toGlass(darkTheme) else solidScheme
     val backdrop = if (darkTheme) lerp(Color(0xFF07090A), solidScheme.primary, 0.06f)
     else lerp(Color(0xFFF2F5F3), solidScheme.primary, 0.05f)
-    val typography = remember(theme, appearance.font) { appearance.font?.let { appTypography(it.family) } ?: themeTypography(theme) }
+    val pickedFamily = appearance.font?.family
+    val themeFamily = themeFont(theme)?.family
+    val typography = remember(theme, pickedFamily, themeFamily) {
+        pickedFamily?.let { appTypography(it) } ?: themeTypography(theme, themeFamily)
+    }
     val shapes = remember(theme, appearance.corners) { appearance.corners?.let { appShapes(it) } ?: themeShapes(theme) }
 
     SystemBarsFollow(darkTheme)

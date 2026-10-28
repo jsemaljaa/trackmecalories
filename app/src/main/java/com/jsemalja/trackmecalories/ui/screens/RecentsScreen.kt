@@ -22,8 +22,9 @@ import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.viewmodel.RecipeListItem
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.ui.res.stringResource
-import com.jsemalja.trackmecalories.R
+import org.jetbrains.compose.resources.stringResource
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 // Chains with bundled menus; picking one searches its menu.
 private val POPULAR_SPOTS = listOf(
@@ -32,12 +33,12 @@ private val POPULAR_SPOTS = listOf(
 )
 
 /** Which list the Food tab shows while the search box is empty. */
-enum class SavedFoodsTab(@androidx.annotation.StringRes val label: Int) {
-    RECENT(R.string.tab_recent),
-    FAVORITES(R.string.tab_favorites),
-    ALL(R.string.tab_all),
-    RECIPES(R.string.tab_recipes),
-    RESTAURANTS(R.string.tab_restaurants)
+enum class SavedFoodsTab(val label: StringResource) {
+    RECENT(Res.string.tab_recent),
+    FAVORITES(Res.string.tab_favorites),
+    ALL(Res.string.tab_all),
+    RECIPES(Res.string.tab_recipes),
+    RESTAURANTS(Res.string.tab_restaurants)
 }
 
 /**
@@ -106,8 +107,8 @@ fun LazyListScope.savedFoodsSection(
         item(key = "saved_empty") {
             Text(
                 when (tab) {
-                    SavedFoodsTab.FAVORITES -> stringResource(R.string.favorites_empty)
-                    else -> stringResource(R.string.saved_empty)
+                    SavedFoodsTab.FAVORITES -> stringResource(Res.string.favorites_empty)
+                    else -> stringResource(Res.string.saved_empty)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -171,12 +172,12 @@ fun SavedFoodRow(
             RowIconButton(onClick = onToggleFavorite) {
                 Icon(
                     if (food.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                    contentDescription = stringResource(if (food.isFavorite) R.string.unpin_favorite else R.string.pin_favorite),
+                    contentDescription = stringResource(if (food.isFavorite) Res.string.unpin_favorite else Res.string.pin_favorite),
                     tint = if (food.isFavorite) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             RowIconButton(onClick = onEdit) {
-                Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit_food), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Outlined.Edit, contentDescription = stringResource(Res.string.edit_food), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )
@@ -199,13 +200,13 @@ private fun LazyListScope.recipesSection(
         OutlinedButton(onClick = onNewRecipe, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.recipe_new))
+            Text(stringResource(Res.string.recipe_new))
         }
     }
     if (recipes.isEmpty()) {
         item(key = "recipe_empty") {
             Text(
-                stringResource(R.string.recipe_empty),
+                stringResource(Res.string.recipe_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -228,7 +229,7 @@ private fun LazyListScope.recipesSection(
                 rated = food,
                 trailing = {
                     RowIconButton(onClick = { onOpenRecipe(item.recipe.id) }) {
-                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.recipe_edit), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(Res.string.recipe_edit), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             )

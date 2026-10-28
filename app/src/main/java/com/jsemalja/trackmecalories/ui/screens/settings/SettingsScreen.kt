@@ -1,6 +1,5 @@
 package com.jsemalja.trackmecalories.ui.screens.settings
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
@@ -21,10 +20,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.HealthStatus
 import com.jsemalja.trackmecalories.data.StreakKind
 import com.jsemalja.trackmecalories.ui.screens.GoalsEditor
@@ -41,17 +39,19 @@ import com.jsemalja.trackmecalories.ui.theme.rememberPredictiveBack
 import com.jsemalja.trackmecalories.ui.theme.sharedAxisX
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /** The pages under Settings; back from one goes to its [parent], or to the list. */
-private enum class SettingsPage(@StringRes val title: Int, val parent: SettingsPage? = null) {
-    GOALS(R.string.goals_title),
-    FEATURES(R.string.settings_features),
-    FASTING(R.string.fasting_timer, parent = FEATURES),
-    STREAKS(R.string.gamification_title),
-    HEALTH(R.string.health_data),
-    APPEARANCE(R.string.appearance),
-    DATA(R.string.data),
-    ABOUT(R.string.settings_about);
+private enum class SettingsPage(val title: StringResource, val parent: SettingsPage? = null) {
+    GOALS(Res.string.goals_title),
+    FEATURES(Res.string.settings_features),
+    FASTING(Res.string.fasting_timer, parent = FEATURES),
+    STREAKS(Res.string.gamification_title),
+    HEALTH(Res.string.health_data),
+    APPEARANCE(Res.string.appearance),
+    DATA(Res.string.data),
+    ABOUT(Res.string.settings_about);
 
     val depth: Int get() = 1 + (parent?.depth ?: 0)
 }
@@ -148,28 +148,28 @@ private fun SettingsList(
     val language = rememberAppLanguage()
 
     Column(modifier.verticalScroll(scroll).padding(16.dp)) {
-        ScreenHeader(Icons.Default.Settings, stringResource(R.string.nav_settings))
+        ScreenHeader(Icons.Default.Settings, stringResource(Res.string.nav_settings))
         Spacer(Modifier.height(24.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             SettingsRow(
                 0, 4, Icons.Default.Flag, stringResource(SettingsPage.GOALS.title),
-                "%,d ".format(goals.calorieGoal) + stringResource(R.string.unit_kcal) + " · " +
+                "%,d ".format(goals.calorieGoal) + stringResource(Res.string.unit_kcal) + " · " +
                     stringResource(
-                        R.string.macro_line,
+                        Res.string.macro_line,
                         goals.proteinGoal.roundToInt().toString(),
                         goals.carbGoal.roundToInt().toString(),
                         goals.fatGoal.roundToInt().toString()
                     )
             ) { onOpen(SettingsPage.GOALS) }
             val features = listOfNotNull(
-                stringResource(R.string.weekly_budget).takeIf { weeklyOn },
-                stringResource(R.string.water_tracking).takeIf { waterOn },
-                stringResource(R.string.settings_fasting_plan, fastingPlanLabel(fasting.planHours)).takeIf { fasting.enabled }
+                stringResource(Res.string.weekly_budget).takeIf { weeklyOn },
+                stringResource(Res.string.water_tracking).takeIf { waterOn },
+                stringResource(Res.string.settings_fasting_plan, fastingPlanLabel(fasting.planHours)).takeIf { fasting.enabled }
             )
             SettingsRow(
                 1, 4, Icons.Default.Tune, stringResource(SettingsPage.FEATURES.title),
-                if (features.isEmpty()) stringResource(R.string.settings_features_none) else features.joinToString(" · ")
+                if (features.isEmpty()) stringResource(Res.string.settings_features_none) else features.joinToString(" · ")
             ) { onOpen(SettingsPage.FEATURES) }
             // Water and fasting streaks only count while those features are on.
             val tracked = gamification.streaks.count {
@@ -177,17 +177,17 @@ private fun SettingsList(
             }
             SettingsRow(
                 2, 4, Icons.Default.LocalFireDepartment, stringResource(SettingsPage.STREAKS.title),
-                if (gamification.enabled) pluralStringResource(R.plurals.gamification_on_summary, tracked, tracked)
-                else stringResource(R.string.settings_off)
+                if (gamification.enabled) pluralStringResource(Res.plurals.gamification_on_summary, tracked, tracked)
+                else stringResource(Res.string.settings_off)
             ) { onOpen(SettingsPage.STREAKS) }
             SettingsRow(
                 3, 4, Icons.Default.MonitorHeart, stringResource(SettingsPage.HEALTH.title),
                 stringResource(
                     when (healthStatus) {
-                        HealthStatus.CONNECTED -> R.string.settings_health_connected
-                        HealthStatus.NOT_CONNECTED -> R.string.settings_health_not_connected
-                        HealthStatus.NEEDS_INSTALL -> R.string.settings_health_needs_install
-                        HealthStatus.UNAVAILABLE -> R.string.settings_health_unavailable
+                        HealthStatus.CONNECTED -> Res.string.settings_health_connected
+                        HealthStatus.NOT_CONNECTED -> Res.string.settings_health_not_connected
+                        HealthStatus.NEEDS_INSTALL -> Res.string.settings_health_needs_install
+                        HealthStatus.UNAVAILABLE -> Res.string.settings_health_unavailable
                     }
                 )
             ) { onOpen(SettingsPage.HEALTH) }
@@ -202,12 +202,12 @@ private fun SettingsList(
                 listOf(
                     stringResource(appearance.theme.label),
                     stringResource(appearance.mode.label),
-                    if (appearance.accent == AccentColor.CUSTOM) stringResource(R.string.accent_custom_hex, hexOf(appearance.customAccent))
+                    if (appearance.accent == AccentColor.CUSTOM) stringResource(Res.string.accent_custom_hex, hexOf(appearance.customAccent))
                     else stringResource(appearance.accent.label)
                 ).joinToString(" · ")
             ) { onOpen(SettingsPage.APPEARANCE) }
             if (language != null) {
-                SettingsRow(1, 2, Icons.Default.Language, stringResource(R.string.language), stringResource(language.current.label)) {
+                SettingsRow(1, 2, Icons.Default.Language, stringResource(Res.string.language), stringResource(language.current.label)) {
                     choosingLanguage = true
                 }
             }
@@ -215,10 +215,10 @@ private fun SettingsList(
 
         Spacer(Modifier.height(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            SettingsRow(0, 2, Icons.Default.Storage, stringResource(SettingsPage.DATA.title), stringResource(R.string.settings_data_summary)) {
+            SettingsRow(0, 2, Icons.Default.Storage, stringResource(SettingsPage.DATA.title), stringResource(Res.string.settings_data_summary)) {
                 onOpen(SettingsPage.DATA)
             }
-            SettingsRow(1, 2, Icons.Outlined.Info, stringResource(SettingsPage.ABOUT.title), stringResource(R.string.settings_about_summary)) {
+            SettingsRow(1, 2, Icons.Outlined.Info, stringResource(SettingsPage.ABOUT.title), stringResource(Res.string.settings_about_summary)) {
                 onOpen(SettingsPage.ABOUT)
             }
         }
@@ -237,13 +237,13 @@ private fun FeaturesSettings(viewModel: MainViewModel, onOpen: (SettingsPage) ->
     val fasting by viewModel.fastingSettings.collectAsState()
 
     SettingsSectionCard {
-        SettingSwitch(stringResource(R.string.weekly_budget), stringResource(R.string.weekly_budget_desc), weeklyOn, viewModel::setWeeklyBudget)
+        SettingSwitch(stringResource(Res.string.weekly_budget), stringResource(Res.string.weekly_budget_desc), weeklyOn, viewModel::setWeeklyBudget)
         Spacer(Modifier.height(16.dp))
-        SettingSwitch(stringResource(R.string.water_tracking), stringResource(R.string.water_tracking_desc), waterOn, viewModel::setWaterTracking)
+        SettingSwitch(stringResource(Res.string.water_tracking), stringResource(Res.string.water_tracking_desc), waterOn, viewModel::setWaterTracking)
     }
     SettingsRow(
-        0, 1, Icons.Default.Timer, stringResource(R.string.fasting_timer),
-        if (fasting.enabled) fastingPlanLabel(fasting.planHours) else stringResource(R.string.settings_off)
+        0, 1, Icons.Default.Timer, stringResource(Res.string.fasting_timer),
+        if (fasting.enabled) fastingPlanLabel(fasting.planHours) else stringResource(Res.string.settings_off)
     ) { onOpen(SettingsPage.FASTING) }
 }
 

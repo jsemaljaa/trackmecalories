@@ -31,8 +31,8 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodInfo
 import com.jsemalja.trackmecalories.data.toCustomFood
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
-import androidx.compose.ui.res.stringResource
-import com.jsemalja.trackmecalories.R
+import org.jetbrains.compose.resources.stringResource
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * Screen providing barcode scanning functionality.
@@ -58,7 +58,7 @@ fun ScannerScreen(
                     .padding(12.dp)
                     .align(Alignment.TopStart)
             ) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
+                Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close))
             }
         }
     }
@@ -157,7 +157,7 @@ private fun ScannerContent(
                 isScanning = false
             },
             showMeal = onPick == null,
-            confirmLabel = if (onPick != null) stringResource(R.string.recipe_add) else null,
+            confirmLabel = if (onPick != null) stringResource(Res.string.recipe_add) else null,
             onConfirm = { food, amount, mealType, confidence, portion ->
                 if (onPick != null) {
                     onPick(food, amount)
@@ -253,7 +253,7 @@ fun PermissionRequestScreen(onRequestPermission: () -> Unit, modifier: Modifier 
     ) {
         Icon(imageVector = Icons.Default.Camera, contentDescription = null, modifier = Modifier.size(64.dp))
         Spacer(Modifier.height(16.dp))
-        Text(text = stringResource(R.string.camera_needed), textAlign = TextAlign.Center)
-        Button(onClick = onRequestPermission) { Text(stringResource(R.string.grant_permission)) }
+        Text(text = stringResource(Res.string.camera_needed), textAlign = TextAlign.Center)
+        Button(onClick = onRequestPermission) { Text(stringResource(Res.string.grant_permission)) }
     }
 }

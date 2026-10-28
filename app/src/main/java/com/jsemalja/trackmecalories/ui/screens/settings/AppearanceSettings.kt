@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -36,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.ui.screens.FitText
 import com.jsemalja.trackmecalories.ui.theme.AccentColor
 import com.jsemalja.trackmecalories.ui.theme.AccentPalette
@@ -56,7 +55,9 @@ import com.jsemalja.trackmecalories.ui.theme.hueChroma
 import com.jsemalja.trackmecalories.ui.theme.neutrals
 import com.jsemalja.trackmecalories.ui.theme.parseHexColor
 import com.jsemalja.trackmecalories.ui.theme.themeShapes
+import com.jsemalja.trackmecalories.ui.theme.themeFont
 import com.jsemalja.trackmecalories.ui.theme.themeTypography
+import com.jsemalja.trackmecalories.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -72,7 +73,7 @@ internal fun AppearanceSettings(
     val dark = LocalDarkTheme.current
     var editingCustom by rememberSaveable { mutableStateOf(false) }
 
-    Text(stringResource(R.string.theme), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(Res.string.theme), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(10.dp))
     // Scrolls sideways on narrow phones; the padding leaves room for Bold's shadow and Neon's glow.
     Row(
@@ -91,7 +92,7 @@ internal fun AppearanceSettings(
     }
 
     Spacer(Modifier.height(20.dp))
-    Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(Res.string.theme_mode), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         ThemeMode.entries.forEachIndexed { i, mode ->
@@ -108,13 +109,13 @@ internal fun AppearanceSettings(
     // The dots are unlabelled (TalkBack reads their names), so the chosen one is named here.
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            stringResource(R.string.accent_colour),
+            stringResource(Res.string.accent_colour),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
         Text(
-            if (appearance.accent == AccentColor.CUSTOM) stringResource(R.string.accent_custom_hex, hexOf(appearance.customAccent))
+            if (appearance.accent == AccentColor.CUSTOM) stringResource(Res.string.accent_custom_hex, hexOf(appearance.customAccent))
             else stringResource(appearance.accent.label),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary
@@ -184,7 +185,7 @@ internal fun AppearanceSettings(
 
     // Corners and font follow the theme until overridden here; picking a theme resets them.
     Spacer(Modifier.height(20.dp))
-    Text(stringResource(R.string.corners), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(Res.string.corners), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
     val cornerOptions = listOf<CornerStyle?>(null) + CornerStyle.entries
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -194,18 +195,18 @@ internal fun AppearanceSettings(
                 onClick = { onCornersChange(corners) },
                 shape = SegmentedButtonDefaults.itemShape(i, cornerOptions.size),
                 colors = appSegmentedColors()
-            ) { FitText(stringResource(corners?.label ?: R.string.from_theme)) }
+            ) { FitText(stringResource(corners?.label ?: Res.string.from_theme)) }
         }
     }
 
     Spacer(Modifier.height(20.dp))
-    Text(stringResource(R.string.font), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(Res.string.font), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilterChip(
             selected = appearance.font == null,
             onClick = { onFontChange(null) },
-            label = { Text(stringResource(R.string.from_theme), fontFamily = themeTypography(appearance.theme).titleMedium.fontFamily) }
+            label = { Text(stringResource(Res.string.from_theme), fontFamily = themeTypography(appearance.theme, themeFont(appearance.theme)?.family).titleMedium.fontFamily) }
         )
         AppFont.entries.forEach { font ->
             FilterChip(
@@ -234,7 +235,8 @@ private fun ThemeTile(
 ) {
     val n = remember(theme, tint, dark) { neutrals(theme, tint, dark) }
     val shapes = remember(theme) { themeShapes(theme) }
-    val headingFont = remember(theme) { themeTypography(theme).titleLarge.fontFamily }
+    val themeFamily = themeFont(theme)?.family
+    val headingFont = remember(theme, themeFamily) { themeTypography(theme, themeFamily).titleLarge.fontFamily }
     val colors = MaterialTheme.colorScheme
     val primary = colors.primary
     val frame = MaterialTheme.shapes.medium
@@ -381,15 +383,15 @@ private fun CustomAccentDialog(initial: Int, dark: Boolean, onDismiss: () -> Uni
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.custom_accent_title)) },
+        title = { Text(stringResource(Res.string.custom_accent_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 AccentPreview(palette, dark)
                 Spacer(Modifier.height(16.dp))
-                Text(stringResource(R.string.accent_hue), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.accent_hue), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 GradientSlider(hue, 0f..360f, vividWheel) { fromSliders(it, chroma) }
                 Spacer(Modifier.height(4.dp))
-                Text(stringResource(R.string.accent_vividness), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.accent_vividness), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 GradientSlider(chroma, 0f..MAX_ACCENT_CHROMA.toFloat(), vividness) { fromSliders(hue, it) }
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
@@ -403,21 +405,21 @@ private fun CustomAccentDialog(initial: Int, dark: Boolean, onDismiss: () -> Uni
                             chroma = c.toFloat()
                         }
                     },
-                    label = { Text(stringResource(R.string.accent_hex)) },
+                    label = { Text(stringResource(Res.string.accent_hex)) },
                     prefix = { Text("#") },
                     singleLine = true,
                     isError = !hexValid,
-                    supportingText = { if (!hexValid) Text(stringResource(R.string.accent_hex_invalid)) },
+                    supportingText = { if (!hexValid) Text(stringResource(Res.string.accent_hex_invalid)) },
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, keyboardType = KeyboardType.Ascii),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onApply(seed) }, enabled = hexValid) { Text(stringResource(R.string.apply)) }
+            TextButton(onClick = { onApply(seed) }, enabled = hexValid) { Text(stringResource(Res.string.apply)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
         }
     )
 }

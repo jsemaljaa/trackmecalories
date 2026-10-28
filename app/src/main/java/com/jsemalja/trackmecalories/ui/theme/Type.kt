@@ -48,14 +48,19 @@ private fun TextStyle.tuned(family: FontFamily, weight: FontWeight, spacing: and
 private fun TextStyle.heading(family: FontFamily, weight: FontWeight, spacing: androidx.compose.ui.unit.TextUnit) =
     tuned(family, weight, spacing).copy(lineBreak = LineBreak.Heading)
 
+/** The bundled font an [AppTheme] uses throughout, if any (see [themeTypography]). */
+fun themeFont(theme: AppTheme): AppFont? = when (theme) {
+    AppTheme.BOLD -> AppFont.SPACE_GROTESK
+    AppTheme.NEON -> AppFont.MULISH
+    else -> null
+}
+
 /**
  * Each [AppTheme]'s own type, used unless the user picks an [AppFont]: Paper sets headings
  * (and the big numbers) in the phone's serif over a sans body, Bold is Space Grotesk
- * throughout, Neon Mulish.
+ * throughout, Neon Mulish. [themeFamily] is [themeFont]'s family.
  */
-fun themeTypography(theme: AppTheme): Typography = when (theme) {
-    AppTheme.CLASSIC, AppTheme.GLASS -> appTypography()
+fun themeTypography(theme: AppTheme, themeFamily: FontFamily?): Typography = when (theme) {
     AppTheme.PAPER -> appTypography(FontFamily.Default, headingFamily = FontFamily.Serif)
-    AppTheme.BOLD -> appTypography(AppFont.SPACE_GROTESK.family)
-    AppTheme.NEON -> appTypography(AppFont.MULISH.family)
+    else -> themeFamily?.let { appTypography(it) } ?: appTypography()
 }

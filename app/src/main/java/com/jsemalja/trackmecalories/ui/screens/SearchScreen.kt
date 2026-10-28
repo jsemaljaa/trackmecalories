@@ -40,11 +40,11 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.SearchHit
 import com.jsemalja.trackmecalories.data.SearchSource
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
-import androidx.compose.ui.res.stringResource
-import com.jsemalja.trackmecalories.R
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.jsemalja.trackmecalories.data.label
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * The Food tab. One search box over everything: your saved foods first, then a single list
@@ -85,7 +85,7 @@ fun SearchScreen(
     val savedMatches by viewModel.savedFoodMatches.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
     val searchError by viewModel.searchError.collectAsState()
-    val couldNotLoad = stringResource(R.string.could_not_load)
+    val couldNotLoad = stringResource(Res.string.could_not_load)
     val selectedDate by viewModel.selectedDate.collectAsState()
 
     val keyboard = LocalSoftwareKeyboardController.current
@@ -134,28 +134,28 @@ fun SearchScreen(
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
         if (pick != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = pick.onClose) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close)) }
-                Text(stringResource(R.string.recipe_add_ingredient), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                IconButton(onClick = pick.onClose) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close)) }
+                Text(stringResource(Res.string.recipe_add_ingredient), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
         } else {
-            ScreenHeader(Icons.Outlined.Restaurant, stringResource(R.string.nav_food))
+            ScreenHeader(Icons.Outlined.Restaurant, stringResource(Res.string.nav_food))
         }
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
             value = query,
             onValueChange = viewModel::searchFoods,
-            placeholder = { Text(stringResource(R.string.search_placeholder)) },
+            placeholder = { Text(stringResource(Res.string.search_placeholder)) },
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { viewModel.searchFoods("") }) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_search))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
                     }
                 } else {
                     IconButton(onClick = onOpenScanner) {
-                        Icon(Icons.Outlined.QrCodeScanner, contentDescription = stringResource(R.string.add_scan))
+                        Icon(Icons.Outlined.QrCodeScanner, contentDescription = stringResource(Res.string.add_scan))
                     }
                 }
             },
@@ -204,7 +204,7 @@ fun SearchScreen(
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 if (savedMatches.isNotEmpty()) {
-                    item(key = "saved_header") { SectionLabel(stringResource(R.string.your_foods)) }
+                    item(key = "saved_header") { SectionLabel(stringResource(Res.string.your_foods)) }
                     items(savedMatches, key = { "saved_${it.id}" }) { food ->
                         SavedFoodRow(
                             food = food,
@@ -218,11 +218,11 @@ fun SearchScreen(
                 if (results.isNotEmpty()) {
                     item(key = "results_header") {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.weight(1f)) { SectionLabel(stringResource(R.string.results)) }
+                            Box(Modifier.weight(1f)) { SectionLabel(stringResource(Res.string.results)) }
                             TextButton(onClick = { healthFirst = !healthFirst }) {
                                 Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text(stringResource(if (healthFirst) R.string.sort_nutriscore else R.string.sort_relevance))
+                                Text(stringResource(if (healthFirst) Res.string.sort_nutriscore else Res.string.sort_relevance))
                             }
                         }
                     }
@@ -241,9 +241,9 @@ fun SearchScreen(
                     item(key = "error") {
                         SearchMessage(
                             icon = Icons.Default.CloudOff,
-                            title = stringResource(if (results.isEmpty()) R.string.search_unavailable else R.string.search_partial),
+                            title = stringResource(if (results.isEmpty()) Res.string.search_unavailable else Res.string.search_partial),
                             body = stringResource(error),
-                            actionLabel = stringResource(R.string.retry),
+                            actionLabel = stringResource(Res.string.retry),
                             onAction = viewModel::retrySearch
                         )
                     }
@@ -253,9 +253,9 @@ fun SearchScreen(
                     item(key = "empty") {
                         SearchMessage(
                             icon = Icons.Default.SearchOff,
-                            title = stringResource(R.string.no_matches, query.trim()),
-                            body = stringResource(R.string.no_matches_body),
-                            actionLabel = stringResource(R.string.add_custom),
+                            title = stringResource(Res.string.no_matches, query.trim()),
+                            body = stringResource(Res.string.no_matches_body),
+                            actionLabel = stringResource(Res.string.add_custom),
                             onAction = { showCreateDialog = true }
                         )
                     }
@@ -267,7 +267,7 @@ fun SearchScreen(
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.cant_find_create))
+                            Text(stringResource(Res.string.cant_find_create))
                         }
                     }
                 }
@@ -297,7 +297,7 @@ fun SearchScreen(
             favorite = if (food.id != 0 && pick == null) food.isFavorite else null,
             onFavoriteChange = { viewModel.setFavorite(food, it) },
             showMeal = pick == null,
-            confirmLabel = if (pick != null) stringResource(R.string.recipe_add) else null
+            confirmLabel = if (pick != null) stringResource(Res.string.recipe_add) else null
         )
     }
 
@@ -367,9 +367,9 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
     val carbs = hit.carbs
     val fat = hit.fat
     val macros = when {
-        isLoading -> stringResource(R.string.loading_serving)
+        isLoading -> stringResource(Res.string.loading_serving)
         protein != null && carbs != null && fat != null -> macroLine(protein, carbs, fat)
-        else -> stringResource(R.string.tap_for_macros)
+        else -> stringResource(Res.string.tap_for_macros)
     }
     // Base foods show their usual portion ("Medium · 51 g") so it's clear they can be logged that way.
     val usualPortion = hit.food?.let { food -> food.portionList.firstOrNull { it.key == food.defaultPortion } }
@@ -381,7 +381,7 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
         macros = macros,
         per = perLabel(hit.unit),
         source = when (hit.source) {
-            SearchSource.OPEN_FOOD_FACTS -> if (hit.isCzech) stringResource(R.string.source_off_cz) else stringResource(R.string.source_off)
+            SearchSource.OPEN_FOOD_FACTS -> if (hit.isCzech) stringResource(Res.string.source_off_cz) else stringResource(Res.string.source_off)
             else -> stringResource(hit.source.label)
         },
         leading = when (hit.source) {
@@ -398,10 +398,10 @@ private fun SearchHitRow(hit: SearchHit, isLoading: Boolean, onClick: () -> Unit
 }
 
 @Composable
-internal fun perLabel(unit: String) = if (unit == "pcs") stringResource(R.string.per_piece_short) else "100 ${unitLabel(unit)}"
+internal fun perLabel(unit: String) = if (unit == "pcs") stringResource(Res.string.per_piece_short) else "100 ${unitLabel(unit)}"
 
 @Composable
-internal fun macroLine(protein: Double, carbs: Double, fat: Double) = stringResource(R.string.macro_line, fmt(protein), fmt(carbs), fmt(fat))
+internal fun macroLine(protein: Double, carbs: Double, fat: Double) = stringResource(Res.string.macro_line, fmt(protein), fmt(carbs), fmt(fat))
 
 @Composable
 internal fun ResultCard(
@@ -465,7 +465,7 @@ internal fun ResultCard(
             // A minimum width keeps the badges in one column when the "per" label varies.
             Column(Modifier.widthIn(min = 64.dp), horizontalAlignment = Alignment.End) {
                 Text("${kcal.roundToInt()}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.kcal_per, per), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.kcal_per, per), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             trailing?.invoke()
         }

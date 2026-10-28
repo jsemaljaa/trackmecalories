@@ -9,14 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDate
+import com.jsemalja.trackmecalories.resources.*
 
 /** Export to CSV, and wiping everything (behind a confirmation). */
 @Composable
@@ -26,12 +26,12 @@ internal fun DataSettings(viewModel: MainViewModel) {
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val exportChooserTitle = stringResource(R.string.export_chooser)
-    val exportFailed = stringResource(R.string.export_failed)
+    val exportChooserTitle = stringResource(Res.string.export_chooser)
+    val exportFailed = stringResource(Res.string.export_failed)
 
     SettingsSectionCard {
         Text(
-            stringResource(R.string.settings_export_desc),
+            stringResource(Res.string.settings_export_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -60,7 +60,7 @@ internal fun DataSettings(viewModel: MainViewModel) {
         ) {
             Icon(Icons.Default.Download, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.export_csv))
+            Text(stringResource(Res.string.export_csv))
         }
 
         exportError?.let {
@@ -69,7 +69,7 @@ internal fun DataSettings(viewModel: MainViewModel) {
         }
     }
 
-    SettingsSectionCard(title = stringResource(R.string.danger_zone), titleColor = MaterialTheme.colorScheme.error) {
+    SettingsSectionCard(title = stringResource(Res.string.danger_zone), titleColor = MaterialTheme.colorScheme.error) {
         OutlinedButton(
             onClick = { showDeleteDialog = true },
             modifier = Modifier.fillMaxWidth(),
@@ -77,15 +77,15 @@ internal fun DataSettings(viewModel: MainViewModel) {
         ) {
             Icon(Icons.Default.DeleteForever, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.wipe_all))
+            Text(stringResource(Res.string.wipe_all))
         }
     }
 
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text(stringResource(R.string.wipe_all_title)) },
-            text = { Text(stringResource(R.string.wipe_all_body)) },
+            title = { Text(stringResource(Res.string.wipe_all_title)) },
+            text = { Text(stringResource(Res.string.wipe_all_body)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -93,10 +93,10 @@ internal fun DataSettings(viewModel: MainViewModel) {
                         showDeleteDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text(stringResource(R.string.wipe_all_confirm)) }
+                ) { Text(stringResource(Res.string.wipe_all_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(Res.string.cancel)) }
             }
         )
     }

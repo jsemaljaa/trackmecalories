@@ -20,11 +20,10 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.AdaptiveMaintenance
 import com.jsemalja.trackmecalories.data.WeightEntry
 import com.jsemalja.trackmecalories.data.WeightPoint
@@ -41,12 +40,14 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlinx.datetime.toJavaLocalDate
 import kotlin.math.abs
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
-private enum class WeightRange(@androidx.annotation.StringRes val label: Int, val days: Long?) {
-    MONTH(R.string.range_1m, 30),
-    QUARTER(R.string.range_3m, 91),
-    YEAR(R.string.range_1y, 365),
-    ALL(R.string.range_all, null)
+private enum class WeightRange(val label: StringResource, val days: Long?) {
+    MONTH(Res.string.range_1m, 30),
+    QUARTER(Res.string.range_3m, 91),
+    YEAR(Res.string.range_1y, 365),
+    ALL(Res.string.range_all, null)
 }
 
 /** "72.4" with one decimal, localised (72,4 in Czech/Russian). */
@@ -80,12 +81,12 @@ fun WeightSection(
         Button(onClick = { showLog = true }, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Outlined.MonitorWeight, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.weight_log))
+            Text(stringResource(Res.string.weight_log))
         }
 
         if (stats == null) {
             Text(
-                stringResource(R.string.weight_empty),
+                stringResource(Res.string.weight_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
@@ -93,48 +94,48 @@ fun WeightSection(
         } else {
             AppCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(stringResource(R.string.weight_trend), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(Res.string.weight_trend), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     ValueWithUnit(
                         kg(stats.trend),
-                        stringResource(R.string.unit_kg),
+                        stringResource(Res.string.unit_kg),
                         MaterialTheme.typography.displaySmall,
                         unitStyle = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        stringResource(R.string.weight_last_reading, kg(stats.latest), stats.latestDate.toJavaLocalDate().format(dateFormat)),
+                        stringResource(Res.string.weight_last_reading, kg(stats.latest), stats.latestDate.toJavaLocalDate().format(dateFormat)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        stringResource(R.string.weight_since_start, signedKg(stats.change), stats.startDate.toJavaLocalDate().format(dateFormat)),
+                        stringResource(Res.string.weight_since_start, signedKg(stats.change), stats.startDate.toJavaLocalDate().format(dateFormat)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(4.dp))
-                    Text(stringResource(R.string.weight_trend_explainer), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                    Text(stringResource(Res.string.weight_trend_explainer), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                 }
             }
 
             Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 WeightTile(
-                    label = stringResource(R.string.weight_weekly),
+                    label = stringResource(Res.string.weight_weekly),
                     value = stats.weeklyRate?.let { signedKg(it) } ?: "–",
-                    unit = stringResource(R.string.unit_kg_per_week),
-                    detail = stringResource(if (stats.weeklyRate == null) R.string.weight_weekly_need_data else R.string.weight_weekly_detail),
+                    unit = stringResource(Res.string.unit_kg_per_week),
+                    detail = stringResource(if (stats.weeklyRate == null) Res.string.weight_weekly_need_data else Res.string.weight_weekly_detail),
                     modifier = Modifier.weight(1f)
                 )
                 WeightTile(
-                    label = stringResource(R.string.weight_goal),
+                    label = stringResource(Res.string.weight_goal),
                     value = goalKg?.let { kg(it) } ?: "–",
-                    unit = stringResource(R.string.unit_kg),
+                    unit = stringResource(Res.string.unit_kg),
                     detail = when {
-                        goalKg == null -> stringResource(R.string.weight_goal_set)
+                        goalKg == null -> stringResource(Res.string.weight_goal_set)
                         stats.projectedGoalDate != null -> stringResource(
-                            R.string.weight_goal_eta,
+                            Res.string.weight_goal_eta,
                             signedKg(stats.toGoal!!),
                             stats.projectedGoalDate!!.toJavaLocalDate().format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
                         )
-                        else -> stringResource(R.string.weight_goal_to_go, signedKg(stats.toGoal!!))
+                        else -> stringResource(Res.string.weight_goal_to_go, signedKg(stats.toGoal!!))
                     },
                     modifier = Modifier.weight(1f),
                     onEdit = { showGoal = true }
@@ -144,7 +145,7 @@ fun WeightSection(
             bmi(stats.trend, heightCm)?.let { value ->
                 AppCard(Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.bmi), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                        Text(stringResource(Res.string.bmi), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
                         Text("%.1f".format(Locale.getDefault(), value), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(" · " + stringResource(bmiCategory(value)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -153,16 +154,16 @@ fun WeightSection(
 
             AppCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(stringResource(R.string.weight_maintenance), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.weight_maintenance), style = MaterialTheme.typography.labelLarge)
                     if (adaptive != null) {
-                        ValueWithUnit("%,d".format(adaptive.kcal), stringResource(R.string.unit_kcal_day), MaterialTheme.typography.headlineSmall)
+                        ValueWithUnit("%,d".format(adaptive.kcal), stringResource(Res.string.unit_kcal_day), MaterialTheme.typography.headlineSmall)
                         Text(
-                            stringResource(R.string.weight_maintenance_detail, adaptive.loggedDays, adaptive.spanDays),
+                            stringResource(Res.string.weight_maintenance_detail, adaptive.loggedDays, adaptive.spanDays),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
-                        Text(stringResource(R.string.weight_maintenance_need_data), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(Res.string.weight_maintenance_need_data), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -185,13 +186,13 @@ fun WeightSection(
                     WeightChart(points.filter { from == null || !it.date.toJavaLocalDate().isBefore(from) }, goalKg)
                     Spacer(Modifier.height(6.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        LegendItem(MaterialTheme.colorScheme.primary, stringResource(R.string.weight_trend))
-                        LegendItem(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), stringResource(R.string.weight_readings))
+                        LegendItem(MaterialTheme.colorScheme.primary, stringResource(Res.string.weight_trend))
+                        LegendItem(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), stringResource(Res.string.weight_readings))
                     }
                 }
             }
 
-            Text(stringResource(R.string.weight_history), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.weight_history), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             val trendByDate = points.associate { it.date.toString() to it.trend }
             entries.sortedByDescending { it.date }.forEach { entry ->
                 AppCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
@@ -202,13 +203,13 @@ fun WeightSection(
                             modifier = Modifier.weight(1f)
                         )
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("${kg(entry.weightKg)} ${stringResource(R.string.unit_kg)}", fontWeight = FontWeight.SemiBold)
+                            Text("${kg(entry.weightKg)} ${stringResource(Res.string.unit_kg)}", fontWeight = FontWeight.SemiBold)
                             trendByDate[entry.date]?.let {
-                                Text(stringResource(R.string.weight_trend_short, kg(it)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(Res.string.weight_trend_short, kg(it)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         IconButton(onClick = { onDelete(entry) }) {
-                            Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(Icons.Outlined.Delete, contentDescription = stringResource(Res.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -260,7 +261,7 @@ private fun LegendItem(color: androidx.compose.ui.graphics.Color, label: String)
 private fun WeightChart(points: List<WeightPoint>, goalKg: Double?) {
     val colors = MaterialTheme.colorScheme
     if (points.size < 2) {
-        Text(stringResource(R.string.weight_chart_need_two), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, modifier = Modifier.padding(vertical = 24.dp))
+        Text(stringResource(Res.string.weight_chart_need_two), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, modifier = Modifier.padding(vertical = 24.dp))
         return
     }
     val values = points.flatMap { listOf(it.weight, it.trend) } + listOfNotNull(goalKg?.takeIf { g ->
@@ -320,29 +321,29 @@ fun LogWeightDialog(initialKg: Double?, onDismiss: () -> Unit, onSave: (Double, 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.weight_log)) },
+        title = { Text(stringResource(Res.string.weight_log)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = value,
                     onValueChange = { value = it },
-                    label = { Text(stringResource(R.string.calc_weight_kg)) },
-                    suffix = { Text(stringResource(R.string.unit_kg)) },
+                    label = { Text(stringResource(Res.string.calc_weight_kg)) },
+                    suffix = { Text(stringResource(Res.string.unit_kg)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedButton(onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        if (date == LocalDate.now()) stringResource(R.string.today)
+                        if (date == LocalDate.now()) stringResource(Res.string.today)
                         else date.format(DateTimeFormatter.ofPattern("EEE d MMM yyyy", Locale.getDefault()))
                     )
                 }
-                Text(stringResource(R.string.weight_log_tip), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.weight_log_tip), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        confirmButton = { Button(enabled = parsed != null, onClick = { onSave(parsed!!, date) }) { Text(stringResource(R.string.save)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        confirmButton = { Button(enabled = parsed != null, onClick = { onSave(parsed!!, date) }) { Text(stringResource(Res.string.save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } }
     )
 
     if (showPicker) {
@@ -358,9 +359,9 @@ fun LogWeightDialog(initialKg: Double?, onDismiss: () -> Unit, onSave: (Double, 
                         if (!picked.isAfter(LocalDate.now())) date = picked
                     }
                     showPicker = false
-                }) { Text(stringResource(R.string.ok)) }
+                }) { Text(stringResource(Res.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showPicker = false }) { Text(stringResource(R.string.cancel)) } }
+            dismissButton = { TextButton(onClick = { showPicker = false }) { Text(stringResource(Res.string.cancel)) } }
         ) { DatePicker(state = state) }
     }
 }
@@ -372,24 +373,24 @@ private fun GoalWeightDialog(current: Double?, onDismiss: () -> Unit, onSave: (D
     val parsed = value.toDecimal()?.takeIf { it in 20.0..400.0 }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.weight_goal)) },
+        title = { Text(stringResource(Res.string.weight_goal)) },
         text = {
             OutlinedTextField(
                 value = value,
                 onValueChange = { value = it },
-                label = { Text(stringResource(R.string.weight_goal_kg)) },
-                suffix = { Text(stringResource(R.string.unit_kg)) },
+                label = { Text(stringResource(Res.string.weight_goal_kg)) },
+                suffix = { Text(stringResource(Res.string.unit_kg)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
         },
-        confirmButton = { Button(enabled = parsed != null, onClick = { onSave(parsed) }) { Text(stringResource(R.string.save)) } },
+        confirmButton = { Button(enabled = parsed != null, onClick = { onSave(parsed) }) { Text(stringResource(Res.string.save)) } },
         dismissButton = {
             // Three buttons can outgrow a narrow dialog; these two wrap under each other then.
             FlowRow(horizontalArrangement = Arrangement.End) {
-                if (current != null) TextButton(onClick = { onSave(null) }) { Text(stringResource(R.string.weight_goal_clear)) }
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+                if (current != null) TextButton(onClick = { onSave(null) }) { Text(stringResource(Res.string.weight_goal_clear)) }
+                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
             }
         }
     )

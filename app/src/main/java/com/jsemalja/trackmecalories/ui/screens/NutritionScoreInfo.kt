@@ -1,6 +1,5 @@
 package com.jsemalja.trackmecalories.ui.screens
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,17 +9,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /** Settings > Nutrition score: one line and a button to the full explanation. */
 @Composable
 fun NutritionScoreSettings() {
     var open by remember { mutableStateOf(false) }
     Text(
-        stringResource(R.string.nutrition_score_desc),
+        stringResource(Res.string.nutrition_score_desc),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -28,7 +28,7 @@ fun NutritionScoreSettings() {
     OutlinedButton(onClick = { open = true }, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.Outlined.Info, contentDescription = null)
         Spacer(Modifier.width(8.dp))
-        Text(stringResource(R.string.nutrition_score_how))
+        Text(stringResource(Res.string.nutrition_score_how))
     }
     if (open) NutritionScoreDialog(onDismiss = { open = false })
 }
@@ -38,22 +38,22 @@ fun NutritionScoreSettings() {
 private fun NutritionScoreDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.nutrition_score_title)) },
+        title = { Text(stringResource(Res.string.nutrition_score_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(stringResource(R.string.nutrition_score_intro), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.nutrition_score_intro), style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(12.dp))
                 GradeScale()
-                Section(R.string.nutrition_score_against_title, R.string.nutrition_score_against)
-                Section(R.string.nutrition_score_for_title, R.string.nutrition_score_for)
-                Section(R.string.nutrition_score_groups_title, R.string.nutrition_score_groups)
-                Section(R.string.nutrition_score_scale_title, R.string.nutrition_score_scale)
-                Section(R.string.nutrition_score_badges_title, R.string.nutrition_score_badges)
-                Section(R.string.nutrition_score_missing_title, R.string.nutrition_score_missing)
-                Section(R.string.nutrition_score_limits_title, R.string.nutrition_score_limits)
+                Section(Res.string.nutrition_score_against_title, Res.string.nutrition_score_against)
+                Section(Res.string.nutrition_score_for_title, Res.string.nutrition_score_for)
+                Section(Res.string.nutrition_score_groups_title, Res.string.nutrition_score_groups)
+                Section(Res.string.nutrition_score_scale_title, Res.string.nutrition_score_scale)
+                Section(Res.string.nutrition_score_badges_title, Res.string.nutrition_score_badges)
+                Section(Res.string.nutrition_score_missing_title, Res.string.nutrition_score_missing)
+                Section(Res.string.nutrition_score_limits_title, Res.string.nutrition_score_limits)
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) } }
     )
 }
 
@@ -72,7 +72,7 @@ private fun GradeScale() {
 }
 
 @Composable
-private fun Section(@StringRes title: Int, @StringRes body: Int) {
+private fun Section(title: StringResource, body: StringResource) {
     Spacer(Modifier.height(12.dp))
     Text(stringResource(title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
     Spacer(Modifier.height(2.dp))

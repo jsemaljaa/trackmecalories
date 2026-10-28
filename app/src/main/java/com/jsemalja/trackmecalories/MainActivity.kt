@@ -15,7 +15,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import android.content.Intent
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -107,6 +107,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.semantics.Role
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModelFactory
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 class MainActivity : ComponentActivity() {
     // Set by a launcher shortcut or widget button; consumed once by the UI.
@@ -432,12 +434,12 @@ private fun DockedNavBar(current: AppDestinations, onSelect: (AppDestinations) -
 }
 
 enum class AppDestinations(
-    @androidx.annotation.StringRes val label: Int,
+    val label: StringResource,
     val icon: ImageVector,
     val selectedIcon: ImageVector,
 ) {
-    HOME(R.string.nav_today, Icons.Outlined.Home, Icons.Filled.Home),
-    FOOD(R.string.nav_food, Icons.Outlined.Restaurant, Icons.Filled.Restaurant),
-    TRENDS(R.string.nav_trends, Icons.Outlined.BarChart, Icons.Filled.BarChart),
-    SETTINGS(R.string.nav_settings, Icons.Outlined.Settings, Icons.Filled.Settings),
+    HOME(Res.string.nav_today, Icons.Outlined.Home, Icons.Filled.Home),
+    FOOD(Res.string.nav_food, Icons.Outlined.Restaurant, Icons.Filled.Restaurant),
+    TRENDS(Res.string.nav_trends, Icons.Outlined.BarChart, Icons.Filled.BarChart),
+    SETTINGS(Res.string.nav_settings, Icons.Outlined.Settings, Icons.Filled.Settings),
 }

@@ -14,12 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.ActivityLevel
 import com.jsemalja.trackmecalories.data.CalorieCalculator
 import com.jsemalja.trackmecalories.data.Diet
@@ -34,6 +33,7 @@ import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import kotlin.math.roundToInt
 import com.jsemalja.trackmecalories.data.label
 import com.jsemalja.trackmecalories.data.description
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * Goals: pick a diet and enter calories — protein, carbs, fat and fiber follow
@@ -62,8 +62,8 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
         OutlinedTextField(
             value = kcal,
             onValueChange = { kcal = it.filter(Char::isDigit); saved = false },
-            label = { Text(stringResource(R.string.goal_calories), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            suffix = { Text(stringResource(R.string.unit_kcal)) },
+            label = { Text(stringResource(Res.string.goal_calories), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            suffix = { Text(stringResource(Res.string.unit_kcal)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             modifier = modifier
@@ -73,7 +73,7 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
         FilledTonalButton(onClick = { showCalculator = true }, contentPadding = PaddingValues(horizontal = 14.dp), modifier = modifier) {
             Icon(Icons.Outlined.Calculate, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.goal_calculate), maxLines = 1)
+            Text(stringResource(Res.string.goal_calculate), maxLines = 1)
         }
     }
     // Side by side when there's room; on narrow phones the field would be squeezed to a
@@ -94,7 +94,7 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
     }
 
     Spacer(Modifier.height(16.dp))
-    Text(stringResource(R.string.goal_diet), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(Res.string.goal_diet), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(6.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Diet.entries.forEach { d ->
@@ -123,23 +123,23 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
     if (computed != null) {
         // Calculated from calories; shown read-only so it's obvious they follow the diet.
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ComputedMacro(stringResource(R.string.protein), computed.protein, MacroProtein, Modifier.weight(1f))
-            ComputedMacro(stringResource(R.string.carbs), computed.carbs, MacroCarbs, Modifier.weight(1f))
-            ComputedMacro(stringResource(R.string.fat), computed.fat, MacroFat, Modifier.weight(1f))
-            ComputedMacro(stringResource(R.string.fiber), computed.fiber, MacroFiber, Modifier.weight(1f))
+            ComputedMacro(stringResource(Res.string.protein), computed.protein, MacroProtein, Modifier.weight(1f))
+            ComputedMacro(stringResource(Res.string.carbs), computed.carbs, MacroCarbs, Modifier.weight(1f))
+            ComputedMacro(stringResource(Res.string.fat), computed.fat, MacroFat, Modifier.weight(1f))
+            ComputedMacro(stringResource(Res.string.fiber), computed.fiber, MacroFiber, Modifier.weight(1f))
         }
         Spacer(Modifier.height(8.dp))
         MacroSplitBar(diet.proteinPct, diet.carbsPct, diet.fatPct)
     } else {
         // Two per row, so each label ("Carbs (g)" and its translations) stays readable.
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GoalField(stringResource(R.string.protein_g), protein, Modifier.weight(1f)) { protein = it; saved = false }
-            GoalField(stringResource(R.string.carbs_g), carbs, Modifier.weight(1f)) { carbs = it; saved = false }
+            GoalField(stringResource(Res.string.protein_g), protein, Modifier.weight(1f)) { protein = it; saved = false }
+            GoalField(stringResource(Res.string.carbs_g), carbs, Modifier.weight(1f)) { carbs = it; saved = false }
         }
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GoalField(stringResource(R.string.fat_g), fat, Modifier.weight(1f)) { fat = it; saved = false }
-            GoalField(stringResource(R.string.fiber_g), fiber, Modifier.weight(1f)) { fiber = it; saved = false }
+            GoalField(stringResource(Res.string.fat_g), fat, Modifier.weight(1f)) { fat = it; saved = false }
+            GoalField(stringResource(Res.string.fiber_g), fiber, Modifier.weight(1f)) { fiber = it; saved = false }
         }
         val p = protein.toDecimal() ?: 0.0
         val c = carbs.toDecimal() ?: 0.0
@@ -149,7 +149,7 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
             Spacer(Modifier.height(8.dp))
             MacroSplitBar((p * 4 / macroKcal * 100).roundToInt(), (c * 4 / macroKcal * 100).roundToInt(), (f * 9 / macroKcal * 100).roundToInt())
             Text(
-                stringResource(R.string.goal_macros_add_up, macroKcal.roundToInt()),
+                stringResource(Res.string.goal_macros_add_up, macroKcal.roundToInt()),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (kotlin.math.abs(macroKcal - kcalValue) > kcalValue * 0.1) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -158,9 +158,9 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
 
     Spacer(Modifier.height(12.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        GoalField(stringResource(R.string.salt_limit_g), salt, Modifier.weight(1f)) { salt = it; saved = false }
+        GoalField(stringResource(Res.string.salt_limit_g), salt, Modifier.weight(1f)) { salt = it; saved = false }
         if (showWater) {
-            GoalField(stringResource(R.string.water_goal_ml), water, Modifier.weight(1f)) { water = it; saved = false }
+            GoalField(stringResource(Res.string.water_goal_ml), water, Modifier.weight(1f)) { water = it; saved = false }
         } else {
             Spacer(Modifier.weight(1f))
         }
@@ -191,7 +191,7 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
         },
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text(stringResource(if (saved) R.string.goal_saved else R.string.goal_save))
+        Text(stringResource(if (saved) Res.string.goal_saved else Res.string.goal_save))
     }
 
     if (showCalculator) {
@@ -232,7 +232,7 @@ private fun ComputedMacro(label: String, grams: Double, color: androidx.compose.
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // A quarter of the card: shrink to fit rather than clip "Fiber" in longer languages.
-        FitText("${grams.roundToInt()} ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
+        FitText("${grams.roundToInt()} ${stringResource(Res.string.unit_g)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
         FitText(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 4.dp))
     }
 }
@@ -278,7 +278,7 @@ fun CalorieCalculatorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.calc_title)) },
+        title = { Text(stringResource(Res.string.calc_title)) },
         text = {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 item {
@@ -296,23 +296,23 @@ fun CalorieCalculatorDialog(
                 // Two per row: three across a dialog left each label a few letters wide.
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        GoalField(stringResource(R.string.calc_birth_year), birthYear, Modifier.weight(1f)) { birthYear = it.filter(Char::isDigit).take(4) }
+                        GoalField(stringResource(Res.string.calc_birth_year), birthYear, Modifier.weight(1f)) { birthYear = it.filter(Char::isDigit).take(4) }
                         Spacer(Modifier.weight(1f))
                     }
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        GoalField(stringResource(R.string.calc_height_cm), height, Modifier.weight(1f)) { height = it }
-                        GoalField(stringResource(R.string.calc_weight_kg), weight, Modifier.weight(1f)) { weight = it }
+                        GoalField(stringResource(Res.string.calc_height_cm), height, Modifier.weight(1f)) { height = it }
+                        GoalField(stringResource(Res.string.calc_weight_kg), weight, Modifier.weight(1f)) { weight = it }
                     }
                 }
-                item { Text(stringResource(R.string.calc_activity), style = MaterialTheme.typography.labelLarge) }
+                item { Text(stringResource(Res.string.calc_activity), style = MaterialTheme.typography.labelLarge) }
                 ActivityLevel.entries.forEach { a ->
                     item(key = "a_${a.name}") {
                         ChoiceRow(selected = activity == a, title = stringResource(a.label), subtitle = stringResource(a.description)) { activity = a }
                     }
                 }
-                item { Text(stringResource(R.string.calc_goal), style = MaterialTheme.typography.labelLarge) }
+                item { Text(stringResource(Res.string.calc_goal), style = MaterialTheme.typography.labelLarge) }
                 WeightPace.entries.forEach { p ->
                     item(key = "p_${p.name}") {
                         ChoiceRow(selected = pace == p, title = stringResource(p.label), subtitle = null) { pace = p }
@@ -328,13 +328,13 @@ fun CalorieCalculatorDialog(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         if (target != null) {
-                            FitText("%,d %s".format(target, stringResource(R.string.unit_kcal)), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                            Text(stringResource(R.string.calc_maintenance, maintenance!!), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            FitText("%,d %s".format(target, stringResource(Res.string.unit_kcal)), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Text(stringResource(Res.string.calc_maintenance, maintenance!!), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             if (target == CalorieCalculator.MIN_KCAL) {
-                                Text(stringResource(R.string.calc_min_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                                Text(stringResource(Res.string.calc_min_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                             }
                         } else {
-                            Text(stringResource(R.string.calc_fill_in), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(Res.string.calc_fill_in), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -349,7 +349,7 @@ fun CalorieCalculatorDialog(
                                 )
                             },
                             modifier = Modifier.fillMaxWidth()
-                        ) { Text(stringResource(R.string.calc_use_measured, measuredMaintenance)) }
+                        ) { Text(stringResource(Res.string.calc_use_measured, measuredMaintenance)) }
                     }
                 }
             }
@@ -363,9 +363,9 @@ fun CalorieCalculatorDialog(
                         goals.copy(sex = sex.name, birthYear = year, heightCm = h, activityLevel = activity.name)
                     )
                 }
-            ) { Text(stringResource(R.string.calc_use)) }
+            ) { Text(stringResource(Res.string.calc_use)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } }
     )
 }
 

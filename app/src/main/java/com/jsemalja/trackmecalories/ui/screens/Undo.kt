@@ -7,10 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.res.stringResource
-import com.jsemalja.trackmecalories.R
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * The app's one "Deleted … Undo" snackbar. Deletes happen at once and can be taken back
@@ -38,6 +38,6 @@ val LocalUndo = staticCompositionLocalOf<UndoController> { error("No UndoControl
 fun rememberUndoController(): UndoController {
     val hostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val undoLabel = stringResource(R.string.undo)
+    val undoLabel = stringResource(Res.string.undo)
     return remember(undoLabel) { UndoController(hostState, scope, undoLabel) }
 }

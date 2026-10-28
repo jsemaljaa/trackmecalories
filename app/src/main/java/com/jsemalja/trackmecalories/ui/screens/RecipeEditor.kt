@@ -22,7 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,7 +31,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.CookFactor
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.Recipe
@@ -51,6 +50,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import com.jsemalja.trackmecalories.data.label
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * Create or edit a recipe the way you cook it: add the ingredients as weighed raw, optionally
@@ -125,13 +125,13 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
             Column(Modifier.fillMaxSize().safeDrawingPadding()) {
                 // Close icon and Save line up with the 16 dp content edges below.
                 Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close)) }
+                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close)) }
                     Text(
-                        stringResource(if (recipeId == null) R.string.recipe_new else R.string.recipe_edit),
+                        stringResource(if (recipeId == null) Res.string.recipe_new else Res.string.recipe_edit),
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.weight(1f)
                     )
-                    Button(onClick = ::save, enabled = canSave && loaded) { Text(stringResource(R.string.save)) }
+                    Button(onClick = ::save, enabled = canSave && loaded) { Text(stringResource(Res.string.save)) }
                 }
 
                 LazyColumn(
@@ -143,7 +143,7 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                         OutlinedTextField(
                             value = name,
                             onValueChange = { name = it },
-                            label = { Text(stringResource(R.string.recipe_name)) },
+                            label = { Text(stringResource(Res.string.recipe_name)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -151,7 +151,7 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
 
                     // Step 1: what went into the pot, weighed raw.
                     item {
-                        StepHeader(stringResource(R.string.recipe_step_ingredients), stringResource(R.string.recipe_ingredients_hint))
+                        StepHeader(stringResource(Res.string.recipe_step_ingredients), stringResource(Res.string.recipe_ingredients_hint))
                     }
                     itemsIndexed(ingredients, key = { i, ing -> "$i-${ing.name}" }) { i, ing ->
                         IngredientRow(ing, onClick = { editing = i }, onRemove = { ingredients.removeAt(i) })
@@ -163,12 +163,12 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                             OutlinedButton(onClick = { picking = true }, modifier = Modifier.weight(1f), contentPadding = padding) {
                                 Icon(Icons.Outlined.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(6.dp))
-                                FitText(stringResource(R.string.recipe_add_search))
+                                FitText(stringResource(Res.string.recipe_add_search))
                             }
                             OutlinedButton(onClick = { scanning = true }, modifier = Modifier.weight(1f), contentPadding = padding) {
                                 Icon(Icons.Outlined.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(6.dp))
-                                FitText(stringResource(R.string.recipe_add_scan))
+                                FitText(stringResource(Res.string.recipe_add_scan))
                             }
                         }
                     }
@@ -176,13 +176,13 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                     // Step 2: optionally weigh the finished dish, since cooking adds or removes water.
                     item {
                         Spacer(Modifier.height(6.dp))
-                        StepHeader(stringResource(R.string.recipe_step_cooked), stringResource(R.string.recipe_pot_weight_hint))
+                        StepHeader(stringResource(Res.string.recipe_step_cooked), stringResource(Res.string.recipe_pot_weight_hint))
                         Spacer(Modifier.height(6.dp))
                         OutlinedTextField(
                             value = potWeight,
                             onValueChange = { potWeight = it },
-                            label = { Text(stringResource(R.string.recipe_pot_weight)) },
-                            suffix = { Text(stringResource(R.string.unit_g)) },
+                            label = { Text(stringResource(Res.string.recipe_pot_weight)) },
+                            suffix = { Text(stringResource(Res.string.unit_g)) },
                             placeholder = { if (estimated > 0) Text(estimated.roundToInt().toString()) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             singleLine = true,
@@ -194,10 +194,10 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                     item {
                         AppCard(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(stringResource(R.string.recipe_per_100g), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(Res.string.recipe_per_100g), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 ValueWithUnit(
                                     per100?.kcal?.roundToInt()?.toString() ?: "—",
-                                    stringResource(R.string.unit_kcal),
+                                    stringResource(Res.string.unit_kcal),
                                     MaterialTheme.typography.displaySmall,
                                     unitStyle = MaterialTheme.typography.titleMedium,
                                     unitColor = LocalContentColor.current,
@@ -205,27 +205,27 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                                 )
                                 if (per100 != null) {
                                     Text(
-                                        stringResource(R.string.macro_line, short(per100.protein), short(per100.carbs), short(per100.fat)),
+                                        stringResource(Res.string.macro_line, short(per100.protein), short(per100.carbs), short(per100.fat)),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
                                 Text(
                                     when {
-                                        weighed != null -> stringResource(R.string.recipe_basis_weighed, weighed.roundToInt(), rawWeight.roundToInt())
-                                        estimated <= 0 -> stringResource(R.string.recipe_basis_unknown)
-                                        list.hasCookFactors() -> stringResource(R.string.recipe_basis_estimated, estimated.roundToInt(), rawWeight.roundToInt())
-                                        else -> stringResource(R.string.recipe_basis_raw, rawWeight.roundToInt())
-                                    } + if (missingWeights && weighed == null) " " + stringResource(R.string.recipe_pot_pieces_note) else "",
+                                        weighed != null -> stringResource(Res.string.recipe_basis_weighed, weighed.roundToInt(), rawWeight.roundToInt())
+                                        estimated <= 0 -> stringResource(Res.string.recipe_basis_unknown)
+                                        list.hasCookFactors() -> stringResource(Res.string.recipe_basis_estimated, estimated.roundToInt(), rawWeight.roundToInt())
+                                        else -> stringResource(Res.string.recipe_basis_raw, rawWeight.roundToInt())
+                                    } + if (missingWeights && weighed == null) " " + stringResource(Res.string.recipe_pot_pieces_note) else "",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 HorizontalDivider(Modifier.padding(vertical = 4.dp))
-                                TotalsRow(stringResource(R.string.recipe_total), totals.kcal, totals.protein, totals.carbs, totals.fat)
+                                TotalsRow(stringResource(Res.string.recipe_total), totals.kcal, totals.protein, totals.carbs, totals.fat)
                                 if (logBy == "pcs") {
-                                    TotalsRow(stringResource(R.string.recipe_per_serving), totals.kcal / servingsValue, totals.protein / servingsValue, totals.carbs / servingsValue, totals.fat / servingsValue)
+                                    TotalsRow(stringResource(Res.string.recipe_per_serving), totals.kcal / servingsValue, totals.protein / servingsValue, totals.carbs / servingsValue, totals.fat / servingsValue)
                                     if (dishWeight > 0) {
                                         Text(
-                                            stringResource(R.string.recipe_serving_weighs, (dishWeight / servingsValue).roundToInt()),
+                                            stringResource(Res.string.recipe_serving_weighs, (dishWeight / servingsValue).roundToInt()),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -238,10 +238,10 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                     // Step 3: by weight (the per-100 g values above) or per serving.
                     item {
                         Spacer(Modifier.height(6.dp))
-                        StepHeader(stringResource(R.string.recipe_step_log), null)
+                        StepHeader(stringResource(Res.string.recipe_step_log), null)
                         Spacer(Modifier.height(6.dp))
                         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                            listOf("g" to R.string.recipe_log_weight, "pcs" to R.string.recipe_log_serving).forEachIndexed { i, (value, label) ->
+                            listOf("g" to Res.string.recipe_log_weight, "pcs" to Res.string.recipe_log_serving).forEachIndexed { i, (value, label) ->
                                 SegmentedButton(
                                     selected = logBy == value,
                                     onClick = { logBy = value },
@@ -253,7 +253,7 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            stringResource(if (logBy == "pcs") R.string.recipe_log_serving_desc else R.string.recipe_log_weight_desc),
+                            stringResource(if (logBy == "pcs") Res.string.recipe_log_serving_desc else Res.string.recipe_log_weight_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -262,7 +262,7 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                             OutlinedTextField(
                                 value = servings,
                                 onValueChange = { servings = it },
-                                label = { Text(stringResource(R.string.recipe_servings)) },
+                                label = { Text(stringResource(Res.string.recipe_servings)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
@@ -276,7 +276,7 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
                                 onClick = { confirmDelete = true },
                                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                                 contentPadding = PaddingValues(horizontal = 0.dp)
-                            ) { Text(stringResource(R.string.recipe_delete)) }
+                            ) { Text(stringResource(Res.string.recipe_delete)) }
                         }
                     }
                 }
@@ -323,15 +323,15 @@ fun RecipeEditor(viewModel: MainViewModel, recipeId: Int?, onDismiss: () -> Unit
     if (confirmDelete && recipeId != null) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(stringResource(R.string.recipe_delete_title, name)) },
-            text = { Text(stringResource(R.string.recipe_delete_body)) },
+            title = { Text(stringResource(Res.string.recipe_delete_title, name)) },
+            text = { Text(stringResource(Res.string.recipe_delete_body)) },
             confirmButton = {
                 Button(
                     onClick = { viewModel.deleteRecipe(recipeId); confirmDelete = false; onDismiss() },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text(stringResource(R.string.delete)) }
+                ) { Text(stringResource(Res.string.delete)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } }
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(Res.string.cancel)) } }
         )
     }
 }
@@ -393,23 +393,23 @@ private fun IngredientRow(ing: RecipeIngredient, onClick: () -> Unit, onRemove: 
             Column(Modifier.weight(1f)) {
                 Text(ing.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val grams = ing.amount * ing.gramsPerUnit
-                val gramsLabel = "${grams.roundToInt()} ${stringResource(R.string.unit_g)}"
+                val gramsLabel = "${grams.roundToInt()} ${stringResource(Res.string.unit_g)}"
                 val amount = when {
-                    ing.unit != "pcs" -> stringResource(R.string.recipe_raw_amount, "${ing.amount.clean()} ${unitLabel(ing.unit)}")
+                    ing.unit != "pcs" -> stringResource(Res.string.recipe_raw_amount, "${ing.amount.clean()} ${unitLabel(ing.unit)}")
                     // Entered in grams: a share of a piece ("0.01 pcs") means nothing.
-                    !ing.inPieces() -> stringResource(R.string.recipe_raw_amount, gramsLabel)
-                    grams > 0 -> "${ing.amount.clean()} ${unitLabel(ing.unit)} · " + stringResource(R.string.recipe_raw_amount, gramsLabel)
+                    !ing.inPieces() -> stringResource(Res.string.recipe_raw_amount, gramsLabel)
+                    grams > 0 -> "${ing.amount.clean()} ${unitLabel(ing.unit)} · " + stringResource(Res.string.recipe_raw_amount, gramsLabel)
                     else -> "${ing.amount.clean()} ${unitLabel(ing.unit)}"
                 }
-                val cook = if (abs(ing.cookFactor - 1.0) > 0.001 && grams > 0) " · " + stringResource(R.string.recipe_cooks_to, (grams * ing.cookFactor).roundToInt()) else ""
+                val cook = if (abs(ing.cookFactor - 1.0) > 0.001 && grams > 0) " · " + stringResource(Res.string.recipe_cooks_to, (grams * ing.cookFactor).roundToInt()) else ""
                 Text(amount + cook, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (ing.gramsPerUnit <= 0.0) {
-                    Text(stringResource(R.string.recipe_piece_weight_missing), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.recipe_piece_weight_missing), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
             }
-            Text("${ing.totals().kcal.roundToInt()} ${stringResource(R.string.unit_kcal)}", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
+            Text("${ing.totals().kcal.roundToInt()} ${stringResource(Res.string.unit_kcal)}", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
             IconButton(onClick = onRemove) {
-                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Outlined.Delete, contentDescription = stringResource(Res.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -420,9 +420,9 @@ private fun TotalsRow(label: String, kcal: Double, protein: Double, carbs: Doubl
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
         Column(horizontalAlignment = Alignment.End) {
-            Text("${kcal.roundToInt()} ${stringResource(R.string.unit_kcal)}", fontWeight = FontWeight.Bold)
+            Text("${kcal.roundToInt()} ${stringResource(Res.string.unit_kcal)}", fontWeight = FontWeight.Bold)
             Text(
-                "${stringResource(R.string.macro_p)} ${protein.roundToInt()} · ${stringResource(R.string.macro_c)} ${carbs.roundToInt()} · ${stringResource(R.string.macro_f)} ${fat.roundToInt()}",
+                "${stringResource(Res.string.macro_p)} ${protein.roundToInt()} · ${stringResource(Res.string.macro_c)} ${carbs.roundToInt()} · ${stringResource(Res.string.macro_f)} ${fat.roundToInt()}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -472,14 +472,14 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
                                 shape = SegmentedButtonDefaults.itemShape(i, 2),
                                 colors = appSegmentedColors(),
                                 icon = {}
-                            ) { Text(stringResource(if (grams) R.string.recipe_in_grams else R.string.recipe_in_pieces)) }
+                            ) { Text(stringResource(if (grams) Res.string.recipe_in_grams else Res.string.recipe_in_pieces)) }
                         }
                     }
                 }
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text(stringResource(R.string.recipe_amount)) },
+                    label = { Text(stringResource(Res.string.recipe_amount)) },
                     suffix = { Text(unitLabel(if (inGrams) "g" else ingredient.unit)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -489,9 +489,9 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
                     OutlinedTextField(
                         value = pieceGrams,
                         onValueChange = { pieceGrams = it },
-                        label = { Text(stringResource(R.string.recipe_piece_weight)) },
-                        suffix = { Text(stringResource(R.string.unit_g)) },
-                        supportingText = { Text(stringResource(if (inGrams) R.string.piece_weight_needed else R.string.recipe_piece_weight_help)) },
+                        label = { Text(stringResource(Res.string.recipe_piece_weight)) },
+                        suffix = { Text(stringResource(Res.string.unit_g)) },
+                        supportingText = { Text(stringResource(if (inGrams) Res.string.piece_weight_needed else Res.string.recipe_piece_weight_help)) },
                         isError = inGrams && pieceWeight == null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
@@ -499,12 +499,12 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
                     )
                 }
                 TextButton(onClick = { showFactor = !showFactor }, contentPadding = PaddingValues(horizontal = 0.dp)) {
-                    Text(stringResource(R.string.recipe_cook_factor_toggle), modifier = Modifier.weight(1f, fill = false))
+                    Text(stringResource(Res.string.recipe_cook_factor_toggle), modifier = Modifier.weight(1f, fill = false))
                     Spacer(Modifier.width(4.dp))
                     Icon(if (showFactor) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, contentDescription = null, modifier = Modifier.size(18.dp))
                 }
                 if (showFactor) {
-                    Text(stringResource(R.string.recipe_cook_factor_help), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(Res.string.recipe_cook_factor_help), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         CookFactor.entries.forEach { cf ->
                             FilterChip(
@@ -517,7 +517,7 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
                     OutlinedTextField(
                         value = factor,
                         onValueChange = { factor = it },
-                        label = { Text(stringResource(R.string.recipe_cook_factor_custom)) },
+                        label = { Text(stringResource(Res.string.recipe_cook_factor_custom)) },
                         prefix = { Text("×") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
@@ -541,8 +541,8 @@ private fun IngredientDialog(ingredient: RecipeIngredient, onDismiss: () -> Unit
                 },
                 // Grams can't be turned into pieces without a piece's weight.
                 enabled = !(inGrams && pieceWeight == null)
-            ) { Text(stringResource(R.string.save)) }
+            ) { Text(stringResource(Res.string.save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } }
     )
 }

@@ -6,16 +6,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.StreakKind
 import com.jsemalja.trackmecalories.ui.screens.description
 import com.jsemalja.trackmecalories.ui.screens.icon
 import com.jsemalja.trackmecalories.ui.screens.label
 import com.jsemalja.trackmecalories.ui.viewmodel.MainViewModel
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * Streaks and badges: the switch for all of it, which streaks to track (water and fasting
@@ -28,13 +28,13 @@ internal fun GamificationSettingsSection(viewModel: MainViewModel) {
     val fasting by viewModel.fastingSettings.collectAsState()
 
     SettingsSectionCard {
-        SettingSwitch(stringResource(R.string.gamification_title), stringResource(R.string.gamification_desc), settings.enabled) {
+        SettingSwitch(stringResource(Res.string.gamification_title), stringResource(Res.string.gamification_desc), settings.enabled) {
             viewModel.setGamification(settings.copy(enabled = it))
         }
     }
     if (!settings.enabled) return
 
-    SettingsSectionCard(title = stringResource(R.string.gamification_streaks_heading)) {
+    SettingsSectionCard(title = stringResource(Res.string.gamification_streaks_heading)) {
         StreakKind.entries.forEachIndexed { i, kind ->
             val available = when (kind) {
                 StreakKind.WATER -> waterOn
@@ -48,18 +48,18 @@ internal fun GamificationSettingsSection(viewModel: MainViewModel) {
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            stringResource(R.string.gamification_grace_note),
+            stringResource(Res.string.gamification_grace_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
     SettingsSectionCard {
-        SettingSwitch(stringResource(R.string.gamification_show_today), stringResource(R.string.gamification_show_today_desc), settings.showOnToday) {
+        SettingSwitch(stringResource(Res.string.gamification_show_today), stringResource(Res.string.gamification_show_today_desc), settings.showOnToday) {
             viewModel.setGamification(settings.copy(showOnToday = it))
         }
         Spacer(Modifier.height(16.dp))
-        SettingSwitch(stringResource(R.string.gamification_celebrations), stringResource(R.string.gamification_celebrations_desc), settings.celebrations) {
+        SettingSwitch(stringResource(Res.string.gamification_celebrations), stringResource(Res.string.gamification_celebrations_desc), settings.celebrations) {
             viewModel.setGamification(settings.copy(celebrations = it))
         }
     }
@@ -83,7 +83,7 @@ private fun StreakChoice(kind: StreakKind, checked: Boolean, enabled: Boolean, o
                 color = if (enabled) colors.onSurface else colors.onSurface.copy(alpha = 0.5f)
             )
             Text(
-                stringResource(if (enabled) kind.description else R.string.gamification_needs_feature),
+                stringResource(if (enabled) kind.description else Res.string.gamification_needs_feature),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant
             )

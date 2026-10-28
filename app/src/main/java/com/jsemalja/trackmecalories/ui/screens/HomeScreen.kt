@@ -58,8 +58,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.MonitorWeight
-import androidx.compose.ui.res.stringResource
-import com.jsemalja.trackmecalories.R
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Search
@@ -96,6 +95,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 import com.jsemalja.trackmecalories.data.currentDateTime
 import com.jsemalja.trackmecalories.data.label
+import com.jsemalja.trackmecalories.resources.*
 
 // Section order for the daily log; anything else (custom meal types) is appended alphabetically.
 private val MEAL_ORDER = listOf("Breakfast", "Lunch", "Dinner", "Snack", "Quick Add")
@@ -159,8 +159,8 @@ fun HomeScreen(
     var showPortionDialogFor by remember { mutableStateOf<CustomFood?>(null) }
 
     val undo = LocalUndo.current
-    val deletedMessage = stringResource(R.string.deleted_entry)
-    val deletedWater = stringResource(R.string.deleted_water)
+    val deletedMessage = stringResource(Res.string.deleted_entry)
+    val deletedWater = stringResource(Res.string.deleted_water)
 
     // Every delete (swipe or the dialog's button) is undoable for a few seconds, so an
     // accidental swipe never loses anything.
@@ -196,7 +196,7 @@ fun HomeScreen(
                 contentColor = if (ink) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onPrimary,
                 elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_food))
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_food))
             }
         }
     ) { padding ->
@@ -264,7 +264,7 @@ fun HomeScreen(
                             }
                         }
                         Spacer(Modifier.height(20.dp))
-                        Text(stringResource(R.string.daily_log), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.daily_log), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                     }
                 }
@@ -272,7 +272,7 @@ fun HomeScreen(
                 if (entries.isEmpty()) {
                     item(key = "empty") {
                         Text(
-                            stringResource(R.string.no_entries_day),
+                            stringResource(Res.string.no_entries_day),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -495,7 +495,7 @@ fun MealSectionHeader(
             if (onRate != null) MealRatingChip(satiety, energy, onRate)
         }
         Text(
-            "$totalKcal ${stringResource(R.string.unit_kcal)}",
+            "$totalKcal ${stringResource(Res.string.unit_kcal)}",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
@@ -533,8 +533,8 @@ fun WaterCard(
             Icon(Icons.Default.LocalDrink, contentDescription = null, tint = if (tintedCards) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.tertiary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.water), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                Text("${totalMl.toInt()} / ${goalMl.toInt()} ${stringResource(R.string.unit_ml)}", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.water), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text("${totalMl.toInt()} / ${goalMl.toInt()} ${stringResource(Res.string.unit_ml)}", style = MaterialTheme.typography.bodyMedium)
             }
             // Tighter than the default 24 dp padding, so the label keeps room on narrow phones.
             val buttonPadding = PaddingValues(horizontal = 12.dp)
@@ -547,10 +547,10 @@ fun WaterCard(
     if (showEntries) {
         AlertDialog(
             onDismissRequest = { showEntries = false },
-            title = { Text(stringResource(R.string.water_entries_title)) },
+            title = { Text(stringResource(Res.string.water_entries_title)) },
             text = {
                 if (waterEntries.isEmpty()) {
-                    Text(stringResource(R.string.water_entries_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(Res.string.water_entries_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     Column(Modifier.verticalScroll(rememberScrollState())) {
                         val timeFormat = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(Locale.getDefault())
@@ -563,16 +563,16 @@ fun WaterCard(
                                     softWrap = false,
                                     modifier = Modifier.widthIn(min = 72.dp).padding(end = 8.dp)
                                 )
-                                Text("${entry.amountMl.toInt()} ${stringResource(R.string.unit_ml)}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                Text("${entry.amountMl.toInt()} ${stringResource(Res.string.unit_ml)}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                                 IconButton(onClick = { onRemove(entry) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showEntries = false }) { Text(stringResource(R.string.close)) } }
+            confirmButton = { TextButton(onClick = { showEntries = false }) { Text(stringResource(Res.string.close)) } }
         )
     }
 }
@@ -622,7 +622,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
                             modifier = Modifier.widthIn(max = ringSize - 36.dp)
                         )
                         Text(
-                            stringResource(if (isOver) R.string.kcal_over else R.string.kcal_left),
+                            stringResource(if (isOver) Res.string.kcal_over else Res.string.kcal_left),
                             style = MaterialTheme.typography.labelMedium,
                             color = if (isOver) colors.error else onCard.copy(alpha = 0.75f),
                             textAlign = TextAlign.Center,
@@ -635,12 +635,12 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
                     Spacer(Modifier.width(ringGap))
 
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        CalorieStat(stringResource(R.string.eaten), eaten, onCard, uncertainty = entries.kcalUncertainty().roundToInt())
+                        CalorieStat(stringResource(Res.string.eaten), eaten, onCard, uncertainty = entries.kcalUncertainty().roundToInt())
                         Column {
-                            CalorieStat(stringResource(if (weekly != null) R.string.goal_today_flex else R.string.goal), goal, onCard)
+                            CalorieStat(stringResource(if (weekly != null) Res.string.goal_today_flex else Res.string.goal), goal, onCard)
                             if (activityBonus > 0) {
                                 Text(
-                                    stringResource(R.string.goal_activity_bonus, "%,d".format(activityBonus)),
+                                    stringResource(Res.string.goal_activity_bonus, "%,d".format(activityBonus)),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = onCard.copy(alpha = 0.7f)
                                 )
@@ -649,9 +649,9 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
                         HorizontalDivider(color = onCard.copy(alpha = 0.15f))
                         Text(
                             when {
-                                eaten == 0 -> stringResource(R.string.nothing_logged_yet)
-                                isOver -> stringResource(R.string.percent_of_goal, eaten * 100 / goal)
-                                else -> stringResource(R.string.percent_of_goal_eaten, eaten * 100 / goal)
+                                eaten == 0 -> stringResource(Res.string.nothing_logged_yet)
+                                isOver -> stringResource(Res.string.percent_of_goal, eaten * 100 / goal)
+                                else -> stringResource(Res.string.percent_of_goal_eaten, eaten * 100 / goal)
                             },
                             style = MaterialTheme.typography.labelMedium,
                             color = if (isOver) statusColor else onCard.copy(alpha = 0.75f)
@@ -664,15 +664,15 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
 
             // Fixed 3-column grid so the second row lines up with the first.
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                NutrientProgress(stringResource(R.string.protein), entries.sumOf { it.protein }, goals.proteinGoal, MacroProtein, Modifier.weight(1f))
-                NutrientProgress(stringResource(R.string.carbs), entries.sumOf { it.carbs }, goals.carbGoal, MacroCarbs, Modifier.weight(1f))
-                NutrientProgress(stringResource(R.string.fat), entries.sumOf { it.fat }, goals.fatGoal, MacroFat, Modifier.weight(1f))
+                NutrientProgress(stringResource(Res.string.protein), entries.sumOf { it.protein }, goals.proteinGoal, MacroProtein, Modifier.weight(1f))
+                NutrientProgress(stringResource(Res.string.carbs), entries.sumOf { it.carbs }, goals.carbGoal, MacroCarbs, Modifier.weight(1f))
+                NutrientProgress(stringResource(Res.string.fat), entries.sumOf { it.fat }, goals.fatGoal, MacroFat, Modifier.weight(1f))
             }
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                NutrientProgress(stringResource(R.string.fiber), entries.sumOf { it.fiber }, goals.fiberGoal, MacroFiber, Modifier.weight(1f))
+                NutrientProgress(stringResource(Res.string.fiber), entries.sumOf { it.fiber }, goals.fiberGoal, MacroFiber, Modifier.weight(1f))
                 // Salt is a limit, not a target — going over it is flagged.
-                NutrientProgress(stringResource(R.string.salt), entries.sumOf { it.salt }, goals.saltGoal, MacroSalt, Modifier.weight(1f), isLimit = true, decimals = true)
+                NutrientProgress(stringResource(Res.string.salt), entries.sumOf { it.salt }, goals.saltGoal, MacroSalt, Modifier.weight(1f), isLimit = true, decimals = true)
                 Spacer(Modifier.weight(1f))
             }
             if (weekly != null) {
@@ -681,7 +681,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
                 Spacer(Modifier.height(10.dp))
                 Text(
                     stringResource(
-                        R.string.week_budget_line,
+                        Res.string.week_budget_line,
                         "%,d".format(weekly.weekLeft - eaten),
                         "%,d".format(weekly.weekBudget),
                         weekly.daysLeft
@@ -690,7 +690,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
                     color = onCard.copy(alpha = 0.8f)
                 )
                 if (weekly.capped) {
-                    Text(stringResource(R.string.week_budget_capped), style = MaterialTheme.typography.labelSmall, color = onCard.copy(alpha = 0.65f))
+                    Text(stringResource(Res.string.week_budget_capped), style = MaterialTheme.typography.labelSmall, color = onCard.copy(alpha = 0.65f))
                 }
             }
         }
@@ -704,7 +704,7 @@ private fun CalorieStat(label: String, kcal: Int, color: Color, uncertainty: Int
         ValueWithUnit(
             value = "%,d".format(kcal),
             // How far off the total could be, given how each entry was measured.
-            unit = stringResource(R.string.unit_kcal) + if (uncertainty >= 5) "  ± %,d".format(uncertainty) else "",
+            unit = stringResource(Res.string.unit_kcal) + if (uncertainty >= 5) "  ± %,d".format(uncertainty) else "",
             valueStyle = MaterialTheme.typography.titleLarge,
             valueColor = color,
             unitColor = color.copy(alpha = 0.7f)
@@ -790,7 +790,7 @@ private fun NutrientProgress(
     val overLimit = isLimit && value > goal
     val fmt: (Double) -> String = { if (decimals) "%.1f".format(it).removeSuffix(".0").removeSuffix(",0") else "${it.toInt()}" }
 
-    val unitG = stringResource(R.string.unit_g)
+    val unitG = stringResource(Res.string.unit_g)
 
     // A third of the card: long nutrient names and big numbers shrink rather than wrap.
     Column(modifier) {
@@ -877,7 +877,7 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    stringResource(R.string.entry_line, amount, entry.protein.toInt(), entry.carbs.toInt(), entry.fat.toInt()),
+                    stringResource(Res.string.entry_line, amount, entry.protein.toInt(), entry.carbs.toInt(), entry.fat.toInt()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -897,7 +897,7 @@ fun FoodItemRow(entry: FoodEntry, shape: Shape, onClick: () -> Unit) {
                 }
                 Text("${entry.kcal}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    " " + stringResource(R.string.unit_kcal),
+                    " " + stringResource(Res.string.unit_kcal),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 2.dp)
@@ -959,7 +959,7 @@ fun SwipeToDeleteContainer(
                 modifier = Modifier.fillMaxSize().clip(shape).background(color).padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onErrorContainer)
+                Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete), tint = MaterialTheme.colorScheme.onErrorContainer)
             }
         },
         content = { content() }
@@ -971,24 +971,24 @@ fun QuickAddDialog(onDismiss: () -> Unit, onSave: (Int) -> Unit) {
     var kcal by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.add_quick)) },
+        title = { Text(stringResource(Res.string.add_quick)) },
         text = {
             OutlinedTextField(
                 value = kcal,
                 onValueChange = { kcal = it },
-                label = { Text(stringResource(R.string.quick_add_total)) },
+                label = { Text(stringResource(Res.string.quick_add_total)) },
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.quick_add_example)) }
+                placeholder = { Text(stringResource(Res.string.quick_add_example)) }
             )
         },
         confirmButton = {
             Button(onClick = {
                 kcal.toIntOrNull()?.let { onSave(it) }
                 onDismiss()
-            }) { Text(stringResource(R.string.recipe_add)) }
+            }) { Text(stringResource(Res.string.recipe_add)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } }
     )
 }
 
@@ -1005,9 +1005,9 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
     val weekStart = weekStartOf(selectedDate)
 
     val title = when (selectedDate) {
-        today -> stringResource(R.string.today)
-        today.minusDays(1) -> stringResource(R.string.yesterday)
-        today.plusDays(1) -> stringResource(R.string.tomorrow)
+        today -> stringResource(Res.string.today)
+        today.minusDays(1) -> stringResource(Res.string.yesterday)
+        today.plusDays(1) -> stringResource(Res.string.tomorrow)
         else -> selectedDate.format(DateTimeFormatter.ofPattern("EEEE", locale)).replaceFirstChar { it.titlecase(locale) }
     }
     val subtitle = selectedDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale))
@@ -1015,7 +1015,7 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { onDateSelected(selectedDate.minusWeeks(1)) }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.previous_week))
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.previous_week))
             }
             Column(
                 modifier = Modifier
@@ -1030,14 +1030,14 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
                     Text(subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Icon(
                         Icons.Default.ArrowDropDown,
-                        contentDescription = stringResource(R.string.open_calendar),
+                        contentDescription = stringResource(Res.string.open_calendar),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
                 }
             }
             IconButton(onClick = { onDateSelected(selectedDate.plusWeeks(1)) }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.next_week))
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(Res.string.next_week))
             }
         }
 
@@ -1065,7 +1065,7 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
             ) {
                 Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.back_to_today))
+                Text(stringResource(Res.string.back_to_today))
             }
         }
     }
@@ -1082,9 +1082,9 @@ fun DateSelector(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
                         onDateSelected(date)
                     }
                     showPicker = false
-                }) { Text(stringResource(R.string.ok)) }
+                }) { Text(stringResource(Res.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showPicker = false }) { Text(stringResource(R.string.cancel)) } }
+            dismissButton = { TextButton(onClick = { showPicker = false }) { Text(stringResource(Res.string.cancel)) } }
         ) {
             DatePicker(state = state)
         }
@@ -1179,17 +1179,17 @@ private fun AddFoodSheet(
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 24.dp)) {
             Text(
-                stringResource(R.string.add_food),
+                stringResource(Res.string.add_food),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
             )
-            AddFoodAction(Icons.Outlined.AutoAwesome, stringResource(R.string.what_fits), stringResource(R.string.what_fits_desc), onWhatFits)
-            AddFoodAction(Icons.Outlined.Search, stringResource(R.string.add_search), stringResource(R.string.add_search_desc), onSearch)
-            AddFoodAction(Icons.Outlined.QrCodeScanner, stringResource(R.string.add_scan), stringResource(R.string.add_scan_desc), onScan)
-            AddFoodAction(Icons.Outlined.Bolt, stringResource(R.string.add_quick), stringResource(R.string.add_quick_desc), onQuickAdd)
-            AddFoodAction(Icons.Outlined.EditNote, stringResource(R.string.add_custom), stringResource(R.string.add_custom_desc), onCustom)
+            AddFoodAction(Icons.Outlined.AutoAwesome, stringResource(Res.string.what_fits), stringResource(Res.string.what_fits_desc), onWhatFits)
+            AddFoodAction(Icons.Outlined.Search, stringResource(Res.string.add_search), stringResource(Res.string.add_search_desc), onSearch)
+            AddFoodAction(Icons.Outlined.QrCodeScanner, stringResource(Res.string.add_scan), stringResource(Res.string.add_scan_desc), onScan)
+            AddFoodAction(Icons.Outlined.Bolt, stringResource(Res.string.add_quick), stringResource(Res.string.add_quick_desc), onQuickAdd)
+            AddFoodAction(Icons.Outlined.EditNote, stringResource(Res.string.add_custom), stringResource(Res.string.add_custom_desc), onCustom)
             HorizontalDivider(Modifier.padding(vertical = 4.dp, horizontal = 12.dp))
-            AddFoodAction(Icons.Outlined.MonitorWeight, stringResource(R.string.weight_log), stringResource(R.string.weight_log_desc), onLogWeight)
+            AddFoodAction(Icons.Outlined.MonitorWeight, stringResource(Res.string.weight_log), stringResource(Res.string.weight_log_desc), onLogWeight)
         }
     }
 }
@@ -1221,23 +1221,23 @@ private fun AddFoodAction(icon: androidx.compose.ui.graphics.vector.ImageVector,
 @Composable
 private fun DayStatusRow(complete: Boolean?, onChange: (Boolean?) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
-        Text(stringResource(R.string.day_status), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(Res.string.day_status), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = complete == true,
                 onClick = { onChange(if (complete == true) null else true) },
-                label = { Text(stringResource(R.string.day_complete)) },
+                label = { Text(stringResource(Res.string.day_complete)) },
                 leadingIcon = { Icon(Icons.Outlined.TaskAlt, contentDescription = null, modifier = Modifier.size(16.dp)) }
             )
             FilterChip(
                 selected = complete == false,
                 onClick = { onChange(if (complete == false) null else false) },
-                label = { Text(stringResource(R.string.day_incomplete)) },
+                label = { Text(stringResource(Res.string.day_incomplete)) },
                 leadingIcon = { Icon(Icons.Outlined.HourglassEmpty, contentDescription = null, modifier = Modifier.size(16.dp)) }
             )
         }
         if (complete == false) {
-            Text(stringResource(R.string.day_incomplete_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(Res.string.day_incomplete_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -1246,7 +1246,7 @@ private fun DayStatusRow(complete: Boolean?, onChange: (Boolean?) -> Unit) {
 @Composable
 private fun SuggestionsRow(habits: List<FoodHabit>, onPick: (FoodHabit) -> Unit) {
     Column {
-        Text(stringResource(R.string.suggestions_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(Res.string.suggestions_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(6.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(habits, key = { it.food.id }) { habit ->
@@ -1272,16 +1272,16 @@ private fun SuggestionsRow(habits: List<FoodHabit>, onPick: (FoodHabit) -> Unit)
 private fun WhatFitsDialog(fits: List<FitSuggestion>, remainingKcal: Double, onDismiss: () -> Unit, onPick: (FitSuggestion) -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.what_fits)) },
+        title = { Text(stringResource(Res.string.what_fits)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    stringResource(R.string.what_fits_left, remainingKcal.roundToInt().coerceAtLeast(0)),
+                    stringResource(Res.string.what_fits_left, remainingKcal.roundToInt().coerceAtLeast(0)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (fits.isEmpty()) {
-                    Text(stringResource(R.string.what_fits_empty), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(Res.string.what_fits_empty), style = MaterialTheme.typography.bodyMedium)
                 }
                 fits.forEach { fit ->
                     AppCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, strong = true, onClick = { onPick(fit) }) {
@@ -1289,7 +1289,7 @@ private fun WhatFitsDialog(fits: List<FitSuggestion>, remainingKcal: Double, onD
                             Text(fit.food.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             Text(
                                 stringResource(
-                                    R.string.what_fits_line,
+                                    Res.string.what_fits_line,
                                     amountLabel(fit.amount, fit.food.unit),
                                     fit.kcal.roundToInt(),
                                     fit.protein.roundToInt(),
@@ -1303,6 +1303,6 @@ private fun WhatFitsDialog(fits: List<FitSuggestion>, remainingKcal: Double, onD
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) } }
     )
 }

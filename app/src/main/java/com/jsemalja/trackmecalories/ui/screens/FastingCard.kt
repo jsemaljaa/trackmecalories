@@ -31,10 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.Fast
 import com.jsemalja.trackmecalories.data.HOUR_MS
 import com.jsemalja.trackmecalories.data.fastProgress
@@ -52,6 +51,7 @@ import java.time.Instant
 import kotlinx.datetime.LocalTime
 import java.time.ZoneId
 import java.util.Date
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * The fasting timer on Today: while fasting, the elapsed time, progress toward the goal and an
@@ -68,8 +68,8 @@ fun FastingCard(
     onMoveStart: (Long) -> Unit
 ) {
     val context = LocalContext.current
-    val hourUnit = stringResource(R.string.unit_h)
-    val minuteUnit = stringResource(R.string.unit_min)
+    val hourUnit = stringResource(Res.string.unit_h)
+    val minuteUnit = stringResource(Res.string.unit_min)
     fun duration(ms: Long) = formatFastDuration(ms, hourUnit, minuteUnit)
     fun clock(ms: Long): String = DateFormat.getTimeFormat(context).format(Date(ms))
     // Ticks every second, on the second, while the card is on screen.
@@ -98,7 +98,7 @@ fun FastingCard(
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "${stringResource(R.string.fasting)} · ${planHours}:${24 - planHours}",
+                        "${stringResource(Res.string.fasting)} · ${planHours}:${24 - planHours}",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -106,22 +106,22 @@ fun FastingCard(
                         val progress = fastProgress(active, now)
                         Text(formatStopwatch(progress.elapsedMs), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(
-                            if (progress.reached) stringResource(R.string.fasting_goal_reached, duration(progress.targetMs))
-                            else stringResource(R.string.fasting_left, duration(progress.remainingMs), clock(active.goalTime)),
+                            if (progress.reached) stringResource(Res.string.fasting_goal_reached, duration(progress.targetMs))
+                            else stringResource(Res.string.fasting_left, duration(progress.remainingMs), clock(active.goalTime)),
                             style = MaterialTheme.typography.bodySmall,
                             color = if (progress.reached) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
                         Text(
-                            last?.endTime?.let { stringResource(R.string.fasting_since_last, duration(now - it)) }
-                                ?: stringResource(R.string.fasting_not_fasting),
+                            last?.endTime?.let { stringResource(Res.string.fasting_since_last, duration(now - it)) }
+                                ?: stringResource(Res.string.fasting_not_fasting),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         last?.endTime?.let { end ->
                             val due = nextFastDue(end, planHours)
-                            val lastText = stringResource(R.string.fasting_last, duration(end - last.startTime))
+                            val lastText = stringResource(Res.string.fasting_last, duration(end - last.startTime))
                             Text(
-                                if (due > now) "$lastText · ${stringResource(R.string.fasting_next_at, clock(due))}" else lastText,
+                                if (due > now) "$lastText · ${stringResource(Res.string.fasting_next_at, clock(due))}" else lastText,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -134,9 +134,9 @@ fun FastingCard(
                     OutlinedButton(
                         onClick = { if (fastProgress(active, now).reached) onEnd() else confirmingEnd = true },
                         contentPadding = buttonPadding
-                    ) { Text(stringResource(R.string.fasting_end), maxLines = 1) }
+                    ) { Text(stringResource(Res.string.fasting_end), maxLines = 1) }
                 } else {
-                    Button(onClick = onStart, contentPadding = buttonPadding) { Text(stringResource(R.string.fasting_start), maxLines = 1) }
+                    Button(onClick = onStart, contentPadding = buttonPadding) { Text(stringResource(Res.string.fasting_start), maxLines = 1) }
                 }
             }
             if (active != null) {
@@ -148,7 +148,7 @@ fun FastingCard(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    stringResource(R.string.fasting_started_at, clock(active.startTime)),
+                    stringResource(Res.string.fasting_started_at, clock(active.startTime)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -171,15 +171,15 @@ fun FastingCard(
         val progress = fastProgress(active, now)
         AlertDialog(
             onDismissRequest = { confirmingEnd = false },
-            title = { Text(stringResource(R.string.fasting_end_early_title)) },
-            text = { Text(stringResource(R.string.fasting_end_early_body, duration(progress.elapsedMs), duration(active.targetHours * HOUR_MS))) },
+            title = { Text(stringResource(Res.string.fasting_end_early_title)) },
+            text = { Text(stringResource(Res.string.fasting_end_early_body, duration(progress.elapsedMs), duration(active.targetHours * HOUR_MS))) },
             confirmButton = {
                 Button(onClick = {
                     onEnd()
                     confirmingEnd = false
-                }) { Text(stringResource(R.string.fasting_end)) }
+                }) { Text(stringResource(Res.string.fasting_end)) }
             },
-            dismissButton = { TextButton(onClick = { confirmingEnd = false }) { Text(stringResource(R.string.fasting_keep)) } }
+            dismissButton = { TextButton(onClick = { confirmingEnd = false }) { Text(stringResource(Res.string.fasting_keep)) } }
         )
     }
 }
@@ -193,13 +193,13 @@ private fun FastStartDialog(start: Long, onDismiss: () -> Unit, onSave: (Long) -
     val state = rememberTimePickerState(initial.hour, initial.minute, is24Hour = DateFormat.is24HourFormat(context))
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.fasting_edit_start)) },
+        title = { Text(stringResource(Res.string.fasting_edit_start)) },
         text = { TimePicker(state) },
         confirmButton = {
             Button(onClick = {
                 onSave(fastStartFromClock(LocalTime(state.hour, state.minute), currentDateTime()).toEpochMillis())
-            }) { Text(stringResource(R.string.save)) }
+            }) { Text(stringResource(Res.string.save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } }
     )
 }

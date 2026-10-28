@@ -1,16 +1,18 @@
 package com.jsemalja.trackmecalories.ui.theme
 
-import com.jsemalja.trackmecalories.R
-import androidx.annotation.StringRes
 import android.content.Context
 import android.os.Build
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.Font
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.FontResource
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * A whole design language, not just a palette: neutrals, cards, nav bar, headers, corner
@@ -24,19 +26,19 @@ import kotlinx.coroutines.flow.asStateFlow
  *   cards, chunky square progress, uppercase headings in Space Grotesk.
  * - [NEON]: true black with glowing accent edges, glowing rings and bars, big round corners.
  */
-enum class AppTheme(@StringRes val label: Int) {
-    CLASSIC(R.string.theme_classic),
-    GLASS(R.string.theme_glass),
-    PAPER(R.string.theme_paper),
-    BOLD(R.string.theme_bold),
-    NEON(R.string.theme_neon)
+enum class AppTheme(val label: StringResource) {
+    CLASSIC(Res.string.theme_classic),
+    GLASS(Res.string.theme_glass),
+    PAPER(Res.string.theme_paper),
+    BOLD(Res.string.theme_bold),
+    NEON(Res.string.theme_neon)
 }
 
 /** Light or dark: follow the phone, or pin one regardless of the system setting. */
-enum class ThemeMode(@StringRes val label: Int) {
-    SYSTEM(R.string.mode_system),
-    LIGHT(R.string.mode_light),
-    DARK(R.string.mode_dark)
+enum class ThemeMode(val label: StringResource) {
+    SYSTEM(Res.string.mode_system),
+    LIGHT(Res.string.mode_light),
+    DARK(Res.string.mode_dark)
 }
 
 /** The primary tones of an accent for dark and light mode (Material tones 80/20/30/90 and 40/100/90/10). */
@@ -76,54 +78,54 @@ private val BrandGreen = AccentPalette(
  * [CUSTOM] a palette from [Appearance.customAccent] (see [Appearance.palette]).
  * Saved by name, so the order can change freely.
  */
-enum class AccentColor(@StringRes val label: Int, val palette: AccentPalette) {
-    RED(R.string.accent_red, AccentPalette.fromSeed(0xFFD32F2F)),
+enum class AccentColor(val label: StringResource, val palette: AccentPalette) {
+    RED(Res.string.accent_red, AccentPalette.fromSeed(0xFFD32F2F)),
     ORANGE(
-        R.string.accent_orange,
+        Res.string.accent_orange,
         AccentPalette(
             Color(0xFFFFB68B), Color(0xFF522300), Color(0xFF743500), Color(0xFFFFDBC8),
             Color(0xFF964A12), Color(0xFFFFFFFF), Color(0xFFFFDBC8), Color(0xFF321300)
         )
     ),
-    LIME(R.string.accent_lime, AccentPalette.fromSeed(0xFF7CB342)),
-    GREEN(R.string.accent_green, BrandGreen),
+    LIME(Res.string.accent_lime, AccentPalette.fromSeed(0xFF7CB342)),
+    GREEN(Res.string.accent_green, BrandGreen),
     TEAL(
-        R.string.accent_teal,
+        Res.string.accent_teal,
         AccentPalette(
             Color(0xFF4FDAD1), Color(0xFF003734), Color(0xFF00504C), Color(0xFF71F7EE),
             Color(0xFF006A65), Color(0xFFFFFFFF), Color(0xFF71F7EE), Color(0xFF00201E)
         )
     ),
-    CYAN(R.string.accent_cyan, AccentPalette.fromSeed(0xFF00ACC1)),
+    CYAN(Res.string.accent_cyan, AccentPalette.fromSeed(0xFF00ACC1)),
     BLUE(
-        R.string.accent_blue,
+        Res.string.accent_blue,
         AccentPalette(
             Color(0xFFA8C8FF), Color(0xFF00315F), Color(0xFF194880), Color(0xFFD5E3FF),
             Color(0xFF345F99), Color(0xFFFFFFFF), Color(0xFFD5E3FF), Color(0xFF001C3B)
         )
     ),
-    INDIGO(R.string.accent_indigo, AccentPalette.fromSeed(0xFF3949AB)),
+    INDIGO(Res.string.accent_indigo, AccentPalette.fromSeed(0xFF3949AB)),
     VIOLET(
-        R.string.accent_violet,
+        Res.string.accent_violet,
         AccentPalette(
             Color(0xFFCFBDFF), Color(0xFF36196F), Color(0xFF4D3287), Color(0xFFE9DDFF),
             Color(0xFF6650A1), Color(0xFFFFFFFF), Color(0xFFE9DDFF), Color(0xFF21005D)
         )
     ),
-    FUCHSIA(R.string.accent_fuchsia, AccentPalette.fromSeed(0xFFB0279F)),
+    FUCHSIA(Res.string.accent_fuchsia, AccentPalette.fromSeed(0xFFB0279F)),
     ROSE(
-        R.string.accent_rose,
+        Res.string.accent_rose,
         AccentPalette(
             Color(0xFFFFB0CA), Color(0xFF5E1134), Color(0xFF7B294B), Color(0xFFFFD9E3),
             Color(0xFF984063), Color(0xFFFFFFFF), Color(0xFFFFD9E3), Color(0xFF3E001E)
         )
     ),
-    BROWN(R.string.accent_brown, AccentPalette.fromSeed(0xFF795548)),
-    GRAPHITE(R.string.accent_graphite, AccentPalette.fromSeed(0xFF5F6368)),
+    BROWN(Res.string.accent_brown, AccentPalette.fromSeed(0xFF795548)),
+    GRAPHITE(Res.string.accent_graphite, AccentPalette.fromSeed(0xFF5F6368)),
     // Fallback (pre-Android 12) is the brand green.
-    WALLPAPER(R.string.accent_wallpaper, BrandGreen),
+    WALLPAPER(Res.string.accent_wallpaper, BrandGreen),
     // The real palette comes from Appearance.customAccent.
-    CUSTOM(R.string.accent_custom, BrandGreen);
+    CUSTOM(Res.string.accent_custom, BrandGreen);
 
     companion object {
         /** Accents offered on this device (wallpaper colours need Android 12). */
@@ -137,23 +139,28 @@ const val DEFAULT_CUSTOM_ACCENT = 0xFF5B6CD9.toInt()
 
 /**
  * Typeface choices: the phone's own font, or one of the bundled Google Fonts (static
- * 400–700 weights in res/font, so they work offline and without Play services).
+ * 400–700 weights in composeResources/font, so they work offline and without Play services).
  * Oxygen ships only regular and bold; Medium/SemiBold fall back to the nearest of those.
  */
-enum class AppFont(@StringRes val label: Int, val family: FontFamily) {
-    SYSTEM(R.string.font_system, FontFamily.Default),
-    ROBOTO(R.string.font_roboto, weights(R.font.roboto_regular, R.font.roboto_medium, R.font.roboto_semibold, R.font.roboto_bold)),
-    PUBLIC_SANS(R.string.font_public_sans, weights(R.font.public_sans_regular, R.font.public_sans_medium, R.font.public_sans_semibold, R.font.public_sans_bold)),
-    SPACE_GROTESK(R.string.font_space_grotesk, weights(R.font.space_grotesk_regular, R.font.space_grotesk_medium, R.font.space_grotesk_semibold, R.font.space_grotesk_bold)),
-    MULISH(R.string.font_mulish, weights(R.font.mulish_regular, R.font.mulish_medium, R.font.mulish_semibold, R.font.mulish_bold)),
-    OXYGEN(R.string.font_oxygen, FontFamily(Font(R.font.oxygen_regular, FontWeight.Normal), Font(R.font.oxygen_bold, FontWeight.Bold)))
+enum class AppFont(val label: StringResource, private val faces: List<Pair<FontResource, FontWeight>>) {
+    SYSTEM(Res.string.font_system, emptyList()),
+    ROBOTO(Res.string.font_roboto, weights(Res.font.roboto_regular, Res.font.roboto_medium, Res.font.roboto_semibold, Res.font.roboto_bold)),
+    PUBLIC_SANS(Res.string.font_public_sans, weights(Res.font.public_sans_regular, Res.font.public_sans_medium, Res.font.public_sans_semibold, Res.font.public_sans_bold)),
+    SPACE_GROTESK(Res.string.font_space_grotesk, weights(Res.font.space_grotesk_regular, Res.font.space_grotesk_medium, Res.font.space_grotesk_semibold, Res.font.space_grotesk_bold)),
+    MULISH(Res.string.font_mulish, weights(Res.font.mulish_regular, Res.font.mulish_medium, Res.font.mulish_semibold, Res.font.mulish_bold)),
+    OXYGEN(Res.string.font_oxygen, listOf(Res.font.oxygen_regular to FontWeight.Normal, Res.font.oxygen_bold to FontWeight.Bold));
+
+    /** The family to draw with; composable because the bundled files load through Compose resources. */
+    val family: FontFamily
+        @Composable get() = if (faces.isEmpty()) FontFamily.Default
+        else FontFamily(faces.map { (file, weight) -> Font(file, weight) })
 }
 
-private fun weights(regular: Int, medium: Int, semiBold: Int, bold: Int) = FontFamily(
-    Font(regular, FontWeight.Normal),
-    Font(medium, FontWeight.Medium),
-    Font(semiBold, FontWeight.SemiBold),
-    Font(bold, FontWeight.Bold)
+private fun weights(regular: FontResource, medium: FontResource, semiBold: FontResource, bold: FontResource) = listOf(
+    regular to FontWeight.Normal,
+    medium to FontWeight.Medium,
+    semiBold to FontWeight.SemiBold,
+    bold to FontWeight.Bold
 )
 
 /**

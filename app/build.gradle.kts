@@ -74,14 +74,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.camera.mlkit.vision)
     
+    // Also brings Compose (Multiplatform builds of ui, material3, icons, navigation suite).
     implementation(project(":shared"))
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -89,7 +84,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -101,8 +95,6 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.camera2)
-
-    implementation("androidx.compose.material:material-icons-extended")
 
     // Health Connect: steps, workouts and active calories synced by Zepp (Amazfit) etc.
     implementation("androidx.health.connect:connect-client:1.1.0")

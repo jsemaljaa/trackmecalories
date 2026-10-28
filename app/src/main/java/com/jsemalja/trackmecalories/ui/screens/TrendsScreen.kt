@@ -1,6 +1,6 @@
 package com.jsemalja.trackmecalories.ui.screens
 
-import androidx.compose.ui.res.pluralStringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import com.jsemalja.trackmecalories.ui.theme.isGlass
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import androidx.compose.foundation.Canvas
@@ -18,8 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
-import com.jsemalja.trackmecalories.R
+import org.jetbrains.compose.resources.stringResource
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -47,6 +46,8 @@ import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Weekly summary for one calendar week (navigable): calories per day against the goal,
@@ -84,11 +85,11 @@ fun TrendsScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        ScreenHeader(Icons.Default.BarChart, stringResource(R.string.nav_trends))
+        ScreenHeader(Icons.Default.BarChart, stringResource(Res.string.nav_trends))
         Spacer(Modifier.height(12.dp))
 
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            val tabs = listOf(R.string.tab_calories, R.string.tab_weight, R.string.tab_insights)
+            val tabs = listOf(Res.string.tab_calories, Res.string.tab_weight, Res.string.tab_insights)
             tabs.forEachIndexed { i, label ->
                 SegmentedButton(
                     selected = section == i,
@@ -112,7 +113,7 @@ fun TrendsScreen(
             val entries by viewModel.weightEntries.collectAsState()
             val adaptive by viewModel.adaptiveMaintenance.collectAsState()
             val undo = LocalUndo.current
-            val deletedWeight = stringResource(R.string.deleted_weight)
+            val deletedWeight = stringResource(Res.string.deleted_weight)
             WeightSection(
                 points = points,
                 entries = entries,
@@ -140,7 +141,7 @@ fun TrendsScreen(
 
         AppCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text(stringResource(R.string.calories_per_day), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.calories_per_day), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 ChartLegend(goal)
                 Spacer(Modifier.height(12.dp))
@@ -155,7 +156,7 @@ fun TrendsScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.tap_day_to_open),
+                    stringResource(Res.string.tap_day_to_open),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -167,7 +168,7 @@ fun TrendsScreen(
 
         if (logged.isEmpty()) {
             Text(
-                stringResource(if (daysSoFar == 0) R.string.week_not_started else R.string.week_nothing_logged),
+                stringResource(if (daysSoFar == 0) Res.string.week_not_started else Res.string.week_nothing_logged),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -178,7 +179,7 @@ fun TrendsScreen(
             if (excludedCount > 0) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    pluralStringResource(R.plurals.incomplete_excluded, excludedCount, excludedCount),
+                    pluralStringResource(Res.plurals.incomplete_excluded, excludedCount, excludedCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -208,9 +209,9 @@ private fun WeekSelector(
     val weekEnd = weekStart.plusDays(6)
     val thisWeek = weekStartOf(today)
     val title = when (weekStart) {
-        thisWeek -> stringResource(R.string.this_week)
-        thisWeek.minusWeeks(1) -> stringResource(R.string.last_week)
-        else -> stringResource(R.string.week_of, weekStart.format(DateTimeFormatter.ofPattern("d MMM", locale)))
+        thisWeek -> stringResource(Res.string.this_week)
+        thisWeek.minusWeeks(1) -> stringResource(Res.string.last_week)
+        else -> stringResource(Res.string.week_of, weekStart.format(DateTimeFormatter.ofPattern("d MMM", locale)))
     }
     val range = if (weekStart.month == weekEnd.month) {
         "${weekStart.dayOfMonth} – ${weekEnd.format(DateTimeFormatter.ofPattern("d MMM yyyy", locale))}"
@@ -220,14 +221,14 @@ private fun WeekSelector(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onPrevious) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.previous_week))
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.previous_week))
         }
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(range, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         IconButton(onClick = onNext, enabled = canGoForward) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.next_week))
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(Res.string.next_week))
         }
     }
 }
@@ -238,9 +239,9 @@ private fun ChartLegend(goal: Int) {
     val colors = MaterialTheme.colorScheme
     // Wraps onto a second line when the labels don't fit (narrow phone, longer language).
     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        LegendSwatch(colors.primary, stringResource(R.string.within_goal))
-        LegendSwatch(colors.error, stringResource(R.string.over_goal))
-        LegendSwatch(colors.onSurfaceVariant.copy(alpha = 0.3f), stringResource(R.string.incomplete_short))
+        LegendSwatch(colors.primary, stringResource(Res.string.within_goal))
+        LegendSwatch(colors.error, stringResource(Res.string.over_goal))
+        LegendSwatch(colors.onSurfaceVariant.copy(alpha = 0.3f), stringResource(Res.string.incomplete_short))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.width(16.dp).height(2.dp)) {
                 drawLine(
@@ -249,7 +250,7 @@ private fun ChartLegend(goal: Int) {
                 )
             }
             Spacer(Modifier.width(4.dp))
-            Text(stringResource(R.string.goal_value, "%,d".format(goal)), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+            Text(stringResource(Res.string.goal_value, "%,d".format(goal)), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
         }
     }
 }
@@ -411,52 +412,52 @@ private fun WeekStats(logged: List<DailyTotal>, previousLogged: List<DailyTotal>
     val prevAvg = previousLogged.takeIf { it.isNotEmpty() }?.let { p -> p.sumOf { it.totalKcal } / p.size }
     val withinGoal = logged.count { it.totalKcal <= goal }
     val balance = logged.sumOf { it.totalKcal - goal }
-    val kcal = stringResource(R.string.unit_kcal)
+    val kcal = stringResource(Res.string.unit_kcal)
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatTile(
-                label = stringResource(R.string.daily_average),
+                label = stringResource(Res.string.daily_average),
                 value = "%,d".format(avg),
                 unit = kcal,
-                detail = pluralStringResource(R.plurals.over_logged_days, logged.size, logged.size) +
-                    (if (avgSigma >= 5) "\n" + stringResource(R.string.plus_minus_kcal, "%,d".format(avgSigma.roundToInt())) else "") + when {
+                detail = pluralStringResource(Res.plurals.over_logged_days, logged.size, logged.size) +
+                    (if (avgSigma >= 5) "\n" + stringResource(Res.string.plus_minus_kcal, "%,d".format(avgSigma.roundToInt())) else "") + when {
                     prevAvg == null -> ""
-                    avg > prevAvg -> "\n" + stringResource(R.string.vs_last_week_up, "%,d".format(avg - prevAvg))
-                    avg < prevAvg -> "\n" + stringResource(R.string.vs_last_week_down, "%,d".format(prevAvg - avg))
-                    else -> "\n" + stringResource(R.string.vs_last_week_same)
+                    avg > prevAvg -> "\n" + stringResource(Res.string.vs_last_week_up, "%,d".format(avg - prevAvg))
+                    avg < prevAvg -> "\n" + stringResource(Res.string.vs_last_week_down, "%,d".format(prevAvg - avg))
+                    else -> "\n" + stringResource(Res.string.vs_last_week_same)
                 },
                 valueColor = if (avg > goal) colors.error else colors.onSurface,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
-                label = stringResource(R.string.week_balance),
+                label = stringResource(Res.string.week_balance),
                 value = (if (balance > 0) "+" else if (balance < 0) "−" else "") + "%,d".format(abs(balance)),
                 unit = kcal,
                 detail = stringResource(
                     when {
-                        balance > 0 -> R.string.balance_over
-                        balance < 0 -> R.string.balance_under
-                        else -> R.string.balance_exact
+                        balance > 0 -> Res.string.balance_over
+                        balance < 0 -> Res.string.balance_under
+                        else -> Res.string.balance_exact
                     }
-                ) + if (weekSigma >= 5) "\n" + stringResource(R.string.plus_minus_kcal, "%,d".format(weekSigma.roundToInt())) else "",
+                ) + if (weekSigma >= 5) "\n" + stringResource(Res.string.plus_minus_kcal, "%,d".format(weekSigma.roundToInt())) else "",
                 valueColor = if (balance > 0) colors.error else colors.primary,
                 modifier = Modifier.weight(1f)
             )
         }
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatTile(
-                label = stringResource(R.string.within_goal),
+                label = stringResource(Res.string.within_goal),
                 value = "$withinGoal / ${logged.size}",
-                unit = pluralStringResource(R.plurals.days_unit, logged.size),
-                detail = stringResource(R.string.within_goal_detail, "%,d".format(goal)),
+                unit = pluralStringResource(Res.plurals.days_unit, logged.size),
+                detail = stringResource(Res.string.within_goal_detail, "%,d".format(goal)),
                 modifier = Modifier.weight(1f)
             )
             StatTile(
-                label = stringResource(R.string.days_logged),
+                label = stringResource(Res.string.days_logged),
                 value = "${logged.size} / $daysSoFar",
-                unit = pluralStringResource(R.plurals.days_unit, daysSoFar),
-                detail = stringResource(if (daysSoFar < 7) R.string.so_far_this_week else R.string.this_week_lower),
+                unit = pluralStringResource(Res.plurals.days_unit, daysSoFar),
+                detail = stringResource(if (daysSoFar < 7) Res.string.so_far_this_week else Res.string.this_week_lower),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -496,21 +497,21 @@ private fun MacroAverages(logged: List<DailyTotal>, proteinGoal: Double, carbGoa
     AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column {
-                Text(stringResource(R.string.average_macros), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.average_macros), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    stringResource(R.string.average_macros_detail),
+                    stringResource(Res.string.average_macros_detail),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            MacroGoalRow(stringResource(R.string.protein), protein, proteinGoal, MacroProtein)
-            MacroGoalRow(stringResource(R.string.carbs), carbs, carbGoal, MacroCarbs)
-            MacroGoalRow(stringResource(R.string.fat), fat, fatGoal, MacroFat)
+            MacroGoalRow(stringResource(Res.string.protein), protein, proteinGoal, MacroProtein)
+            MacroGoalRow(stringResource(Res.string.carbs), carbs, carbGoal, MacroCarbs)
+            MacroGoalRow(stringResource(Res.string.fat), fat, fatGoal, MacroFat)
 
             if (macroKcal > 0) {
                 val shares = listOf(protein * 4 / macroKcal, carbs * 4 / macroKcal, fat * 9 / macroKcal)
                 HorizontalDivider()
-                Text(stringResource(R.string.calories_come_from), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.calories_come_from), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Row(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp))) {
                     listOf(MacroProtein, MacroCarbs, MacroFat).forEachIndexed { i, color ->
                         if (shares[i] > 0) Box(Modifier.weight(shares[i].toFloat()).fillMaxHeight().background(color))
@@ -521,7 +522,7 @@ private fun MacroAverages(logged: List<DailyTotal>, proteinGoal: Double, carbGoa
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    listOf(stringResource(R.string.protein) to MacroProtein, stringResource(R.string.carbs) to MacroCarbs, stringResource(R.string.fat) to MacroFat).forEachIndexed { i, (label, color) ->
+                    listOf(stringResource(Res.string.protein) to MacroProtein, stringResource(Res.string.carbs) to MacroCarbs, stringResource(Res.string.fat) to MacroFat).forEachIndexed { i, (label, color) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(color))
                             Spacer(Modifier.width(4.dp))
@@ -540,9 +541,9 @@ private fun MacroGoalRow(label: String, value: Double, goal: Double, color: Colo
     Column {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text("${value.roundToInt()} ${stringResource(R.string.unit_g)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text("${value.roundToInt()} ${stringResource(Res.string.unit_g)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
             Text(
-                " / ${goal.roundToInt()} ${stringResource(R.string.unit_g)} · $pct%",
+                " / ${goal.roundToInt()} ${stringResource(Res.string.unit_g)} · $pct%",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

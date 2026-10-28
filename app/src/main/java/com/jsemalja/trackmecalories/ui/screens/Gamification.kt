@@ -1,6 +1,5 @@
 package com.jsemalja.trackmecalories.ui.screens
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -29,14 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.Badge
 import com.jsemalja.trackmecalories.data.BadgeProgress
 import com.jsemalja.trackmecalories.data.GamificationState
@@ -46,6 +44,8 @@ import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.viewmodel.weekStartOf
 import java.time.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 val StreakKind.icon: ImageVector
     get() = when (this) {
@@ -58,28 +58,26 @@ val StreakKind.icon: ImageVector
         StreakKind.WEIGH_IN -> Icons.Default.MonitorWeight
     }
 
-@get:StringRes
-val StreakKind.label: Int
+val StreakKind.label: StringResource
     get() = when (this) {
-        StreakKind.LOGGING -> R.string.streak_logging
-        StreakKind.COMPLETE_DAYS -> R.string.streak_complete
-        StreakKind.PROTEIN -> R.string.streak_protein
-        StreakKind.WATER -> R.string.streak_water
-        StreakKind.CALORIES_IN_RANGE -> R.string.streak_calories
-        StreakKind.FASTING -> R.string.streak_fasting
-        StreakKind.WEIGH_IN -> R.string.streak_weigh_in
+        StreakKind.LOGGING -> Res.string.streak_logging
+        StreakKind.COMPLETE_DAYS -> Res.string.streak_complete
+        StreakKind.PROTEIN -> Res.string.streak_protein
+        StreakKind.WATER -> Res.string.streak_water
+        StreakKind.CALORIES_IN_RANGE -> Res.string.streak_calories
+        StreakKind.FASTING -> Res.string.streak_fasting
+        StreakKind.WEIGH_IN -> Res.string.streak_weigh_in
     }
 
-@get:StringRes
-val StreakKind.description: Int
+val StreakKind.description: StringResource
     get() = when (this) {
-        StreakKind.LOGGING -> R.string.streak_logging_desc
-        StreakKind.COMPLETE_DAYS -> R.string.streak_complete_desc
-        StreakKind.PROTEIN -> R.string.streak_protein_desc
-        StreakKind.WATER -> R.string.streak_water_desc
-        StreakKind.CALORIES_IN_RANGE -> R.string.streak_calories_desc
-        StreakKind.FASTING -> R.string.streak_fasting_desc
-        StreakKind.WEIGH_IN -> R.string.streak_weigh_in_desc
+        StreakKind.LOGGING -> Res.string.streak_logging_desc
+        StreakKind.COMPLETE_DAYS -> Res.string.streak_complete_desc
+        StreakKind.PROTEIN -> Res.string.streak_protein_desc
+        StreakKind.WATER -> Res.string.streak_water_desc
+        StreakKind.CALORIES_IN_RANGE -> Res.string.streak_calories_desc
+        StreakKind.FASTING -> Res.string.streak_fasting_desc
+        StreakKind.WEIGH_IN -> Res.string.streak_weigh_in_desc
     }
 
 private val Badge.icon: ImageVector
@@ -96,48 +94,46 @@ private val Badge.icon: ImageVector
         Badge.WEIGH_INS_10 -> Icons.Default.MonitorWeight
     }
 
-@get:StringRes
-private val Badge.title: Int
+private val Badge.title: StringResource
     get() = when (this) {
-        Badge.FIRST_DAY -> R.string.badge_first_day
-        Badge.STREAK_7 -> R.string.badge_streak_7
-        Badge.STREAK_30 -> R.string.badge_streak_30
-        Badge.STREAK_100 -> R.string.badge_streak_100
-        Badge.STREAK_365 -> R.string.badge_streak_365
-        Badge.COMPLETE_WEEK -> R.string.badge_complete_week
-        Badge.WEIGHED_50 -> R.string.badge_weighed_50
-        Badge.WEIGHED_250 -> R.string.badge_weighed_250
-        Badge.FIRST_SCAN -> R.string.badge_first_scan
-        Badge.FIRST_RECIPE -> R.string.badge_first_recipe
-        Badge.FASTS_10 -> R.string.badge_fasts_10
-        Badge.PROTEIN_30 -> R.string.badge_protein_30
-        Badge.WATER_30 -> R.string.badge_water_30
-        Badge.WEIGH_INS_10 -> R.string.badge_weigh_ins_10
+        Badge.FIRST_DAY -> Res.string.badge_first_day
+        Badge.STREAK_7 -> Res.string.badge_streak_7
+        Badge.STREAK_30 -> Res.string.badge_streak_30
+        Badge.STREAK_100 -> Res.string.badge_streak_100
+        Badge.STREAK_365 -> Res.string.badge_streak_365
+        Badge.COMPLETE_WEEK -> Res.string.badge_complete_week
+        Badge.WEIGHED_50 -> Res.string.badge_weighed_50
+        Badge.WEIGHED_250 -> Res.string.badge_weighed_250
+        Badge.FIRST_SCAN -> Res.string.badge_first_scan
+        Badge.FIRST_RECIPE -> Res.string.badge_first_recipe
+        Badge.FASTS_10 -> Res.string.badge_fasts_10
+        Badge.PROTEIN_30 -> Res.string.badge_protein_30
+        Badge.WATER_30 -> Res.string.badge_water_30
+        Badge.WEIGH_INS_10 -> Res.string.badge_weigh_ins_10
     }
 
-@get:StringRes
-private val Badge.description: Int
+private val Badge.description: StringResource
     get() = when (this) {
-        Badge.FIRST_DAY -> R.string.badge_first_day_desc
-        Badge.STREAK_7 -> R.string.badge_streak_7_desc
-        Badge.STREAK_30 -> R.string.badge_streak_30_desc
-        Badge.STREAK_100 -> R.string.badge_streak_100_desc
-        Badge.STREAK_365 -> R.string.badge_streak_365_desc
-        Badge.COMPLETE_WEEK -> R.string.badge_complete_week_desc
-        Badge.WEIGHED_50 -> R.string.badge_weighed_50_desc
-        Badge.WEIGHED_250 -> R.string.badge_weighed_250_desc
-        Badge.FIRST_SCAN -> R.string.badge_first_scan_desc
-        Badge.FIRST_RECIPE -> R.string.badge_first_recipe_desc
-        Badge.FASTS_10 -> R.string.badge_fasts_10_desc
-        Badge.PROTEIN_30 -> R.string.badge_protein_30_desc
-        Badge.WATER_30 -> R.string.badge_water_30_desc
-        Badge.WEIGH_INS_10 -> R.string.badge_weigh_ins_10_desc
+        Badge.FIRST_DAY -> Res.string.badge_first_day_desc
+        Badge.STREAK_7 -> Res.string.badge_streak_7_desc
+        Badge.STREAK_30 -> Res.string.badge_streak_30_desc
+        Badge.STREAK_100 -> Res.string.badge_streak_100_desc
+        Badge.STREAK_365 -> Res.string.badge_streak_365_desc
+        Badge.COMPLETE_WEEK -> Res.string.badge_complete_week_desc
+        Badge.WEIGHED_50 -> Res.string.badge_weighed_50_desc
+        Badge.WEIGHED_250 -> Res.string.badge_weighed_250_desc
+        Badge.FIRST_SCAN -> Res.string.badge_first_scan_desc
+        Badge.FIRST_RECIPE -> Res.string.badge_first_recipe_desc
+        Badge.FASTS_10 -> Res.string.badge_fasts_10_desc
+        Badge.PROTEIN_30 -> Res.string.badge_protein_30_desc
+        Badge.WATER_30 -> Res.string.badge_water_30_desc
+        Badge.WEIGH_INS_10 -> Res.string.badge_weigh_ins_10_desc
     }
 
 /** "12 days", or "3 weeks" for a weekly streak. */
 @Composable
 private fun streakLength(kind: StreakKind, count: Int): String =
-    pluralStringResource(if (kind.weekly) R.plurals.streak_weeks else R.plurals.streak_days, count, count)
+    pluralStringResource(if (kind.weekly) Res.plurals.streak_weeks else Res.plurals.streak_days, count, count)
 
 /** Done today: the accent; still to do: muted; at risk: the error colour. */
 @Composable
@@ -161,7 +157,7 @@ fun StreakStrip(streaks: Map<StreakKind, Streak>, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 streaks.forEach { (kind, streak) ->
-                    val description = stringResource(R.string.streak_item, stringResource(kind.label), streakLength(kind, streak.current))
+                    val description = stringResource(Res.string.streak_item, stringResource(kind.label), streakLength(kind, streak.current))
                     Row(
                         Modifier.clearAndSetSemantics { contentDescription = description },
                         verticalAlignment = Alignment.CenterVertically
@@ -175,7 +171,7 @@ fun StreakStrip(streaks: Map<StreakKind, Streak>, onClick: () -> Unit) {
             Spacer(Modifier.width(8.dp))
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(R.string.streaks_sheet_title),
+                contentDescription = stringResource(Res.string.streaks_sheet_title),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -193,14 +189,14 @@ fun StreaksSheet(state: GamificationState, onDismiss: () -> Unit) {
                 .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
         ) {
             if (state.streaks.isNotEmpty()) {
-                Text(stringResource(R.string.streaks_sheet_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.streaks_sheet_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(12.dp))
                 state.streaks.forEach { (kind, streak) ->
                     StreakRow(kind, streak)
                     Spacer(Modifier.height(12.dp))
                 }
                 Text(
-                    stringResource(R.string.gamification_grace_note),
+                    stringResource(Res.string.gamification_grace_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -210,13 +206,13 @@ fun StreaksSheet(state: GamificationState, onDismiss: () -> Unit) {
             val unlocked = state.badges.count { it.unlocked }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    stringResource(R.string.badges_title),
+                    stringResource(Res.string.badges_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    stringResource(R.string.badges_count, unlocked, state.badges.size),
+                    stringResource(Res.string.badges_count, unlocked, state.badges.size),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -239,19 +235,19 @@ private fun StreakRow(kind: StreakKind, streak: Streak) {
         Column(Modifier.weight(1f)) {
             Text(stringResource(kind.label), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
             val status = when {
-                streak.atRisk -> stringResource(if (kind.weekly) R.string.streak_at_risk_week else R.string.streak_at_risk_day)
-                streak.pending -> stringResource(if (kind.weekly) R.string.streak_pending_week else R.string.streak_pending_day)
+                streak.atRisk -> stringResource(if (kind.weekly) Res.string.streak_at_risk_week else Res.string.streak_at_risk_day)
+                streak.pending -> stringResource(if (kind.weekly) Res.string.streak_pending_week else Res.string.streak_pending_day)
                 else -> null
             }
             Text(
-                listOfNotNull(status, stringResource(R.string.streak_best, streakLength(kind, streak.best))).joinToString(" · "),
+                listOfNotNull(status, stringResource(Res.string.streak_best, streakLength(kind, streak.best))).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (streak.atRisk) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Spacer(Modifier.width(8.dp))
         Text(
-            if (streak.current == 0) stringResource(R.string.streak_none) else streakLength(kind, streak.current),
+            if (streak.current == 0) stringResource(Res.string.streak_none) else streakLength(kind, streak.current),
             style = if (streak.current == 0) MaterialTheme.typography.bodySmall else MaterialTheme.typography.titleMedium,
             fontWeight = if (streak.current == 0) null else FontWeight.Bold,
             color = if (streak.current == 0) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
@@ -283,7 +279,7 @@ private fun BadgeRow(progress: BadgeProgress) {
                     LinearProgressIndicator(progress = { progress.fraction }, modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        stringResource(R.string.badge_progress, progress.current, badge.target),
+                        stringResource(Res.string.badge_progress, progress.current, badge.target),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -313,7 +309,7 @@ fun BadgeCelebrationDialog(badges: List<Badge>, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.WorkspacePremium, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-        title = { Text(stringResource(if (badges.size == 1) R.string.badge_new_one else R.string.badge_new_many)) },
+        title = { Text(stringResource(if (badges.size == 1) Res.string.badge_new_one else Res.string.badge_new_many)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 badges.forEach { badge ->
@@ -328,7 +324,7 @@ fun BadgeCelebrationDialog(badges: List<Badge>, onDismiss: () -> Unit) {
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.badge_nice)) } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.badge_nice)) } }
     )
 }
 
@@ -351,8 +347,8 @@ fun ConsistencyCard(state: GamificationState, today: LocalDate) {
 
     AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.consistency_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.consistency_desc), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+            Text(stringResource(Res.string.consistency_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(Res.string.consistency_desc), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
             Spacer(Modifier.height(12.dp))
             // The grid is a picture of the numbers below, so TalkBack skips it.
             BoxWithConstraints(Modifier.fillMaxWidth().clearAndSetSemantics { }) {
@@ -382,15 +378,15 @@ fun ConsistencyCard(state: GamificationState, today: LocalDate) {
             }
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                LegendDot(complete, stringResource(R.string.consistency_complete))
-                LegendDot(incomplete, stringResource(R.string.consistency_incomplete))
-                LegendDot(none, stringResource(R.string.consistency_none))
+                LegendDot(complete, stringResource(Res.string.consistency_complete))
+                LegendDot(incomplete, stringResource(Res.string.consistency_incomplete))
+                LegendDot(none, stringResource(Res.string.consistency_none))
             }
             Spacer(Modifier.height(14.dp))
             Row {
-                ConsistencyStat(stringResource(R.string.consistency_days_logged), stringResource(R.string.badge_progress, logged, shown.size), Modifier.weight(1f))
+                ConsistencyStat(stringResource(Res.string.consistency_days_logged), stringResource(Res.string.badge_progress, logged, shown.size), Modifier.weight(1f))
                 if (bestLogging != null) {
-                    ConsistencyStat(stringResource(R.string.consistency_best_streak), streakLength(StreakKind.LOGGING, bestLogging), Modifier.weight(1f))
+                    ConsistencyStat(stringResource(Res.string.consistency_best_streak), streakLength(StreakKind.LOGGING, bestLogging), Modifier.weight(1f))
                 }
             }
         }

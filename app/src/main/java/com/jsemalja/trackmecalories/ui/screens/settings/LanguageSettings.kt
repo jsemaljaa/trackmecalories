@@ -3,7 +3,6 @@ package com.jsemalja.trackmecalories.ui.screens.settings
 import android.app.LocaleManager
 import android.os.Build
 import android.os.LocaleList
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -12,16 +11,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /** The app's languages; [SYSTEM] follows the phone's. */
-internal enum class AppLanguage(val tag: String, @StringRes val label: Int) {
-    SYSTEM("", R.string.language_system),
-    ENGLISH("en", R.string.language_english),
-    RUSSIAN("ru", R.string.language_russian)
+internal enum class AppLanguage(val tag: String, val label: StringResource) {
+    SYSTEM("", Res.string.language_system),
+    ENGLISH("en", Res.string.language_english),
+    RUSSIAN("ru", Res.string.language_russian)
 }
 
 /**
@@ -59,7 +59,7 @@ internal fun rememberAppLanguage(): LanguageState? {
 internal fun LanguageDialog(language: LanguageState, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.language)) },
+        title = { Text(stringResource(Res.string.language)) },
         text = {
             Column(Modifier.selectableGroup()) {
                 AppLanguage.entries.forEach { option ->
@@ -82,7 +82,7 @@ internal fun LanguageDialog(language: LanguageState, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
         }
     )
 }

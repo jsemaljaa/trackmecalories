@@ -8,12 +8,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.Diet
 import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.withDietMacros
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * First-run goal setup. Shown whenever no [UserGoal] has ever been saved, so new users
@@ -24,10 +24,10 @@ import com.jsemalja.trackmecalories.data.withDietMacros
 fun OnboardingDialog(onComplete: (UserGoal) -> Unit) {
     AlertDialog(
         onDismissRequest = { /* Must set up goals before dismissing. */ },
-        title = { Text(stringResource(R.string.onboarding_title)) },
+        title = { Text(stringResource(Res.string.onboarding_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(stringResource(R.string.onboarding_body), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.onboarding_body), style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(16.dp))
                 GoalsEditor(
                     goals = UserGoal(dietType = Diet.BALANCED.name).withDietMacros(),

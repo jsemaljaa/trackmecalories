@@ -1,6 +1,5 @@
 package com.jsemalja.trackmecalories.ui.theme
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,23 +12,24 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * How corners are drawn. [ROUNDED] is plain circular arcs; [CONTINUOUS] eases the curve
  * into the straight edge (a "squircle", like iOS icons) so corners read softer at the same
  * radius; [COMPACT] is the rounded style with tighter radii.
  */
-enum class CornerStyle(@StringRes val label: Int) {
-    ROUNDED(R.string.corners_rounded),
-    CONTINUOUS(R.string.corners_continuous),
-    COMPACT(R.string.corners_compact)
+enum class CornerStyle(val label: StringResource) {
+    ROUNDED(Res.string.corners_rounded),
+    CONTINUOUS(Res.string.corners_continuous),
+    COMPACT(Res.string.corners_compact)
 }
 
 /**

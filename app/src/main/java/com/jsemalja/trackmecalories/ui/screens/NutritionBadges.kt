@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -20,11 +20,12 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.healthOrder
 import com.jsemalja.trackmecalories.data.rating
 import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /** The official Nutri-Score colours. */
 private fun gradeColor(grade: Char) = when (grade) {
@@ -86,14 +87,14 @@ fun RatingLine(food: CustomFood) {
             Spacer(Modifier.width(8.dp))
         }
         val parts = buildList {
-            if (r.grade != null && r.estimated) add(stringResource(R.string.nutriscore_estimated))
-            r.score?.let { add(stringResource(R.string.health_score, it.toInt())) }
+            if (r.grade != null && r.estimated) add(stringResource(Res.string.nutriscore_estimated))
+            r.score?.let { add(stringResource(Res.string.health_score, it.toInt())) }
             if (r.uncertain && r.bestGrade != null && r.worstGrade != null) {
-                add(stringResource(R.string.nutriscore_range, r.bestGrade.toString(), r.worstGrade.toString()))
+                add(stringResource(Res.string.nutriscore_range, r.bestGrade.toString(), r.worstGrade.toString()))
             }
-            add(stringResource(R.string.protein_per_100kcal, "%.1f".format(r.proteinPer100kcal)))
-            if (r.fiberPer100kcal > 0) add(stringResource(R.string.fiber_per_100kcal, "%.1f".format(r.fiberPer100kcal)))
-            r.energyDensity?.let { add(stringResource(R.string.energy_density, "%.1f".format(it))) }
+            add(stringResource(Res.string.protein_per_100kcal, "%.1f".format(r.proteinPer100kcal)))
+            if (r.fiberPer100kcal > 0) add(stringResource(Res.string.fiber_per_100kcal, "%.1f".format(r.fiberPer100kcal)))
+            r.energyDensity?.let { add(stringResource(Res.string.energy_density, "%.1f".format(it))) }
         }
         Text(
             parts.joinToString(" · "),
@@ -104,12 +105,12 @@ fun RatingLine(food: CustomFood) {
 }
 
 /** Ways to sort the saved-foods list. */
-enum class FoodSort(@androidx.annotation.StringRes val label: Int) {
-    NAME(R.string.sort_name),
-    NUTRISCORE(R.string.sort_nutriscore),
-    PROTEIN(R.string.sort_protein),
-    FIBER(R.string.sort_fiber),
-    ENERGY_DENSITY(R.string.sort_energy_density);
+enum class FoodSort(val label: StringResource) {
+    NAME(Res.string.sort_name),
+    NUTRISCORE(Res.string.sort_nutriscore),
+    PROTEIN(Res.string.sort_protein),
+    FIBER(Res.string.sort_fiber),
+    ENERGY_DENSITY(Res.string.sort_energy_density);
 
     fun sort(foods: List<CustomFood>): List<CustomFood> = when (this) {
         NAME -> foods

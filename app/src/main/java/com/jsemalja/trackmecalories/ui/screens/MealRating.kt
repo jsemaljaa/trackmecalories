@@ -1,6 +1,5 @@
 package com.jsemalja.trackmecalories.ui.screens
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,33 +26,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.ui.theme.appSegmentedColors
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 private val FULLNESS_LABELS = listOf(
-    R.string.fullness_1, R.string.fullness_2, R.string.fullness_3, R.string.fullness_4, R.string.fullness_5
+    Res.string.fullness_1, Res.string.fullness_2, Res.string.fullness_3, Res.string.fullness_4, Res.string.fullness_5
 )
 private val ENERGY_LABELS = listOf(
-    R.string.energy_1, R.string.energy_2, R.string.energy_3, R.string.energy_4, R.string.energy_5
+    Res.string.energy_1, Res.string.energy_2, Res.string.energy_3, Res.string.energy_4, Res.string.energy_5
 )
 
 /** In a meal's header: "Rate", or the meal's fullness/energy once rated. */
 @Composable
 fun MealRatingChip(satiety: Int?, energy: Int?, onClick: () -> Unit) {
     val rated = listOfNotNull(
-        satiety?.let { stringResource(R.string.rating_fullness_short, it) },
-        energy?.let { stringResource(R.string.rating_energy_short, it) }
+        satiety?.let { stringResource(Res.string.rating_fullness_short, it) },
+        energy?.let { stringResource(Res.string.rating_energy_short, it) }
     )
     AssistChip(
         onClick = onClick,
         label = {
             Text(
-                if (rated.isEmpty()) stringResource(R.string.rate_meal) else rated.joinToString(" · "),
+                if (rated.isEmpty()) stringResource(Res.string.rate_meal) else rated.joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -85,27 +85,27 @@ fun RateMealDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.rate_meal_title, mealLabel(meal))) },
+        title = { Text(stringResource(Res.string.rate_meal_title, mealLabel(meal))) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(stringResource(R.string.rate_meal_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.rate_meal_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
-                RatingRow(R.string.fullness, fullness, FULLNESS_LABELS) { fullness = it }
+                RatingRow(Res.string.fullness, fullness, FULLNESS_LABELS) { fullness = it }
                 Spacer(Modifier.height(16.dp))
-                RatingRow(R.string.energy, energyLevel, ENERGY_LABELS) { energyLevel = it }
+                RatingRow(Res.string.energy, energyLevel, ENERGY_LABELS) { energyLevel = it }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = { onSave(fullness, energyLevel) },
                 enabled = fullness != null || energyLevel != null
-            ) { Text(stringResource(R.string.save)) }
+            ) { Text(stringResource(Res.string.save)) }
         },
         dismissButton = {
             if (satiety != null || energy != null) {
-                TextButton(onClick = { onSave(null, null) }) { Text(stringResource(R.string.rating_clear)) }
+                TextButton(onClick = { onSave(null, null) }) { Text(stringResource(Res.string.rating_clear)) }
             } else {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
             }
         }
     )
@@ -113,7 +113,7 @@ fun RateMealDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RatingRow(@StringRes title: Int, value: Int?, labels: List<Int>, onChange: (Int?) -> Unit) {
+private fun RatingRow(title: StringResource, value: Int?, labels: List<StringResource>, onChange: (Int?) -> Unit) {
     Text(stringResource(title), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
     Spacer(Modifier.height(6.dp))
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -130,7 +130,7 @@ private fun RatingRow(@StringRes title: Int, value: Int?, labels: List<Int>, onC
     }
     Spacer(Modifier.height(4.dp))
     Text(
-        value?.let { stringResource(labels[it - 1]) } ?: stringResource(R.string.rating_scale_hint, stringResource(labels[0]), stringResource(labels[4])),
+        value?.let { stringResource(labels[it - 1]) } ?: stringResource(Res.string.rating_scale_hint, stringResource(labels[0]), stringResource(labels[4])),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )

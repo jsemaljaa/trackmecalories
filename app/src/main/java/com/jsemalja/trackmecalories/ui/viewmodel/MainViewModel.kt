@@ -28,7 +28,6 @@ import com.jsemalja.trackmecalories.fasting.FastingAccess
 import com.jsemalja.trackmecalories.fasting.FastingTimer
 import com.jsemalja.trackmecalories.data.suggestionHistoryStart
 import com.jsemalja.trackmecalories.data.DayLog
-import com.jsemalja.trackmecalories.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -77,6 +76,8 @@ import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
 import com.jsemalja.trackmecalories.data.weekStartOf as sharedWeekStartOf
 import kotlin.math.roundToInt
+import com.jsemalja.trackmecalories.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Main ViewModel for the application, handling food logging, goals, and history.
@@ -461,11 +462,11 @@ class MainViewModel(
 
     private val _offError = MutableStateFlow(false)
     private val _ktError = MutableStateFlow(false)
-    val searchError: StateFlow<Int?> = combine(_offError, _ktError) { off, kt ->
+    val searchError: StateFlow<StringResource?> = combine(_offError, _ktError) { off, kt ->
         when {
-            off && kt -> R.string.search_error_all
-            off -> R.string.search_error_off
-            kt -> R.string.search_error_kt
+            off && kt -> Res.string.search_error_all
+            off -> Res.string.search_error_off
+            kt -> Res.string.search_error_kt
             else -> null
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)

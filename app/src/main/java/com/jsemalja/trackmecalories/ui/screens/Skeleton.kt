@@ -26,11 +26,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.ui.theme.AppCard
+import com.jsemalja.trackmecalories.resources.*
 
 /**
  * A soft highlight sweeping across placeholder blocks, so a loading list reads as "coming"
@@ -66,7 +66,7 @@ private fun Bone(brush: Brush, width: Dp? = null, fraction: Float = 1f, height: 
 @Composable
 fun SkeletonResultCard() {
     val brush = shimmerBrush()
-    val loading = stringResource(R.string.loading)
+    val loading = stringResource(Res.string.loading)
     AppCard(
         modifier = Modifier.fillMaxWidth().semantics { contentDescription = loading },
         shape = MaterialTheme.shapes.medium,

@@ -27,14 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.ui.screens.groupedShape
 import com.jsemalja.trackmecalories.ui.theme.AppCard
+import com.jsemalja.trackmecalories.resources.*
 
 /** A settings sub-page: a back button beside the title, then its cards in a scrolling column. */
 @Composable
@@ -50,7 +50,7 @@ internal fun SettingsPageScaffold(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack, modifier = Modifier.padding(end = 4.dp)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
             }
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
