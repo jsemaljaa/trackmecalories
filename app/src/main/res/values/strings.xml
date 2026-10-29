@@ -655,6 +655,7 @@
     <string name="settings_about">About</string>
     <string name="settings_about_summary">Version, nutrition score, food data sources</string>
     <string name="settings_version">Version %1$s</string>
+    <string name="settings_developer">Developed by %1$s</string>
     <string name="settings_food_data">Food data</string>
     <!-- Streaks and badges -->
     <string name="gamification_title">Streaks &amp; badges</string>

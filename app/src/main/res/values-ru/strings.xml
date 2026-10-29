@@ -663,6 +663,7 @@
     <string name="settings_about">О приложении</string>
     <string name="settings_about_summary">Версия, оценка питательности, источники данных</string>
     <string name="settings_version">Версия %1$s</string>
+    <string name="settings_developer">Разработчик: %1$s</string>
     <string name="settings_food_data">Данные о продуктах</string>
     <!-- Серии и награды -->
     <string name="gamification_title">Серии и награды</string>

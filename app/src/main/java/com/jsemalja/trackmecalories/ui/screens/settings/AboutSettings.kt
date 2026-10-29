@@ -24,6 +24,11 @@ internal fun AboutSettings() {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Text(
+            stringResource(R.string.settings_developer, "jsemalja"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 
     SettingsSectionCard(title = stringResource(R.string.nutrition_score)) {
