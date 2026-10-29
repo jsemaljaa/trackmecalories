@@ -282,6 +282,8 @@
     <string name="percent_of_goal_eaten">Съедено %1$d%% от цели</string>
     <string name="quick_add_total">Всего калорий</string>
     <string name="quick_add_example">например, 500</string>
+    <string name="quick_add_macros">БЖУ в граммах (необязательно)</string>
+    <string name="quick_add_from_macros">Посчитано по БЖУ</string>
     <string name="yesterday">Вчера</string>
     <string name="tomorrow">Завтра</string>
     <string name="previous_week">Предыдущая неделя</string>
@@ -293,7 +295,7 @@
     <string name="add_scan">Сканировать штрихкод</string>
     <string name="add_scan_desc">Упакованные продукты</string>
     <string name="add_quick">Быстро добавить калории</string>
-    <string name="add_quick_desc">Только число, без продукта</string>
+    <string name="add_quick_desc">Калории и БЖУ, без продукта</string>
     <string name="add_custom">Создать свой продукт</string>
     <string name="add_custom_desc">Ввести данные с этикетки</string>
 

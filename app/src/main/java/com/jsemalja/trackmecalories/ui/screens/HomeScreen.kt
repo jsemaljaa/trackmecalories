@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.TaskAlt
 import kotlin.math.roundToInt
 import com.jsemalja.trackmecalories.data.kcalUncertainty
+import com.jsemalja.trackmecalories.data.kcalFromMacros
 import com.jsemalja.trackmecalories.data.Confidence
 import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.theme.AppTheme
@@ -393,7 +394,9 @@ fun HomeScreen(
         val requestKey = rememberRequestKey()
         QuickAddDialog(
             onDismiss = { showQuickAddDialog = false },
-            onSave = { kcal -> viewModel.addQuickCalories(kcal, requestKey) }
+            onSave = { kcal, protein, carbs, fat ->
+                viewModel.addQuickCalories(kcal, protein, carbs, fat, requestKey)
+            }
         )
     }
 
@@ -965,28 +968,64 @@ fun SwipeToDeleteContainer(
 }
 
 @Composable
-fun QuickAddDialog(onDismiss: () -> Unit, onSave: (Int) -> Unit) {
+fun QuickAddDialog(onDismiss: () -> Unit, onSave: (kcal: Int, protein: Double, carbs: Double, fat: Double) -> Unit) {
     var kcal by remember { mutableStateOf("") }
+    var protein by remember { mutableStateOf("") }
+    var carbs by remember { mutableStateOf("") }
+    var fat by remember { mutableStateOf("") }
+    val p = protein.toDecimal() ?: 0.0
+    val c = carbs.toDecimal() ?: 0.0
+    val f = fat.toDecimal() ?: 0.0
+    // Macros alone are enough: the calories then follow from them.
+    val macroKcal = kcalFromMacros(p, c, f)
+    val enteredKcal = kcal.toDecimal()?.roundToInt()
+    val total = enteredKcal ?: macroKcal.takeIf { it > 0 }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.add_quick)) },
         text = {
-            OutlinedTextField(
-                value = kcal,
-                onValueChange = { kcal = it },
-                label = { Text(stringResource(R.string.quick_add_total)) },
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.quick_add_example)) }
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = kcal,
+                    onValueChange = { kcal = it },
+                    label = { Text(stringResource(R.string.quick_add_total)) },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text(if (macroKcal > 0) macroKcal.toString() else stringResource(R.string.quick_add_example)) },
+                    suffix = { Text(stringResource(R.string.unit_kcal)) },
+                    supportingText = if (enteredKcal == null && macroKcal > 0) {
+                        { Text(stringResource(R.string.quick_add_from_macros)) }
+                    } else null
+                )
+                Text(stringResource(R.string.quick_add_macros), style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    QuickMacroField(stringResource(R.string.protein), protein) { protein = it }
+                    QuickMacroField(stringResource(R.string.carbs), carbs) { carbs = it }
+                    QuickMacroField(stringResource(R.string.fat), fat) { fat = it }
+                }
+            }
         },
         confirmButton = {
             Button(onClick = {
-                kcal.toIntOrNull()?.let { onSave(it) }
+                total?.let { onSave(it, p, c, f) }
                 onDismiss()
             }) { Text(stringResource(R.string.recipe_add)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+    )
+}
+
+/** Grams of one macro in [QuickAddDialog]; a third of the row, so a long name ellipsizes. */
+@Composable
+private fun RowScope.QuickMacroField(label: String, value: String, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        modifier = Modifier.weight(1f),
+        singleLine = true,
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
     )
 }
 

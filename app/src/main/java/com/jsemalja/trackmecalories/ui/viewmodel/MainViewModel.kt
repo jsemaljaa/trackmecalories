@@ -803,16 +803,22 @@ class MainViewModel(
     /**
      * Quickly adds a calorie-only entry for the current day.
      */
-    fun addQuickCalories(kcal: Int, requestKey: String? = null) {
+    fun addQuickCalories(
+        kcal: Int,
+        protein: Double = 0.0,
+        carbs: Double = 0.0,
+        fat: Double = 0.0,
+        requestKey: String? = null
+    ) {
         if (!firstRequest(requestKey)) return
         viewModelScope.launch {
             dao.insertEntry(
                 FoodEntry(
                     name = "Quick Add",
                     kcal = kcal,
-                    protein = 0.0,
-                    carbs = 0.0,
-                    fat = 0.0,
+                    protein = protein,
+                    carbs = carbs,
+                    fat = fat,
                     fiber = 0.0,
                     salt = 0.0,
                     date = selectedDate.value.toString(),

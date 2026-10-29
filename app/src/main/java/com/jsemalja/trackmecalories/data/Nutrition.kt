@@ -91,6 +91,10 @@ object CalorieCalculator {
     fun age(birthYear: Int, today: LocalDate = LocalDate.now()): Int = today.year - birthYear
 }
 
+/** Calories implied by macro grams (4/4/9 kcal per gram of protein/carbs/fat). */
+fun kcalFromMacros(protein: Double, carbs: Double, fat: Double): Int =
+    (protein * 4 + carbs * 4 + fat * 9).roundToInt()
+
 /** Body-mass index, or null without a height. */
 fun bmi(weightKg: Double, heightCm: Double?): Double? =
     heightCm?.takeIf { it > 0 }?.let { weightKg / ((it / 100) * (it / 100)) }

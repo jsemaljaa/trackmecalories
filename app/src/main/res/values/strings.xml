@@ -280,6 +280,8 @@
     <string name="percent_of_goal_eaten">%1$d%% of your goal eaten</string>
     <string name="quick_add_total">Total calories</string>
     <string name="quick_add_example">e.g. 500</string>
+    <string name="quick_add_macros">Macros in grams (optional)</string>
+    <string name="quick_add_from_macros">Counted from the macros</string>
     <string name="yesterday">Yesterday</string>
     <string name="tomorrow">Tomorrow</string>
     <string name="previous_week">Previous week</string>
@@ -291,7 +293,7 @@
     <string name="add_scan">Scan a barcode</string>
     <string name="add_scan_desc">Packaged products</string>
     <string name="add_quick">Quick add calories</string>
-    <string name="add_quick_desc">Just a number, no food</string>
+    <string name="add_quick_desc">Calories and macros, no food</string>
     <string name="add_custom">Create a custom food</string>
     <string name="add_custom_desc">Enter the nutrition label yourself</string>
 
