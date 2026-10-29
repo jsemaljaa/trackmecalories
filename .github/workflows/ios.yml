@@ -8,7 +8,7 @@ name: iOS build
 
 on:
   push:
-    branches: [main, feature/kmp-shared]
+    branches: [main, ios, feature/kmp-shared]
     tags: ['v*']
   workflow_dispatch:
 
