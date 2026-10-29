@@ -969,7 +969,9 @@ class MainViewModel(
         return if (rows.isEmpty()) header else "$header\n$rows"
     }
 
-    private fun String.csvEscape(): String = "\"${replace("\"", "\"\"")}\""
+    // A leading ' stops spreadsheets running a food name like "=HYPERLINK(…)" as a formula.
+    private fun String.csvEscape(): String =
+        "\"${(if (isNotEmpty() && this[0] in "=+-@") "'$this" else this).replace("\"", "\"\"")}\""
 
     /**
      * Clears all food and water entries from the database. Goals and saved foods are kept.

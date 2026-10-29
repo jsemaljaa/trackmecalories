@@ -18,3 +18,8 @@ local.properties
 *.jks
 *.keystore
 /dist
+# Per-machine IDE/tool state (device serials, AI assistant settings)
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml
+/.idea/studiobot.xml
+/.serena

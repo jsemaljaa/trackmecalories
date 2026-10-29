@@ -4,6 +4,7 @@ import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.UserAgent
 import io.ktor.client.request.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
@@ -64,6 +65,8 @@ class FoodRepository(private val dao: FoodDao? = null) {
             requestTimeoutMillis = 15_000
             connectTimeoutMillis = 10_000
         }
+        // Open Food Facts asks every app to identify itself.
+        install(UserAgent) { agent = "TrackMeCalories - Android" }
     }
 
     /**
@@ -89,6 +92,8 @@ class FoodRepository(private val dao: FoodDao? = null) {
      * them), then the world one if that fails.
      */
     suspend fun fetchProductInfo(barcode: String): FoodInfo? {
+        // It goes into the URL path, and a scanned QR code can hold anything.
+        if (barcode.isEmpty() || !barcode.all { it in '0'..'9' }) return null
         Log.d(TAG, "Fetching product info for barcode: $barcode")
         for (host in OFF_PRODUCT_HOSTS) {
             try {
@@ -236,7 +241,8 @@ class FoodRepository(private val dao: FoodDao? = null) {
         val OFF_PRODUCT_HOSTS = listOf("cz.openfoodfacts.org", "world.openfoodfacts.org")
 
         // Czech names first so "Jogurt bílý" isn't shown as its English/German label.
-        val PREFERRED_LANGS = listOf("cs", Locale.getDefault().language.ifBlank { "en" }, "en").distinct()
+        // A getter, so the in-app language switch takes effect without a restart.
+        val PREFERRED_LANGS get() = listOf("cs", Locale.getDefault().language.ifBlank { "en" }, "en").distinct()
 
         // A cached product older than this is still shown, then re-fetched in the background.
         const val STALE_AFTER_MS = 30L * 24 * 60 * 60 * 1000

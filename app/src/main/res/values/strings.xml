@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TrackMe Calories</string>
+    <string name="app_name" translatable="false">TrackMe Calories</string>
 
     <!-- Diets -->
     <string name="diet_balanced">Balanced</string>
@@ -185,8 +185,6 @@
     <string name="recipe_cook_factor_custom">Cooking factor</string>
     <string name="recipe_cook_factor_help">Only used to estimate the cooked weight when you don\'t weigh the dish: dry rice absorbs water (×2.5), meat loses it (×0.75).</string>
     <string name="recipe_cooks_to">≈ %1$d g cooked</string>
-    <string name="recipe_kcal_per_serving">%1$d kcal per serving</string>
-    <string name="recipe_kcal_per_100g">%1$d kcal per 100 g</string>
     <string name="cook_none">×1 unchanged</string>
     <string name="cook_rice">Rice ×2.5</string>
     <string name="cook_pasta">Pasta ×2.2</string>
@@ -197,7 +195,6 @@
     <string name="cook_vegetables">Vegetables ×0.8</string>
 
     <!-- Meals -->
-    <string name="meal">Meal</string>
     <string name="meal_breakfast">Breakfast</string>
     <string name="meal_lunch">Lunch</string>
     <string name="meal_dinner">Dinner</string>
@@ -209,13 +206,11 @@
         <item quantity="one">%1$s piece</item>
         <item quantity="other">%1$s pieces</item>
     </plurals>
-    <string name="log_food_title">Log %1$s</string>
     <string name="log_food">Log food</string>
     <string name="edit_food">Edit food</string>
     <string name="how_many_pieces">How many pieces?</string>
     <string name="how_many_unit">How many %1$s?</string>
     <string name="how_many_portions">How many? (%1$s)</string>
-    <string name="portion_title">Portion</string>
     <string name="portion_with_weight">%1$s · %2$s</string>
     <!-- "2 × Medium (102 g)": count, portion, total amount -->
     <string name="portion_amount">%1$s × %2$s (%3$s)</string>
@@ -488,9 +483,9 @@
     <!-- Weekly budget -->
     <string name="goal_today_flex">Today (weekly)</string>
     <string name="week_budget_line">Week: %1$s of %2$s kcal left · %3$d days incl. today</string>
-    <string name="week_budget_capped">Today\'s target is limited to ±25% of your goal; the rest carries over.</string>
+    <string name="week_budget_capped" formatted="false">Today\'s target is limited to ±25% of your goal; the rest carries over.</string>
     <string name="weekly_budget">Weekly budget</string>
-    <string name="weekly_budget_desc">Let calories flex across the week: what you save or overspend is spread over the remaining days (within ±25% a day).</string>
+    <string name="weekly_budget_desc" formatted="false">Let calories flex across the week: what you save or overspend is spread over the remaining days (within ±25% a day).</string>
 
     <!-- Nutrition rating -->
     <string name="nutriscore_estimated">Nutri-Score estimated</string>
@@ -682,7 +677,7 @@
     <string name="streak_water">Water</string>
     <string name="streak_water_desc">Water goal reached</string>
     <string name="streak_calories">On target</string>
-    <string name="streak_calories_desc">Within 10% of the day\'s calorie goal, either side. Judged once the day is over.</string>
+    <string name="streak_calories_desc" formatted="false">Within 10% of the day\'s calorie goal, either side. Judged once the day is over.</string>
     <string name="streak_fasting">Fasting</string>
     <string name="streak_fasting_desc">A fast reached its goal</string>
     <string name="streak_weigh_in">Weigh-ins</string>

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Diets -->
     <string name="diet_balanced">Сбалансированная</string>
     <string name="diet_balanced_desc">25% белки · 50% углеводы · 25% жиры. Ровный повседневный рацион.</string>
@@ -183,8 +183,6 @@
     <string name="recipe_cook_factor_custom">Коэффициент варки</string>
     <string name="recipe_cook_factor_help">Нужен только для оценки веса готового, если вы не взвешиваете блюдо: рис впитывает воду (×2,5), мясо теряет (×0,75).</string>
     <string name="recipe_cooks_to">≈ %1$d г готового</string>
-    <string name="recipe_kcal_per_serving">%1$d ккал на порцию</string>
-    <string name="recipe_kcal_per_100g">%1$d ккал на 100 г</string>
     <string name="cook_none">×1 без изменений</string>
     <string name="cook_rice">Рис ×2,5</string>
     <string name="cook_pasta">Макароны ×2,2</string>
@@ -195,7 +193,6 @@
     <string name="cook_vegetables">Овощи ×0,8</string>
 
     <!-- Meals -->
-    <string name="meal">Приём пищи</string>
     <string name="meal_breakfast">Завтрак</string>
     <string name="meal_lunch">Обед</string>
     <string name="meal_dinner">Ужин</string>
@@ -209,13 +206,11 @@
         <item quantity="many">%1$s штук</item>
         <item quantity="other">%1$s штуки</item>
     </plurals>
-    <string name="log_food_title">Записать: %1$s</string>
     <string name="log_food">Записать</string>
     <string name="edit_food">Изменить продукт</string>
     <string name="how_many_pieces">Сколько штук?</string>
     <string name="how_many_unit">Сколько %1$s?</string>
     <string name="how_many_portions">Сколько? (%1$s)</string>
-    <string name="portion_title">Порция</string>
     <string name="portion_with_weight">%1$s · %2$s</string>
     <!-- "2 × Средний (102 г)": количество, порция, общий вес -->
     <string name="portion_amount">%1$s × %2$s (%3$s)</string>
@@ -364,7 +359,7 @@
     <string name="balance_over">всего сверх цели</string>
     <string name="balance_under">всего ниже цели</string>
     <string name="balance_exact">ровно по цели</string>
-    <plurals name="days_unit">
+    <plurals name="days_unit" tools:ignore="ImpliedQuantity">
         <item quantity="one">день</item>
         <item quantity="few">дня</item>
         <item quantity="many">дней</item>
@@ -490,9 +485,9 @@
     <!-- Weekly budget -->
     <string name="goal_today_flex">Сегодня (по неделе)</string>
     <string name="week_budget_line">Неделя: осталось %1$s из %2$s ккал · дней с сегодняшним: %3$d</string>
-    <string name="week_budget_capped">Цель на сегодня ограничена ±25% от обычной; остальное переносится.</string>
+    <string name="week_budget_capped" formatted="false">Цель на сегодня ограничена ±25% от обычной; остальное переносится.</string>
     <string name="weekly_budget">Недельный бюджет</string>
-    <string name="weekly_budget_desc">Калории распределяются по неделе: сэкономленное или перебранное делится на оставшиеся дни (не более ±25% в день).</string>
+    <string name="weekly_budget_desc" formatted="false">Калории распределяются по неделе: сэкономленное или перебранное делится на оставшиеся дни (не более ±25% в день).</string>
 
     <!-- Nutrition rating -->
     <string name="nutriscore_estimated">Nutri-Score оценочный</string>
@@ -692,7 +687,7 @@
     <string name="streak_water">Вода</string>
     <string name="streak_water_desc">Цель по воде достигнута</string>
     <string name="streak_calories">В цель</string>
-    <string name="streak_calories_desc">В пределах 10% от цели по калориям в любую сторону. Оценивается, когда день закончился.</string>
+    <string name="streak_calories_desc" formatted="false">В пределах 10% от цели по калориям в любую сторону. Оценивается, когда день закончился.</string>
     <string name="streak_fasting">Голодание</string>
     <string name="streak_fasting_desc">Голодание достигло цели</string>
     <string name="streak_weigh_in">Взвешивания</string>

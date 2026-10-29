@@ -38,21 +38,18 @@ The project follows a modern MVVM (Model-View-ViewModel) architecture with a cle
 ### Project Structure
 ```
 com.jsemalja.trackmecalories/
-├── data/
-│   ├── AppDatabase.kt      # Room DB configuration & Migrations
-│   ├── FoodDao.kt          # Database operations (CRUD)
-│   ├── FoodDatabase.kt     # Entities: FoodEntry, CustomFood, UserGoal
-│   └── FoodRepository.kt   # Open Food Facts API integration (Ktor)
+├── data/            # Room entities + DAO (FoodDatabase.kt), migrations, the DB singleton,
+│                    # food sources (Open Food Facts, Kalorické tabulky, bundled menus and base foods)
+│                    # and pure domain logic (WeeklyBudget, WeightMath, RecipeMath, NutritionRating, …)
+├── fasting/         # Fasting timer alarms and notifications
+├── widget/          # Home-screen "Today" widget
 ├── ui/
-│   ├── screens/
-│   │   ├── HomeScreen.kt    # Dashboard, Date selector, Daily log
-│   │   ├── ScannerScreen.kt # ML Kit Barcode logic & result handling
-│   │   ├── RecentsScreen.kt # List of saved food templates
-│   │   └── SettingsScreen.kt# Goal configuration & data management
-│   ├── viewmodel/
-│   │   └── MainViewModel.kt # Central state (StateFlow) and Business Logic
-│   └── theme/              # Material 3 Theme configuration
-└── MainActivity.kt         # Entry point & Navigation management
+│   ├── screens/     # Compose screens and dialogs (settings/ holds the settings pages)
+│   ├── viewmodel/   # MainViewModel: all app state as StateFlows, all mutations
+│   └── theme/       # Material 3 themes, colours, shapes, motion
+├── MainActivity.kt  # Entry point, navigation, launcher-shortcut / widget actions
+└── HealthRationaleActivity.kt  # Health Connect permission rationale
+tools/               # Python scripts that regenerate the bundled food data in app/src/main/assets
 ```
 
 ### Core Logic
@@ -62,7 +59,7 @@ com.jsemalja.trackmecalories/
     *   `custom_foods`: Saved templates from scans or manual entries.
     *   `user_goals`: A singleton table storing the user's nutritional targets.
 3.  **Barcode Processing**: The `ScannerScreen` uses `LifecycleCameraController` with `MlKitAnalyzer`. If a barcode is not found in the local `custom_foods` cache, it queries the `FoodRepository` (Open Food Facts).
-4.  **Nutrient Calculation**: To ensure precision, all nutrients are calculated based on the ratio of `consumedAmount / 100.0` multiplied by the base value per 100g.
+4.  **Nutrient Calculation**: Foods store values per reference amount (100 g/ml, or 1 piece); an entry's totals are `value / referenceAmount × amount`.
 
 ## 📦 Tech Stack
 *   **Language**: Kotlin 2.1.0
@@ -72,3 +69,16 @@ com.jsemalja.trackmecalories/
 *   **Networking**: Ktor (Open Food Facts API)
 *   **AI/Vision**: Google ML Kit (Barcode Scanning)
 *   **Navigation**: Adaptive Navigation Suite
+
+## 🔧 Building
+Requires JDK 21 and the Android SDK (compile SDK 36).
+```bash
+./gradlew :app:assembleDebug        # debug APK
+./gradlew :app:testDebugUnitTest    # unit tests
+```
+Release builds are signed with a key read from `keystore.properties` + `release.jks` in the repo root; neither is in the repository.
+
+## 📚 Data Sources
+*   [Open Food Facts](https://world.openfoodfacts.org) — barcode lookups and product search (ODbL).
+*   [Fineli](https://fineli.fi) (THL, CC BY 4.0) and [USDA FoodData Central](https://fdc.nal.usda.gov) — nutrients of the bundled base foods.
+*   [Kalorické tabulky](https://www.kaloricketabulky.cz) — Czech food search, queried live.
