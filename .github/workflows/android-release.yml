@@ -1,0 +1,76 @@
+# Builds the signed release APK on every push to the android branch. When versionName in
+# app/build.gradle.kts has no release yet (a "Release X.Y" commit), it publishes a GitHub
+# Release tagged vX.Y-android with the APK attached; other pushes only keep it as an artifact.
+#
+# Signing needs four repository secrets (Settings > Secrets and variables > Actions):
+#   RELEASE_KEYSTORE_BASE64  base64 of release.jks
+#   RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD  from keystore.properties
+name: Android release
+
+on:
+  push:
+    branches: [android]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Signing key
+        env:
+          KEYSTORE: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE" ]; then
+            echo "::error title=Missing secrets::Add RELEASE_KEYSTORE_BASE64 and the other signing secrets (see the top of this workflow)"
+            exit 1
+          fi
+          echo "$KEYSTORE" | base64 -d > release.jks
+          printf 'storeFile=release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
+
+      - name: Build the APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testDebugUnitTest :app:releaseApk
+
+      - name: Version
+        id: version
+        run: |
+          v=$(sed -n 's/^ *versionName = "\(.*\)"/\1/p' app/build.gradle.kts)
+          echo "name=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=v$v-android" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "v$v-android" > /dev/null; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: TrackMeCalories-${{ steps.version.outputs.name }}
+          path: dist/TrackMeCalories-${{ steps.version.outputs.name }}.apk
+
+      - name: Publish the release
+        if: steps.version.outputs.new == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: TrackMeCalories ${{ steps.version.outputs.name }} (Android)
+          files: dist/TrackMeCalories-${{ steps.version.outputs.name }}.apk

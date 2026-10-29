@@ -1,12 +1,6 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 .DS_Store
 /build
 /captures
@@ -18,8 +12,7 @@ local.properties
 *.jks
 *.keystore
 /dist
-# Per-machine IDE/tool state (device serials, AI assistant settings)
-/.idea/deploymentTargetSelector.xml
-/.idea/deviceManager.xml
-/.idea/studiobot.xml
+# Local-only IDE and assistant files
+.idea/
+CLAUDE.md
 /.serena
