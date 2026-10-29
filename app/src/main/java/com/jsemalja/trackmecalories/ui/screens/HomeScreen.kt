@@ -82,6 +82,8 @@ import com.jsemalja.trackmecalories.data.CustomFood
 import com.jsemalja.trackmecalories.data.FoodEntry
 import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.WaterEntry
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.jsemalja.trackmecalories.ui.theme.MacroCarbs
 import com.jsemalja.trackmecalories.ui.theme.MacroFat
 import com.jsemalja.trackmecalories.ui.theme.MacroFiber
@@ -1006,9 +1008,9 @@ fun QuickAddDialog(onDismiss: () -> Unit, onSave: (kcal: Int, protein: Double, c
                 )
                 Text(stringResource(R.string.quick_add_macros), style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    QuickMacroField(stringResource(R.string.protein), protein) { protein = it }
-                    QuickMacroField(stringResource(R.string.carbs), carbs) { carbs = it }
-                    QuickMacroField(stringResource(R.string.fat), fat) { fat = it }
+                    QuickMacroField(stringResource(R.string.macro_p), stringResource(R.string.protein), MacroProtein, protein) { protein = it }
+                    QuickMacroField(stringResource(R.string.macro_c), stringResource(R.string.carbs), MacroCarbs, carbs) { carbs = it }
+                    QuickMacroField(stringResource(R.string.macro_f), stringResource(R.string.fat), MacroFat, fat) { fat = it }
                 }
             }
         },
@@ -1022,13 +1024,14 @@ fun QuickAddDialog(onDismiss: () -> Unit, onSave: (kcal: Int, protein: Double, c
     )
 }
 
-/** Grams of one macro in [QuickAddDialog]; a third of the row, so a long name ellipsizes. */
+/** Grams of one macro in [QuickAddDialog], labelled by its colour-coded letter; [name] is read out instead. */
 @Composable
-private fun RowScope.QuickMacroField(label: String, value: String, onValueChange: (String) -> Unit) {
+private fun RowScope.QuickMacroField(letter: String, name: String, color: Color, value: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        label = { Text(letter, color = color, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { contentDescription = name }) },
+        suffix = { Text(stringResource(R.string.unit_g)) },
         modifier = Modifier.weight(1f),
         singleLine = true,
         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
