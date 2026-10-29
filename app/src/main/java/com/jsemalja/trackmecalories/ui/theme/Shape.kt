@@ -62,12 +62,25 @@ fun appShapes(style: CornerStyle): Shapes = when (style) {
 }
 
 /**
- * Each [AppTheme]'s own corner scale, used unless the user picks a [CornerStyle]: Paper is
- * near-square like print, Bold small and blocky, Neon big and soft.
+ * Each [AppTheme]'s own corner scale, used unless the user picks a [CornerStyle]: Classic
+ * generously round, Glass smooth and soft, Paper near-square like print, Bold small and
+ * blocky, Terminal square.
  */
 fun themeShapes(theme: AppTheme): Shapes = when (theme) {
-    AppTheme.CLASSIC -> appShapes(CornerStyle.ROUNDED)
-    AppTheme.GLASS -> appShapes(CornerStyle.CONTINUOUS)
+    AppTheme.CLASSIC -> Shapes(
+        extraSmall = RoundedCornerShape(8.dp),
+        small = RoundedCornerShape(12.dp),
+        medium = RoundedCornerShape(16.dp),
+        large = RoundedCornerShape(24.dp),
+        extraLarge = RoundedCornerShape(32.dp)
+    )
+    AppTheme.GLASS -> Shapes(
+        extraSmall = ContinuousCornerShape(CornerSize(9.dp)),
+        small = ContinuousCornerShape(CornerSize(14.dp)),
+        medium = ContinuousCornerShape(CornerSize(20.dp)),
+        large = ContinuousCornerShape(CornerSize(28.dp)),
+        extraLarge = ContinuousCornerShape(CornerSize(36.dp))
+    )
     AppTheme.PAPER -> Shapes(
         extraSmall = RoundedCornerShape(2.dp),
         small = RoundedCornerShape(2.dp),
@@ -82,12 +95,12 @@ fun themeShapes(theme: AppTheme): Shapes = when (theme) {
         large = RoundedCornerShape(10.dp),
         extraLarge = RoundedCornerShape(12.dp)
     )
-    AppTheme.NEON -> Shapes(
-        extraSmall = RoundedCornerShape(10.dp),
-        small = RoundedCornerShape(14.dp),
-        medium = RoundedCornerShape(18.dp),
-        large = RoundedCornerShape(24.dp),
-        extraLarge = RoundedCornerShape(32.dp)
+    AppTheme.TERMINAL -> Shapes(
+        extraSmall = RoundedCornerShape(0.dp),
+        small = RoundedCornerShape(0.dp),
+        medium = RoundedCornerShape(0.dp),
+        large = RoundedCornerShape(0.dp),
+        extraLarge = RoundedCornerShape(0.dp)
     )
 }
 

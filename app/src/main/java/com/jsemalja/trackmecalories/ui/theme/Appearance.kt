@@ -5,31 +5,37 @@ import androidx.annotation.StringRes
 import android.content.Context
 import android.os.Build
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.abs
+import kotlin.math.min
 
 /**
  * A whole design language, not just a palette: neutrals, cards, nav bar, headers, corner
  * shapes, typefaces and progress marks change together. Accent and light/dark are picked
  * separately and work with every theme.
- * - [CLASSIC]: quiet filled cards, soft corners, a floating pill nav.
- * - [GLASS]: frosted translucent cards over glows of the accent, smooth corners.
+ * - [CLASSIC]: Material You — white cards lifted on a tinted page by a soft shadow, colour-
+ *   filled hero cards, generous round corners, an elevated pill nav.
+ * - [GLASS]: frosted, sheen-lit panels over an aurora of the accent and its neighbouring
+ *   hues, smooth continuous corners, Mulish.
  * - [PAPER]: editorial — serif headings, near-square outlined sheets on cream, ruled
  *   headers, thin ink progress lines and a docked nav bar with labels.
  * - [BOLD]: neo-brutalist — thick black borders, hard offset shadows, solid colour-block
  *   cards, chunky square progress, uppercase headings in Space Grotesk.
- * - [NEON]: true black with glowing accent edges, glowing rings and bars, big round corners.
+ * - [TERMINAL]: a monospace console — square hairline panels, `>` prompt headers with a
+ *   cursor, rings and bars built from discrete segments.
  */
 enum class AppTheme(@StringRes val label: Int) {
     CLASSIC(R.string.theme_classic),
     GLASS(R.string.theme_glass),
     PAPER(R.string.theme_paper),
     BOLD(R.string.theme_bold),
-    NEON(R.string.theme_neon)
+    TERMINAL(R.string.theme_terminal)
 }
 
 /** Light or dark: follow the phone, or pin one regardless of the system setting. */
@@ -53,10 +59,10 @@ data class AccentPalette(
     fun primary(dark: Boolean) = if (dark) primaryDark else primaryLight
 
     companion object {
-        /** A palette generated from one colour; see [tone]. */
-        fun fromSeed(seed: Int) = AccentPalette(
-            Color(tone(seed, 80.0)), Color(tone(seed, 20.0)), Color(tone(seed, 30.0)), Color(tone(seed, 90.0)),
-            Color(tone(seed, 40.0)), Color.White, Color(tone(seed, 90.0)), Color(tone(seed, 10.0))
+        /** A palette generated from one colour, its chroma capped at [maxChroma]; see [tone]. */
+        fun fromSeed(seed: Int, maxChroma: Double = MAX_ACCENT_CHROMA) = AccentPalette(
+            Color(tone(seed, 80.0, maxChroma)), Color(tone(seed, 20.0, maxChroma)), Color(tone(seed, 30.0, maxChroma)), Color(tone(seed, 90.0, maxChroma)),
+            Color(tone(seed, 40.0, maxChroma)), Color.White, Color(tone(seed, 90.0, maxChroma)), Color(tone(seed, 10.0, maxChroma))
         )
 
         fun fromSeed(seed: Long) = fromSeed(seed.toInt())
@@ -132,6 +138,23 @@ enum class AccentColor(@StringRes val label: Int, val palette: AccentPalette) {
     }
 }
 
+/**
+ * The preset that best names [seed]: Graphite for a near-grey, otherwise the closest hue,
+ * with vividness only breaking near-ties (so a muted orange is Brown, a dusty mauve still
+ * Fuchsia rather than Graphite).
+ */
+fun nearestPreset(seed: Int): AccentColor {
+    val (hue, chroma) = hueChroma(tone(seed, 40.0, MAX_CUSTOM_CHROMA), 1.0)
+    if (chroma < 0.025) return AccentColor.GRAPHITE
+    return AccentColor.entries
+        .filter { it != AccentColor.WALLPAPER && it != AccentColor.CUSTOM && it != AccentColor.GRAPHITE }
+        .minBy { preset ->
+            val (h, c) = hueChroma(preset.palette.primaryLight.toArgb(), 1.0)
+            val turn = abs(hue - h).let { min(it, 360 - it) }
+            turn / 60 + abs(chroma - c) / 0.1
+        }
+}
+
 /** Starting point for the custom colour before one is picked: a periwinkle none of the presets cover. */
 const val DEFAULT_CUSTOM_ACCENT = 0xFF5B6CD9.toInt()
 
@@ -170,7 +193,7 @@ data class Appearance(
 ) {
     /** The accent's tones: the preset's own, or generated from [customAccent]. */
     val palette: AccentPalette by lazy {
-        if (accent == AccentColor.CUSTOM) AccentPalette.fromSeed(customAccent) else accent.palette
+        if (accent == AccentColor.CUSTOM) AccentPalette.fromSeed(customAccent, MAX_CUSTOM_CHROMA) else accent.palette
     }
 }
 
@@ -213,8 +236,9 @@ class AppearancePrefs(context: Context) {
 
     private fun read() = Appearance(
         // Before themes there was only Flat or Glass ("style").
+        // Neon was retired; Terminal took its place as the dark-first theme.
         theme = prefs.getString(KEY_THEME, null)
-            ?.let { name -> AppTheme.entries.firstOrNull { it.name == name } }
+            ?.let { name -> if (name == "NEON") AppTheme.TERMINAL else AppTheme.entries.firstOrNull { it.name == name } }
             ?: if (prefs.getString(KEY_STYLE, null) == "GLASS") AppTheme.GLASS else AppTheme.CLASSIC,
         accent = prefs.getString(KEY_ACCENT, null)
             ?.let { name -> AccentColor.entries.firstOrNull { it.name == name } } ?: AccentColor.GREEN,

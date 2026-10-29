@@ -386,7 +386,7 @@
     <string name="theme_glass">Стекло</string>
     <string name="theme_paper">Бумага</string>
     <string name="theme_bold">Броская</string>
-    <string name="theme_neon">Неон</string>
+    <string name="theme_terminal">Терминал</string>
     <string name="from_theme">Как в теме</string>
     <string name="corners">Углы</string>
     <string name="corners_rounded">Скруглённые</string>
@@ -414,6 +414,11 @@
     <string name="accent_vividness">Насыщенность</string>
     <string name="accent_hex">HEX-код</string>
     <string name="accent_hex_invalid">Шесть символов: 0–9 и A–F</string>
+    <string name="accent_custom_hint">Любой цвет: оттенок и насыщенность или HEX-код</string>
+    <string name="accent_close_to">Похоже на: %1$s</string>
+    <string name="accent_muted">Приглушённый</string>
+    <string name="accent_vivid">Яркий</string>
+    <string name="accent_tone_note">В светлом и тёмном режимах берутся более светлый или глубокий тон, чтобы текст оставался читаемым.</string>
     <string name="apply">Применить</string>
     <string name="font">Шрифт</string>
     <string name="font_system">Системный</string>

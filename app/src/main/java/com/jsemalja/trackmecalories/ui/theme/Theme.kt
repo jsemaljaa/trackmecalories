@@ -191,17 +191,37 @@ private fun ColorScheme.withNeutrals(n: Neutrals) = copy(
 
 /**
  * The neutrals of [theme], faintly tinted with the accent ([tint]) so the whole UI reads
- * as one colour family instead of accent-on-grey. Classic is grey nudged toward the accent;
- * the other themes start from their own hue and take only a trace of it (Bold more).
+ * as one colour family instead of accent-on-grey. Classic and Glass are grey nudged toward
+ * the accent; the other themes start from their own hue and take only a trace of it (Bold more).
  */
 internal fun neutrals(theme: AppTheme, tint: Color, dark: Boolean): Neutrals {
-    // Classic: grey level (0-255) nudged toward the accent.
+    // Classic and Glass: grey level (0-255) nudged toward the accent.
     fun n(level: Int, amount: Float = 0.06f) = lerp(Color(level, level, level), tint, amount)
     // The rest: a fixed colour with a trace of the accent.
     fun h(argb: Long, amount: Float = 0.03f) = lerp(Color(argb), tint, amount)
 
     return when (theme) {
-        AppTheme.CLASSIC, AppTheme.GLASS -> if (dark) Neutrals(
+        // Material You: a page tinted with the accent, cards lifted off it as white sheets
+        // (light) or a raised tone (dark), so hierarchy reads from fill rather than lines.
+        AppTheme.CLASSIC -> if (dark) Neutrals(
+            background = n(0x0F, 0.08f), onBackground = n(0xE3, 0.04f),
+            surfaceVariant = n(0x40, 0.08f), onSurfaceVariant = n(0xC4, 0.06f),
+            surfaceDim = n(0x0F, 0.08f), surfaceBright = n(0x38, 0.08f),
+            containerLowest = n(0x0A, 0.08f), containerLow = n(0x1B, 0.09f), container = n(0x20, 0.09f),
+            containerHigh = n(0x29, 0.09f), containerHighest = n(0x33, 0.09f),
+            outline = n(0x8E, 0.08f), outlineVariant = n(0x40, 0.08f),
+            inverseSurface = n(0xE3, 0.04f), inverseOnSurface = n(0x2F)
+        ) else Neutrals(
+            background = n(0xF1, 0.09f), onBackground = n(0x19),
+            surfaceVariant = n(0xDF, 0.08f), onSurfaceVariant = n(0x44),
+            surfaceDim = n(0xD9, 0.08f), surfaceBright = n(0xFA, 0.05f),
+            containerLowest = Color.White, containerLow = Color.White, container = n(0xF6, 0.06f),
+            containerHigh = n(0xEE, 0.08f), containerHighest = n(0xE6, 0.08f),
+            outline = n(0x74), outlineVariant = n(0xC6, 0.06f),
+            inverseSurface = n(0x2E), inverseOnSurface = n(0xF0, 0.04f)
+        )
+        // Glass pages are transparent over the aurora, so these mostly colour popups.
+        AppTheme.GLASS -> if (dark) Neutrals(
             background = n(0x10), onBackground = n(0xE0, 0.04f),
             surfaceVariant = n(0x3D), onSurfaceVariant = n(0xC2, 0.05f),
             surfaceDim = n(0x10), surfaceBright = n(0x36),
@@ -256,24 +276,24 @@ internal fun neutrals(theme: AppTheme, tint: Color, dark: Boolean): Neutrals {
             outline = Color(0xFF111111), outlineVariant = Color(0xFF111111),
             inverseSurface = Color(0xFF111111), inverseOnSurface = Color(0xFFF5F5F5)
         )
-        // True black page (OLED pixels off) with cards a step above it; in light mode, pure
-        // white with crisp greys. The glow on edges comes from AppCard, not the palette.
-        AppTheme.NEON -> if (dark) Neutrals(
-            background = Color.Black, onBackground = h(0xFFE8E8E8),
-            surfaceVariant = h(0xFF303030), onSurfaceVariant = h(0xFFBDBDBD),
-            surfaceDim = Color.Black, surfaceBright = h(0xFF2A2A2A),
-            containerLowest = Color.Black, containerLow = h(0xFF0B0B0B), container = h(0xFF131313),
-            containerHigh = h(0xFF1A1A1A), containerHighest = h(0xFF242424),
-            outline = h(0xFF7E7E7E), outlineVariant = h(0xFF2C2C2C),
-            inverseSurface = h(0xFFE8E8E8), inverseOnSurface = h(0xFF222222)
+        // A console: near-black (or printout-white) with panels barely off the page, set
+        // apart by hairlines; the outline carries more of the accent, like phosphor.
+        AppTheme.TERMINAL -> if (dark) Neutrals(
+            background = h(0xFF0B0C0B, 0.04f), onBackground = h(0xFFE4E6E1, 0.04f),
+            surfaceVariant = h(0xFF262826, 0.05f), onSurfaceVariant = h(0xFF9DA29C, 0.08f),
+            surfaceDim = h(0xFF0B0C0B, 0.04f), surfaceBright = h(0xFF2A2C2A, 0.05f),
+            containerLowest = h(0xFF070807), containerLow = h(0xFF111311, 0.05f), container = h(0xFF161816, 0.05f),
+            containerHigh = h(0xFF1D1F1D, 0.05f), containerHighest = h(0xFF262826, 0.05f),
+            outline = h(0xFF6F756F, 0.2f), outlineVariant = h(0xFF2E322E, 0.14f),
+            inverseSurface = h(0xFFE4E6E1), inverseOnSurface = h(0xFF1A1C1A)
         ) else Neutrals(
-            background = Color.White, onBackground = h(0xFF0B0B0B),
-            surfaceVariant = h(0xFFE6E6E6), onSurfaceVariant = h(0xFF3C3C3C),
-            surfaceDim = h(0xFFDCDCDC), surfaceBright = Color.White,
-            containerLowest = Color.White, containerLow = h(0xFFFAFAFA), container = h(0xFFF2F2F2),
-            containerHigh = h(0xFFEAEAEA), containerHighest = h(0xFFE3E3E3),
-            outline = h(0xFF6E6E6E), outlineVariant = h(0xFFD6D6D6),
-            inverseSurface = h(0xFF1B1B1B), inverseOnSurface = h(0xFFF3F3F3)
+            background = h(0xFFF2F2EC), onBackground = h(0xFF141614),
+            surfaceVariant = h(0xFFE2E3DC), onSurfaceVariant = h(0xFF545954, 0.06f),
+            surfaceDim = h(0xFFD9DAD2), surfaceBright = h(0xFFF8F8F4),
+            containerLowest = h(0xFFFCFCF8), containerLow = h(0xFFF8F8F3), container = h(0xFFEDEEE7),
+            containerHigh = h(0xFFE6E7E0), containerHighest = h(0xFFDEDFD7),
+            outline = h(0xFF767B76, 0.15f), outlineVariant = h(0xFFC4C7BE, 0.12f),
+            inverseSurface = h(0xFF1D201D), inverseOnSurface = h(0xFFF2F2EC)
         )
     }
 }

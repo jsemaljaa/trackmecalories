@@ -22,21 +22,16 @@ import com.jsemalja.trackmecalories.ui.theme.AppCard
 import com.jsemalja.trackmecalories.ui.theme.AppTheme
 import com.jsemalja.trackmecalories.ui.theme.LocalAppTheme
 import com.jsemalja.trackmecalories.ui.theme.boldShadowColor
-import com.jsemalja.trackmecalories.ui.theme.glow
 import com.jsemalja.trackmecalories.ui.theme.hardShadow
-import com.jsemalja.trackmecalories.ui.theme.neonGlowColor
 import com.jsemalja.trackmecalories.ui.theme.raisedEdge
 import com.jsemalja.trackmecalories.ui.theme.tintedCards
-import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -186,7 +181,7 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(undo.hostState) },
         floatingActionButton = {
             // One entry point for every way of adding food (see AddFoodSheet).
-            // Paper inks it; Bold and Neon give it the same edge as their cards.
+            // Paper inks it; the other themes give it the same edge as their nav bar.
             val fabShape = MaterialTheme.shapes.large
             val (fabEdge, fabBorder) = raisedEdge(fabShape)
             val ink = LocalAppTheme.current == AppTheme.PAPER
@@ -455,7 +450,7 @@ fun MealSectionHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         val labelModifier = Modifier.weight(1f, fill = false)
-        // Paper: spaced small capitals. Bold: an ink-bordered tag. Neon: wide-spaced accent capitals.
+        // Paper: spaced small capitals. Bold: an ink-bordered tag. Terminal: a `//` comment.
         when (theme) {
             AppTheme.PAPER -> Text(
                 label.uppercase(),
@@ -478,11 +473,10 @@ fun MealSectionHeader(
                     .border(2.dp, colors.outline, MaterialTheme.shapes.extraSmall)
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             )
-            AppTheme.NEON -> Text(
-                label.uppercase(),
+            AppTheme.TERMINAL -> Text(
+                "// " + label.lowercase(),
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 2.sp,
+                fontWeight = FontWeight.Bold,
                 color = colors.primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -600,7 +594,7 @@ fun DailyProgressCard(entries: List<FoodEntry>, goals: UserGoal, weekly: WeeklyB
     val remaining = goal - eaten
     val isOver = remaining < 0
     val statusColor = if (isOver) colors.error else colors.primary
-    // Glass and Bold tint the card with primaryContainer; the others keep it neutral.
+    // Classic, Glass and Bold tint the card with primaryContainer; the others keep it neutral.
     val onCard = if (tintedCards) colors.onPrimaryContainer else colors.onSurface
 
     AppCard(
@@ -738,18 +732,25 @@ private fun CalorieRing(
     val theme = LocalAppTheme.current
     val ink = MaterialTheme.colorScheme.outline
     // Paper: a thin ink line on a hairline. Bold: a thick square-ended band between two ink
-    // circles. Neon: a slim round line that glows. Classic and Glass: the soft round band.
+    // circles. Terminal: a dial of separate ticks. Classic and Glass: the soft round band.
     val strokeWidth = when (theme) {
         AppTheme.PAPER -> 5.dp
         AppTheme.BOLD -> 16.dp
-        AppTheme.NEON -> 7.dp
-        else -> 12.dp
+        AppTheme.TERMINAL -> 12.dp
+        AppTheme.CLASSIC -> 14.dp
+        AppTheme.GLASS -> 12.dp
     }
-    val cap = if (theme == AppTheme.PAPER || theme == AppTheme.BOLD) StrokeCap.Butt else StrokeCap.Round
+    val cap = if (theme == AppTheme.GLASS || theme == AppTheme.CLASSIC) StrokeCap.Round else StrokeCap.Butt
     Box(modifier, contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val stroke = strokeWidth.toPx()
-            val style = Stroke(width = stroke, cap = cap)
+            // 60 ticks, one a minute on a clock face; the arcs start a quarter turn apart
+            // (15 ticks), so progress and track ticks line up.
+            val ticks = if (theme == AppTheme.TERMINAL) {
+                val tick = (Math.PI * (size.minDimension - stroke)).toFloat() / 60
+                PathEffect.dashPathEffect(floatArrayOf(tick * 0.55f, tick * 0.45f))
+            } else null
+            val style = Stroke(width = stroke, cap = cap, pathEffect = ticks)
             // Bold's ink circles sit on the band's edges, so the band starts inside them.
             val edge = if (theme == AppTheme.BOLD) 1.dp.toPx() else 0f
             val inset = stroke / 2 + edge
@@ -758,21 +759,9 @@ private fun CalorieRing(
             if (theme == AppTheme.PAPER) {
                 drawArc(trackColor.copy(alpha = (trackColor.alpha * 3f).coerceAtMost(1f)), 0f, 360f, false, topLeft, arcSize, style = Stroke(width = 1.dp.toPx()))
             } else {
-                drawArc(trackColor, 0f, 360f, false, topLeft, arcSize, style = Stroke(width = stroke))
+                drawArc(trackColor, 0f, 360f, false, topLeft, arcSize, style = Stroke(width = stroke, pathEffect = ticks))
             }
-            fun arc(arcColor: Color, sweep: Float) {
-                if (theme == AppTheme.NEON) drawIntoCanvas { canvas ->
-                    val glow = Paint().apply {
-                        this.color = arcColor
-                        this.style = PaintingStyle.Stroke
-                        this.strokeWidth = stroke * 2f
-                        this.strokeCap = StrokeCap.Round
-                        asFrameworkPaint().maskFilter = BlurMaskFilter(14.dp.toPx(), BlurMaskFilter.Blur.NORMAL)
-                    }
-                    canvas.drawArc(topLeft.x, topLeft.y, topLeft.x + arcSize.width, topLeft.y + arcSize.height, -90f, sweep, false, glow)
-                }
-                drawArc(arcColor, -90f, sweep, false, topLeft, arcSize, style = style)
-            }
+            fun arc(arcColor: Color, sweep: Float) = drawArc(arcColor, -90f, sweep, false, topLeft, arcSize, style = style)
             if (animated > 0f) arc(color, 360f * animated.coerceAtMost(1f))
             if (animated > 1f) arc(overColor, 360f * (animated - 1f).coerceAtMost(1f))
             if (theme == AppTheme.BOLD) {
@@ -827,15 +816,32 @@ private fun NutrientProgress(
 
 /**
  * A macro bar in the current theme: Paper a 2dp ink-thin rule, Bold a thick square bar in
- * an ink box, Neon a slim glowing line, Classic and Glass the soft rounded bar.
+ * an ink box, Terminal a meter of separate cells, Classic and Glass the soft rounded bar.
  */
 @Composable
 private fun ProgressBar(fraction: Float, color: Color, onCard: Color) {
     val theme = LocalAppTheme.current
+    if (theme == AppTheme.TERMINAL) {
+        Canvas(Modifier.fillMaxWidth().height(8.dp)) {
+            val cells = 10
+            val gap = 2.dp.toPx()
+            val cell = (size.width - gap * (cells - 1)) / cells
+            // Any intake lights at least one cell, so "a little" never reads as "nothing".
+            val lit = (fraction * cells).roundToInt().let { if (fraction > 0f) it.coerceAtLeast(1) else it }
+            repeat(cells) { i ->
+                drawRect(
+                    if (i < lit) color else color.copy(alpha = 0.18f),
+                    topLeft = androidx.compose.ui.geometry.Offset(i * (cell + gap), 0f),
+                    size = androidx.compose.ui.geometry.Size(cell, size.height)
+                )
+            }
+        }
+        return
+    }
     val height = when (theme) {
         AppTheme.PAPER -> 2.dp
         AppTheme.BOLD -> 10.dp
-        AppTheme.NEON -> 4.dp
+        AppTheme.CLASSIC -> 6.dp
         else -> 5.dp
     }
     val shape = when (theme) {
@@ -846,7 +852,6 @@ private fun ProgressBar(fraction: Float, color: Color, onCard: Color) {
     val track = when (theme) {
         AppTheme.PAPER -> onCard.copy(alpha = 0.15f)
         AppTheme.BOLD -> Color.Transparent
-        AppTheme.NEON -> color.copy(alpha = 0.15f)
         else -> color.copy(alpha = 0.22f)
     }
     val inkBorder = if (theme == AppTheme.BOLD) Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, shape) else Modifier
@@ -855,8 +860,6 @@ private fun ProgressBar(fraction: Float, color: Color, onCard: Color) {
             Modifier
                 .fillMaxWidth(fraction)
                 .fillMaxHeight()
-                // Neon's glow spills past the bar, so it's drawn before the clip.
-                .then(if (theme == AppTheme.NEON && fraction > 0f) Modifier.glow(shape, color, 7.dp) else Modifier)
                 .clip(shape)
                 .background(color)
                 .then(inkBorder)
@@ -922,8 +925,9 @@ fun groupedShape(index: Int, count: Int): Shape {
     val (outer, inner) = when (LocalAppTheme.current) {
         AppTheme.PAPER -> 4.dp to 0.dp
         AppTheme.BOLD -> 10.dp to 4.dp
-        AppTheme.NEON -> 22.dp to 6.dp
-        else -> 18.dp to 4.dp
+        AppTheme.TERMINAL -> 0.dp to 0.dp
+        AppTheme.GLASS -> 24.dp to 6.dp
+        AppTheme.CLASSIC -> 22.dp to 6.dp
     }
     return RoundedCornerShape(
         topStart = if (index == 0) outer else inner,
@@ -1150,20 +1154,11 @@ private fun DayCell(
     val colors = MaterialTheme.colorScheme
     val theme = LocalAppTheme.current
     val shape = MaterialTheme.shapes.medium
-    // The selected day: Paper inks it, Bold blocks it with a border and shadow, Neon outlines
-    // it in glowing accent; Classic and Glass fill it with the accent.
-    val selectedFill = when (theme) {
-        AppTheme.PAPER -> colors.onSurface
-        // Opaque, so the glow behind it doesn't wash out the date.
-        AppTheme.NEON -> androidx.compose.ui.graphics.lerp(colors.background, colors.primary, 0.18f)
-        else -> colors.primary
-    }
+    // The selected day: Paper inks it, Bold blocks it with a border and shadow; the others
+    // fill it with the accent.
+    val selectedFill = if (theme == AppTheme.PAPER) colors.onSurface else colors.primary
     val contentColor = when {
-        isSelected -> when (theme) {
-            AppTheme.PAPER -> colors.surface
-            AppTheme.NEON -> colors.primary
-            else -> colors.onPrimary
-        }
+        isSelected -> if (theme == AppTheme.PAPER) colors.surface else colors.onPrimary
         isToday -> colors.primary
         isFuture -> colors.onSurface.copy(alpha = 0.45f)
         else -> colors.onSurface
@@ -1171,13 +1166,11 @@ private fun DayCell(
     val selectedEdge = when {
         !isSelected -> Modifier
         theme == AppTheme.BOLD -> Modifier.hardShadow(shape, boldShadowColor, 3.dp)
-        theme == AppTheme.NEON -> Modifier.glow(shape, neonGlowColor, 10.dp)
         else -> Modifier
     }
     val selectedBorder = when {
         !isSelected -> Modifier
         theme == AppTheme.BOLD -> Modifier.border(2.dp, colors.outline, shape)
-        theme == AppTheme.NEON -> Modifier.border(1.5.dp, colors.primary, shape)
         else -> Modifier
     }
 

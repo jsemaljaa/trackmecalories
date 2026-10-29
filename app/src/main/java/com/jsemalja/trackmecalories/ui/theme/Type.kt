@@ -51,11 +51,12 @@ private fun TextStyle.heading(family: FontFamily, weight: FontWeight, spacing: a
 /**
  * Each [AppTheme]'s own type, used unless the user picks an [AppFont]: Paper sets headings
  * (and the big numbers) in the phone's serif over a sans body, Bold is Space Grotesk
- * throughout, Neon Mulish.
+ * throughout, Glass the soft, open Mulish, Terminal the phone's monospace.
  */
 fun themeTypography(theme: AppTheme): Typography = when (theme) {
-    AppTheme.CLASSIC, AppTheme.GLASS -> appTypography()
+    AppTheme.CLASSIC -> appTypography()
+    AppTheme.GLASS -> appTypography(AppFont.MULISH.family)
     AppTheme.PAPER -> appTypography(FontFamily.Default, headingFamily = FontFamily.Serif)
     AppTheme.BOLD -> appTypography(AppFont.SPACE_GROTESK.family)
-    AppTheme.NEON -> appTypography(AppFont.MULISH.family)
+    AppTheme.TERMINAL -> appTypography(FontFamily.Monospace)
 }

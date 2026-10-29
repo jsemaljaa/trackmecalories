@@ -380,7 +380,7 @@
     <string name="theme_glass">Glass</string>
     <string name="theme_paper">Paper</string>
     <string name="theme_bold">Bold</string>
-    <string name="theme_neon">Neon</string>
+    <string name="theme_terminal">Terminal</string>
     <string name="from_theme">Theme</string>
     <string name="corners">Corners</string>
     <string name="corners_rounded">Rounded</string>
@@ -408,6 +408,11 @@
     <string name="accent_vividness">Vividness</string>
     <string name="accent_hex">Hex code</string>
     <string name="accent_hex_invalid">Six digits, 0–9 and A–F</string>
+    <string name="accent_custom_hint">Any colour, by hue and vividness or a hex code</string>
+    <string name="accent_close_to">Close to %1$s</string>
+    <string name="accent_muted">Muted</string>
+    <string name="accent_vivid">Vivid</string>
+    <string name="accent_tone_note">Light and dark mode use a lighter or deeper shade of it, so text stays readable.</string>
     <string name="apply">Apply</string>
     <string name="font">Font</string>
     <string name="font_system">System</string>

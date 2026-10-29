@@ -19,14 +19,20 @@ import kotlin.math.sin
 /** OKLCh chroma cap, about Material's "tonal spot" primary: even a vivid seed sits calmly in the UI. */
 const val MAX_ACCENT_CHROMA = 0.13
 
-/** The colour at L* [tone] with [seed]'s hue and (capped) chroma. */
-fun tone(seed: Int, tone: Double): Int {
-    val (hue, chroma) = hueChroma(seed)
+/**
+ * The cap for a custom colour: someone who picks one asked for that colour, so it may go
+ * well past the presets' calm, up to what sRGB holds at each tone ([colorAt] trims the rest).
+ */
+const val MAX_CUSTOM_CHROMA = 0.2
+
+/** The colour at L* [tone] with [seed]'s hue and chroma, capped at [maxChroma]. */
+fun tone(seed: Int, tone: Double, maxChroma: Double = MAX_ACCENT_CHROMA): Int {
+    val (hue, chroma) = hueChroma(seed, maxChroma)
     return colorAt(hue, chroma, tone)
 }
 
-/** OKLCh hue (degrees, 0-360) and chroma of [argb], the chroma capped at [MAX_ACCENT_CHROMA]. */
-fun hueChroma(argb: Int): Pair<Double, Double> {
+/** OKLCh hue (degrees, 0-360) and chroma of [argb], the chroma capped at [maxChroma]. */
+fun hueChroma(argb: Int, maxChroma: Double = MAX_ACCENT_CHROMA): Pair<Double, Double> {
     val r = linear(argb shr 16 and 0xFF)
     val g = linear(argb shr 8 and 0xFF)
     val b = linear(argb and 0xFF)
@@ -36,7 +42,7 @@ fun hueChroma(argb: Int): Pair<Double, Double> {
     val labA = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s
     val labB = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s
     val hue = (Math.toDegrees(atan2(labB, labA)) + 360) % 360
-    return hue to min(hypot(labA, labB), MAX_ACCENT_CHROMA)
+    return hue to min(hypot(labA, labB), maxChroma)
 }
 
 /**

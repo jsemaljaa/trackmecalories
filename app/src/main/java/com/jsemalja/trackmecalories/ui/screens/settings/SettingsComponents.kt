@@ -78,7 +78,7 @@ internal fun SettingsSectionCard(
 
 /**
  * One row of a block of [count] rows, like the food log: only the block's ends are rounded. A
- * row on its own is drawn as a full card (Bold's shadow, Neon's glow).
+ * row on its own is drawn as a full card (Classic's and Bold's shadow).
  */
 @Composable
 internal fun SettingsRow(

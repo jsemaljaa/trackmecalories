@@ -1,9 +1,12 @@
 package com.jsemalja.trackmecalories
 
+import com.jsemalja.trackmecalories.ui.theme.AccentColor
 import com.jsemalja.trackmecalories.ui.theme.MAX_ACCENT_CHROMA
+import com.jsemalja.trackmecalories.ui.theme.MAX_CUSTOM_CHROMA
 import com.jsemalja.trackmecalories.ui.theme.colorAt
 import com.jsemalja.trackmecalories.ui.theme.hexOf
 import com.jsemalja.trackmecalories.ui.theme.hueChroma
+import com.jsemalja.trackmecalories.ui.theme.nearestPreset
 import com.jsemalja.trackmecalories.ui.theme.parseHexColor
 import com.jsemalja.trackmecalories.ui.theme.tone
 import com.jsemalja.trackmecalories.ui.theme.toneOf
@@ -73,5 +76,22 @@ class TonesTest {
         assertNull(parseHexColor("A1B2C"))
         assertNull(parseHexColor("G1B2C3"))
         assertEquals("0000FF", hexOf(0xFF0000FF.toInt()))
+    }
+
+    @Test
+    fun `a custom colour may be more vivid than the presets`() {
+        assertEquals(MAX_CUSTOM_CHROMA, hueChroma(0xFFFF00FF.toInt(), MAX_CUSTOM_CHROMA).second, 1e-9)
+        assertTrue(hueChroma(tone(0xFFFF0000.toInt(), 40.0, MAX_CUSTOM_CHROMA), 1.0).second > MAX_ACCENT_CHROMA + 0.03)
+    }
+
+    @Test
+    fun `custom colours are named after the nearest preset`() {
+        assertEquals(AccentColor.BLUE, nearestPreset(0xFF345F99.toInt()))
+        assertEquals(AccentColor.RED, nearestPreset(0xFFFF0000.toInt()))
+        assertEquals(AccentColor.GRAPHITE, nearestPreset(0xFF808080.toInt()))
+        assertEquals(AccentColor.TEAL, nearestPreset(0xFF006A65.toInt()))
+        // Muted colours keep their hue's name; only a near-grey is Graphite.
+        assertEquals(AccentColor.FUCHSIA, nearestPreset(0xFF6C5870.toInt()))
+        assertEquals(AccentColor.BROWN, nearestPreset(0xFF795548.toInt()))
     }
 }

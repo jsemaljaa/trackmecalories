@@ -97,7 +97,6 @@ import com.jsemalja.trackmecalories.ui.theme.TrackmecaloriesTheme
 import com.jsemalja.trackmecalories.ui.theme.fadeThrough
 import com.jsemalja.trackmecalories.ui.theme.predictiveBack
 import com.jsemalja.trackmecalories.ui.theme.rememberPredictiveBack
-import com.jsemalja.trackmecalories.ui.theme.glassBorder
 import com.jsemalja.trackmecalories.ui.theme.isGlass
 import com.jsemalja.trackmecalories.ui.theme.AppTheme
 import com.jsemalja.trackmecalories.ui.theme.LocalAppTheme
@@ -271,10 +270,11 @@ fun TrackmecaloriesApp(
 }
 
 /**
- * The tab bar, in the current theme. Classic, Glass and Neon: a floating pill with four
- * icon-only tabs, the selected one expanding to show its label (Neon's edge glows). Bold:
- * the same, but a bordered block with a hard shadow and a solid selected tab. Paper: a
- * docked bar under an ink rule with every label shown (see [DockedNavBar]).
+ * The tab bar, in the current theme. Classic and Glass: a floating pill with four
+ * icon-only tabs, the selected one expanding to show its label (Classic's floats on a
+ * shadow, Glass's has a light edge). Bold: the same, but a bordered block with a hard
+ * shadow and a solid selected tab; Terminal a square hairline panel with a solid one.
+ * Paper: a docked bar under an ink rule with every label shown (see [DockedNavBar]).
  */
 @Composable
 private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) -> Unit) {
@@ -285,7 +285,7 @@ private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) 
     }
     val colors = MaterialTheme.colorScheme
     val glass = isGlass
-    val shape = if (theme == AppTheme.BOLD) MaterialTheme.shapes.large else CircleShape
+    val shape = if (theme == AppTheme.BOLD || theme == AppTheme.TERMINAL) MaterialTheme.shapes.large else CircleShape
     val (edge, raisedBorder) = raisedEdge(shape)
 
     BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding()) {
@@ -308,7 +308,7 @@ private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) 
                 modifier = edge,
                 shape = shape,
                 color = if (glass) colors.surfaceContainer else colors.surfaceContainerLow,
-                border = raisedBorder ?: if (glass) glassBorder() else androidx.compose.foundation.BorderStroke(1.dp, colors.outlineVariant)
+                border = raisedBorder
             ) {
                 Row(
                     Modifier.padding(6.dp),
@@ -327,11 +327,15 @@ private fun MinimalNavBar(current: AppDestinations, onSelect: (AppDestinations) 
 @Composable
 private fun NavItem(destination: AppDestinations, selected: Boolean, horizontalPadding: Dp, labelMaxWidth: Dp, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val bold = LocalAppTheme.current == AppTheme.BOLD
+    val theme = LocalAppTheme.current
+    val bold = theme == AppTheme.BOLD
+    // Bold and Terminal mark the tab solid; Classic with a tonal pill, like Material's nav.
+    val solid = bold || theme == AppTheme.TERMINAL
     val background by animateColorAsState(
         when {
             !selected -> Color.Transparent
-            bold -> colors.primary
+            solid -> colors.primary
+            theme == AppTheme.CLASSIC -> colors.primaryContainer
             else -> colors.primary.copy(alpha = 0.16f)
         },
         label = "navItemBackground"
@@ -339,7 +343,8 @@ private fun NavItem(destination: AppDestinations, selected: Boolean, horizontalP
     val content by animateColorAsState(
         when {
             !selected -> colors.onSurfaceVariant
-            bold -> colors.onPrimary
+            solid -> colors.onPrimary
+            theme == AppTheme.CLASSIC -> colors.onPrimaryContainer
             else -> colors.primary
         },
         label = "navItemContent"
@@ -347,7 +352,7 @@ private fun NavItem(destination: AppDestinations, selected: Boolean, horizontalP
 
     Surface(
         onClick = onClick,
-        shape = if (bold) MaterialTheme.shapes.medium else CircleShape,
+        shape = if (solid) MaterialTheme.shapes.medium else CircleShape,
         color = background,
         contentColor = content,
         border = if (bold && selected) androidx.compose.foundation.BorderStroke(2.dp, colors.outline) else null
