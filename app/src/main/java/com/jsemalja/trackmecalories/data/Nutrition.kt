@@ -24,28 +24,60 @@ enum class Diet(
     ZONE(R.string.diet_zone, R.string.diet_zone_desc, 30, 40, 30),
     CUSTOM(R.string.diet_custom, R.string.diet_custom_desc, 0, 0, 0);
 
+    val split get() = MacroSplit(proteinPct, carbsPct, fatPct)
+
     /** Gram goals for [kcal] under this diet, or null for [CUSTOM]. */
-    fun macrosFor(kcal: Int): Macros? {
-        if (this == CUSTOM) return null
-        return Macros(
-            protein = (kcal * proteinPct / 100.0 / 4).roundToInt().toDouble(),
-            carbs = (kcal * carbsPct / 100.0 / 4).roundToInt().toDouble(),
-            fat = (kcal * fatPct / 100.0 / 9).roundToInt().toDouble(),
-            // 14 g per 1000 kcal (Dietary Guidelines for Americans), at least 20 g.
-            fiber = (kcal * 14 / 1000.0).roundToInt().coerceAtLeast(20).toDouble()
-        )
-    }
+    fun macrosFor(kcal: Int): Macros? = if (this == CUSTOM) null else split.macrosFor(kcal)
 
     companion object {
         fun from(name: String?): Diet = entries.firstOrNull { it.name == name } ?: CUSTOM
     }
 }
 
+/**
+ * Protein/carbs/fat as shares of daily calories. A user-chosen split is saved in
+ * [UserGoal.dietType] as "PCT:20/30/50" (read back as [Diet.CUSTOM] by [Diet.from]).
+ */
+data class MacroSplit(val protein: Int, val carbs: Int, val fat: Int) {
+    val total get() = protein + carbs + fat
+    val isValid get() = protein >= 0 && carbs >= 0 && fat >= 0 && total == 100
+
+    fun encode() = "$PREFIX$protein/$carbs/$fat"
+
+    fun macrosFor(kcal: Int) = Macros(
+        protein = (kcal * protein / 100.0 / 4).roundToInt().toDouble(),
+        carbs = (kcal * carbs / 100.0 / 4).roundToInt().toDouble(),
+        fat = (kcal * fat / 100.0 / 9).roundToInt().toDouble(),
+        // 14 g per 1000 kcal (Dietary Guidelines for Americans), at least 20 g.
+        fiber = (kcal * 14 / 1000.0).roundToInt().coerceAtLeast(20).toDouble()
+    )
+
+    companion object {
+        private const val PREFIX = "PCT:"
+
+        fun parse(dietType: String?): MacroSplit? {
+            if (dietType == null || !dietType.startsWith(PREFIX)) return null
+            val parts = dietType.removePrefix(PREFIX).split('/').map { it.toIntOrNull() ?: return null }
+            if (parts.size != 3) return null
+            return MacroSplit(parts[0], parts[1], parts[2]).takeIf { it.isValid }
+        }
+
+        /** The calorie split of gram amounts, rounded so it still adds up to 100; null with no calories. */
+        fun fromGrams(protein: Double, carbs: Double, fat: Double): MacroSplit? {
+            val kcal = protein * 4 + carbs * 4 + fat * 9
+            if (kcal <= 0) return null
+            val p = (protein * 4 / kcal * 100).roundToInt()
+            val c = (carbs * 4 / kcal * 100).roundToInt()
+            return MacroSplit(p, c, (100 - p - c).coerceAtLeast(0))
+        }
+    }
+}
+
 data class Macros(val protein: Double, val carbs: Double, val fat: Double, val fiber: Double)
 
-/** Goal macros recalculated for the goal's own diet (no change for CUSTOM). */
+/** Goal macros recalculated for the goal's own diet or % split (no change for gram CUSTOM). */
 fun UserGoal.withDietMacros(): UserGoal {
-    val macros = Diet.from(dietType).macrosFor(calorieGoal) ?: return this
+    val macros = MacroSplit.parse(dietType)?.macrosFor(calorieGoal) ?: Diet.from(dietType).macrosFor(calorieGoal) ?: return this
     return copy(proteinGoal = macros.protein, carbGoal = macros.carbs, fatGoal = macros.fat, fiberGoal = macros.fiber)
 }
 

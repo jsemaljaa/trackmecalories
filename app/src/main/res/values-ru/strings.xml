@@ -13,7 +13,7 @@
     <string name="diet_zone">Зона</string>
     <string name="diet_zone_desc">30% белки · 40% углеводы · 30% жиры.</string>
     <string name="diet_custom">Своя</string>
-    <string name="diet_custom_desc">Белки, углеводы и жиры задаёте сами.</string>
+    <string name="diet_custom_desc">Белки, углеводы и жиры задаёте сами: в граммах или в % от калорий.</string>
 
     <!-- Calorie calculator -->
     <string name="sex_female">Женский</string>
@@ -47,6 +47,7 @@
     <string name="undo">Отменить</string>
     <string name="close">Закрыть</string>
     <string name="unit_kcal">ккал</string>
+    <string name="unit_percent">%</string>
     <string name="unit_g">г</string>
     <string name="unit_ml">мл</string>
     <string name="unit_kg">кг</string>
@@ -71,6 +72,9 @@
     <string name="fiber_g">Клетчатка (г)</string>
     <string name="salt_limit_g">Соль, не более (г)</string>
     <string name="water_goal_ml">Вода (мл)</string>
+    <string name="goal_split_grams">Граммы</string>
+    <string name="goal_split_percent">% от калорий</string>
+    <string name="goal_percent_sum">В сумме %1$d%% — должно быть 100%%</string>
     <string name="goal_macros_add_up">Эти БЖУ дают %1$d ккал</string>
     <string name="goal_save">Сохранить цели</string>
     <string name="goal_saved">Сохранено ✓</string>

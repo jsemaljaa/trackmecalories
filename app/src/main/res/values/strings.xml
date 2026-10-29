@@ -15,7 +15,7 @@
     <string name="diet_zone">Zone</string>
     <string name="diet_zone_desc">30% protein · 40% carbs · 30% fat.</string>
     <string name="diet_custom">Custom</string>
-    <string name="diet_custom_desc">Set protein, carbs and fat yourself.</string>
+    <string name="diet_custom_desc">Set protein, carbs and fat yourself, in grams or as % of calories.</string>
 
     <!-- Calorie calculator -->
     <string name="sex_female">Female</string>
@@ -49,6 +49,7 @@
     <string name="undo">Undo</string>
     <string name="close">Close</string>
     <string name="unit_kcal">kcal</string>
+    <string name="unit_percent">%</string>
     <string name="unit_g">g</string>
     <string name="unit_ml">ml</string>
     <string name="unit_kg">kg</string>
@@ -73,6 +74,9 @@
     <string name="fiber_g">Fiber (g)</string>
     <string name="salt_limit_g">Salt limit (g)</string>
     <string name="water_goal_ml">Water (ml)</string>
+    <string name="goal_split_grams">Grams</string>
+    <string name="goal_split_percent">% of calories</string>
+    <string name="goal_percent_sum">Adds up to %1$d%% — should be 100%%</string>
     <string name="goal_macros_add_up">These macros add up to %1$d kcal</string>
     <string name="goal_save">Save goals</string>
     <string name="goal_saved">Saved ✓</string>

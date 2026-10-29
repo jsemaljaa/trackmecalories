@@ -23,6 +23,7 @@ import com.jsemalja.trackmecalories.R
 import com.jsemalja.trackmecalories.data.ActivityLevel
 import com.jsemalja.trackmecalories.data.CalorieCalculator
 import com.jsemalja.trackmecalories.data.Diet
+import com.jsemalja.trackmecalories.data.MacroSplit
 import com.jsemalja.trackmecalories.data.Sex
 import com.jsemalja.trackmecalories.data.UserGoal
 import com.jsemalja.trackmecalories.data.WeightPace
@@ -49,12 +50,27 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
     var fiber by remember(goals) { mutableStateOf(goals.fiberGoal.clean()) }
     var salt by remember(goals) { mutableStateOf(goals.saltGoal.clean()) }
     var water by remember(goals) { mutableStateOf(goals.waterGoalMl.clean()) }
+    // Custom goals can be grams or a % split of calories ("PCT:p/c/f" in dietType).
+    var percentMode by remember(goals) { mutableStateOf(MacroSplit.parse(goals.dietType) != null) }
+    val startSplit = remember(goals) {
+        MacroSplit.parse(goals.dietType) ?: MacroSplit.fromGrams(goals.proteinGoal, goals.carbGoal, goals.fatGoal) ?: Diet.BALANCED.split
+    }
+    var proteinPct by remember(goals) { mutableStateOf(startSplit.protein.toString()) }
+    var carbsPct by remember(goals) { mutableStateOf(startSplit.carbs.toString()) }
+    var fatPct by remember(goals) { mutableStateOf(startSplit.fat.toString()) }
     var profile by remember(goals) { mutableStateOf(goals) }
     var showCalculator by remember { mutableStateOf(false) }
     var saved by remember(goals) { mutableStateOf(false) }
 
     val kcalValue = kcal.toIntOrNull() ?: goals.calorieGoal
-    val computed = diet.macrosFor(kcalValue)
+    val customPercent = diet == Diet.CUSTOM && percentMode
+    val split = if (customPercent) {
+        MacroSplit(proteinPct.toIntOrNull() ?: 0, carbsPct.toIntOrNull() ?: 0, fatPct.toIntOrNull() ?: 0)
+    } else {
+        diet.split
+    }
+    // Gram CUSTOM's split is 0/0/0, so it never computes.
+    val computed = if (split.isValid) split.macrosFor(kcalValue) else null
 
     val kcalField = @Composable { modifier: Modifier ->
         OutlinedTextField(
@@ -105,6 +121,7 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
                     if (d == Diet.CUSTOM && computed != null) {
                         protein = computed.protein.clean(); carbs = computed.carbs.clean()
                         fat = computed.fat.clean(); fiber = computed.fiber.clean()
+                        proteinPct = split.protein.toString(); carbsPct = split.carbs.toString(); fatPct = split.fat.toString()
                     }
                 },
                 label = { Text(stringResource(d.label)) }
@@ -118,6 +135,46 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
     )
 
     Spacer(Modifier.height(14.dp))
+    if (diet == Diet.CUSTOM) {
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            listOf(false to R.string.goal_split_grams, true to R.string.goal_split_percent).forEachIndexed { i, (pct, label) ->
+                SegmentedButton(
+                    selected = percentMode == pct,
+                    onClick = {
+                        if (pct && !percentMode) {
+                            MacroSplit.fromGrams(protein.toDecimal() ?: 0.0, carbs.toDecimal() ?: 0.0, fat.toDecimal() ?: 0.0)?.let {
+                                proteinPct = it.protein.toString(); carbsPct = it.carbs.toString(); fatPct = it.fat.toString()
+                            }
+                        } else if (!pct && percentMode && computed != null) {
+                            protein = computed.protein.clean(); carbs = computed.carbs.clean()
+                            fat = computed.fat.clean(); fiber = computed.fiber.clean()
+                        }
+                        percentMode = pct
+                        saved = false
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(i, 2),
+                    colors = appSegmentedColors()
+                ) { FitText(stringResource(label)) }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+    }
+    if (customPercent) {
+        val pct = stringResource(R.string.unit_percent)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            GoalField(stringResource(R.string.protein), proteinPct, Modifier.weight(1f), suffix = pct) { proteinPct = it.filter(Char::isDigit).take(3); saved = false }
+            GoalField(stringResource(R.string.carbs), carbsPct, Modifier.weight(1f), suffix = pct) { carbsPct = it.filter(Char::isDigit).take(3); saved = false }
+            GoalField(stringResource(R.string.fat), fatPct, Modifier.weight(1f), suffix = pct) { fatPct = it.filter(Char::isDigit).take(3); saved = false }
+        }
+        Spacer(Modifier.height(8.dp))
+        if (computed == null) {
+            Text(
+                stringResource(R.string.goal_percent_sum, split.total),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+    }
     if (computed != null) {
         // Calculated from calories; shown read-only so it's obvious they follow the diet.
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -127,8 +184,8 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
             ComputedMacro(stringResource(R.string.fiber), computed.fiber, MacroFiber, Modifier.weight(1f))
         }
         Spacer(Modifier.height(8.dp))
-        MacroSplitBar(diet.proteinPct, diet.carbsPct, diet.fatPct)
-    } else {
+        MacroSplitBar(split.protein, split.carbs, split.fat)
+    } else if (!customPercent) {
         // Two per row, so each label ("Carbs (g)" and its translations) stays readable.
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             GoalField(stringResource(R.string.protein_g), protein, Modifier.weight(1f)) { protein = it; saved = false }
@@ -166,10 +223,11 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
 
     Spacer(Modifier.height(16.dp))
     Button(
+        enabled = !customPercent || computed != null,
         onClick = {
             val base = profile.copy(
                 calorieGoal = kcalValue,
-                dietType = diet.name,
+                dietType = if (customPercent) split.encode() else diet.name,
                 saltGoal = salt.toDecimal() ?: goals.saltGoal,
                 waterGoalMl = water.toDecimal() ?: goals.waterGoalMl
             )
@@ -209,11 +267,12 @@ fun GoalsEditor(goals: UserGoal, latestWeightKg: Double?, measuredMaintenance: I
 }
 
 @Composable
-private fun GoalField(label: String, value: String, modifier: Modifier, onChange: (String) -> Unit) {
+private fun GoalField(label: String, value: String, modifier: Modifier, suffix: String? = null, onChange: (String) -> Unit) {
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
         label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        suffix = suffix?.let { { Text(it) } },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         modifier = modifier

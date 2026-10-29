@@ -104,7 +104,7 @@ data class UserGoal(
     val fiberGoal: Double = 30.0,
     val saltGoal: Double = 6.0,
     val waterGoalMl: Double = 2000.0,
-    // [Diet] name; CUSTOM means the macro goals above are entered by hand.
+    // [Diet] name; CUSTOM means the macro goals above are entered by hand, "PCT:p/c/f" a [MacroSplit].
     val dietType: String = Diet.CUSTOM.name,
     val targetWeightKg: Double? = null,
     // Profile for the calorie calculator (all optional).
