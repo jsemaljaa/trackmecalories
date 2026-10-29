@@ -168,7 +168,8 @@ fun Double.clean(): String =
     else "%.2f".format(java.util.Locale.US, this).trimEnd('0').trimEnd('.')
 
 /** Accepts both "1.5" and the Czech-keyboard "1,5". */
-fun String.toDecimal(): Double? = trim().replace(',', '.').toDoubleOrNull()
+// Amounts, nutrients and goals are never negative; "NaN"/"Infinity" would end up as NULL in the DB.
+fun String.toDecimal(): Double? = trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0 }
 
 /**
  * The log sheet: how much, which meal, how sure. Everything is preselected (last time's
@@ -363,8 +364,9 @@ fun PortionEntryDialog(
                         mealType, confidence, portion
                     )
                 },
-                // Grams of a burger can't be logged until one burger's weight is known.
-                enabled = !missingWeight,
+                // Grams of a burger can't be logged until one burger's weight is known. Zero
+                // is refused too: an entry's values are later backed out per unit of amount.
+                enabled = !missingWeight && enteredAmount != 0.0,
                 modifier = gutter.fillMaxWidth().height(52.dp)
             ) { Text(confirmLabel ?: stringResource(R.string.log_food)) }
         }
@@ -492,8 +494,9 @@ fun EditEntryDialog(
     val enteredAmount = amount.toDecimal()?.let { n -> portionGrams?.let { n * it } ?: n }
     var confidence by remember { mutableStateOf(Confidence.from(entry.confidence)) }
 
-    // Back out the per-reference-amount values for the live summary preview.
-    val ratio = entry.referenceAmount / entry.amount
+    // Back out the per-reference-amount values for the live summary preview. An entry saved
+    // with amount 0 (before that was refused) has nothing to scale, so it's left as it is.
+    val ratio = if (entry.amount > 0) entry.referenceAmount / entry.amount else 0.0
     val kcalPer100 = entry.kcal * ratio
     val proteinPer100 = entry.protein * ratio
     val carbsPer100 = entry.carbs * ratio
@@ -564,12 +567,12 @@ fun EditEntryDialog(
             }
         },
         confirmButton = {
-            Button(onClick = {
+            Button(enabled = enteredAmount != 0.0, onClick = {
                 val newAmount = enteredAmount ?: entry.amount
-                val updateRatio = newAmount / entry.amount
+                val updateRatio = if (entry.amount > 0) newAmount / entry.amount else 1.0
                 onUpdate(entry.copy(
                     amount = newAmount,
-                    kcal = (entry.kcal * updateRatio).toInt(),
+                    kcal = (entry.kcal * updateRatio).roundToInt(),
                     protein = entry.protein * updateRatio,
                     carbs = entry.carbs * updateRatio,
                     fat = entry.fat * updateRatio,
@@ -596,7 +599,7 @@ fun MacroSummary(
     referenceAmount: Double = 100.0
 ) {
     val ratio = amount / referenceAmount
-    val currentKcal = (kcal * ratio).toInt()
+    val currentKcal = (kcal * ratio).roundToInt()
     val currentProtein = protein * ratio
     val currentCarbs = carbs * ratio
     val currentFat = fat * ratio

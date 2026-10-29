@@ -57,7 +57,7 @@ class PortionsTest {
         val entry = egg.toEntry(102.0, "Breakfast", "2026-10-26", portion = medium)
         assertEquals(102.0, entry.amount, 0.0)
         assertEquals("g", entry.unit)
-        assertEquals(145, entry.kcal)
+        assertEquals(146, entry.kcal) // 145.86, rounded like a later rescale would
         assertEquals("medium", entry.portion)
         assertEquals(51.0, entry.portionGrams!!, 0.0)
         assertNull(egg.toEntry(100.0, "Breakfast", "2026-10-26").portion)

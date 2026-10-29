@@ -1,5 +1,7 @@
 package com.jsemalja.trackmecalories.data
 
+import kotlin.math.roundToInt
+
 /**
  * Builds a logged [FoodEntry] from a saved food template, scaling its per-reference-amount
  * macros by how much was actually consumed. Centralizes the amount/referenceAmount ratio so
@@ -16,7 +18,7 @@ fun CustomFood.toEntry(
     val ratio = amount / referenceAmount
     return FoodEntry(
         name = name,
-        kcal = (kcalPer100 * ratio).toInt(),
+        kcal = (kcalPer100 * ratio).roundToInt(),
         protein = proteinPer100 * ratio,
         carbs = carbsPer100 * ratio,
         fat = fatPer100 * ratio,

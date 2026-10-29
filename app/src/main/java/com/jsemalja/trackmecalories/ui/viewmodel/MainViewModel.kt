@@ -245,8 +245,9 @@ class MainViewModel(
 
     val gamificationSettings: StateFlow<GamificationSettings> = userPrefs.gamification
 
-    // Bumped on resume, so streaks move on to a new day without anything being logged.
-    private val gamificationDay = MutableStateFlow(LocalDate.now())
+    // Bumped on resume (see [refreshToday]), so everything keyed to "today" moves on after
+    // midnight even though the ViewModel outlives the day.
+    private val currentDay = MutableStateFlow(LocalDate.now())
 
     private val streakHistory: Flow<StreakHistory> = combine(
         dao.getDailyTotalsBetween("", "9999-12-31"),
@@ -276,7 +277,7 @@ class MainViewModel(
         combine(streakHistory, gamificationCounts, ::Pair),
         userGoal,
         combine(userPrefs.weeklyBudget, userPrefs.waterTracking, userPrefs.fasting, ::Triple),
-        gamificationDay
+        currentDay
     ) { (history, counts), goals, (weekly, water, fastingOn), today ->
         gamificationState(settings.streaks, history, counts, goals, today, ::weekStartOf, weekly, water, fastingOn.enabled)
     }.flowOn(Dispatchers.Default)
@@ -308,14 +309,22 @@ class MainViewModel(
 
     fun markBadgesSeen(badges: List<Badge>) = userPrefs.markBadgesSeen(badges)
 
-    /** Called on resume: the day may have changed while the app was in the background. */
-    fun refreshGamification() {
-        gamificationDay.value = LocalDate.now()
+    /**
+     * Called on resume: the day may have changed while the app was in the background. A view
+     * still on the old "today" follows it, so the morning's breakfast isn't logged to yesterday;
+     * a day the user browsed to stays.
+     */
+    fun refreshToday() {
+        val now = LocalDate.now()
+        val previous = currentDay.value
+        if (now == previous) return
+        if (selectedDate.value == previous) selectedDate.value = now
+        if (trendsWeekStart.value == weekStartOf(previous)) trendsWeekStart.value = weekStartOf(now)
+        currentDay.value = now
     }
 
     /** This week's budget and today's flexible target; null when weekly budgeting is off. */
-    val weeklyBudget: StateFlow<WeeklyBudget?> = run {
-        val today = LocalDate.now()
+    val weeklyBudget: StateFlow<WeeklyBudget?> = currentDay.flatMapLatest { today ->
         val start = weekStartOf(today)
         combine(
             userPrefs.weeklyBudget,
@@ -396,8 +405,7 @@ class MainViewModel(
      * Maintenance measured from the last 4 weeks of intake and weight trend. Days marked
      * incomplete are left out, so forgotten meals don't make it look lower.
      */
-    val adaptiveMaintenance: StateFlow<AdaptiveMaintenance?> = run {
-        val end = LocalDate.now()
+    val adaptiveMaintenance: StateFlow<AdaptiveMaintenance?> = currentDay.flatMapLatest { end ->
         val start = end.minusDays(28)
         combine(
             weightPoints,
@@ -827,15 +835,6 @@ class MainViewModel(
                     confidence = Confidence.GUESSED.name
                 )
             )
-        }
-    }
-
-    /**
-     * Saves a food template for future quick access.
-     */
-    fun saveCustomFood(food: CustomFood) {
-        viewModelScope.launch {
-            dao.insertCustomFood(food)
         }
     }
 
