@@ -543,13 +543,20 @@ fun EditEntryDialog(
                 ConfidenceChips(confidence) { confidence = it }
 
                 Text(stringResource(R.string.quick_copy), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                // Days as the labels say (relative to the real today, whatever day is being viewed),
+                // minus the one the entry is already on.
+                val today = LocalDate.now()
+                val copyTargets = listOf(
+                    today.minusDays(1) to R.string.copy_yesterday,
+                    today to R.string.copy_today,
+                    today.plusDays(1) to R.string.copy_tomorrow
+                ).filter { it.first.toString() != entry.date }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     val padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    Button(onClick = { onCopyToDate(LocalDate.now().minusDays(1)); onDismiss() }, modifier = Modifier.weight(1f), contentPadding = padding) {
-                        FitText(stringResource(R.string.copy_yesterday))
-                    }
-                    Button(onClick = { onCopyToDate(LocalDate.now().plusDays(1)); onDismiss() }, modifier = Modifier.weight(1f), contentPadding = padding) {
-                        FitText(stringResource(R.string.copy_tomorrow))
+                    copyTargets.forEach { (date, label) ->
+                        Button(onClick = { onCopyToDate(date); onDismiss() }, modifier = Modifier.weight(1f), contentPadding = padding) {
+                            FitText(stringResource(label))
+                        }
                     }
                 }
 

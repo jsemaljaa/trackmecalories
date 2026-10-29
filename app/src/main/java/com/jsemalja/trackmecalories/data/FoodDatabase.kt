@@ -290,7 +290,7 @@ interface FoodDao {
     fun getDailyTotalsBetween(startDate: String, endDate: String): Flow<List<DailyTotal>>
 
     @Insert
-    suspend fun insertEntry(entry: FoodEntry)
+    suspend fun insertEntry(entry: FoodEntry): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertEntry(entry: FoodEntry)

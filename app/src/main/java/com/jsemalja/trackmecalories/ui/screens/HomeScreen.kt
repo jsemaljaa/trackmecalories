@@ -160,6 +160,7 @@ fun HomeScreen(
     val undo = LocalUndo.current
     val deletedMessage = stringResource(R.string.deleted_entry)
     val deletedWater = stringResource(R.string.deleted_water)
+    val copiedMessage = stringResource(R.string.copied_entry)
 
     // Every delete (swipe or the dialog's button) is undoable for a few seconds, so an
     // accidental swipe never loses anything.
@@ -419,7 +420,12 @@ fun HomeScreen(
             entry = entry,
             onDismiss = { editingEntry = null },
             onUpdate = { updated -> viewModel.updateEntry(updated) },
-            onCopyToDate = { date -> viewModel.copyEntryToDate(entry, date) },
+            onCopyToDate = { date ->
+                viewModel.copyEntryToDate(entry, date) { copy ->
+                    val day = date.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
+                    undo.offer(copiedMessage.format(entry.name, day)) { viewModel.deleteEntry(copy) }
+                }
+            },
             onDelete = {
                 editingEntry = null
                 deleteWithUndo(entry)

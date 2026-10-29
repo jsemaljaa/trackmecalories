@@ -226,8 +226,9 @@
     <string name="portion_glass">Стакан</string>
     <string name="portion_cup">Чашка</string>
     <string name="edit_entry_title">Запись: %1$s</string>
-    <string name="quick_copy">Быстро скопировать</string>
+    <string name="quick_copy">Скопировать</string>
     <string name="copy_yesterday">На вчера</string>
+    <string name="copy_today">На сегодня</string>
     <string name="copy_tomorrow">На завтра</string>
     <string name="delete_from_log">Удалить из дневника</string>
     <string name="update">Обновить</string>
@@ -262,6 +263,7 @@
 
     <!-- Home -->
     <string name="deleted_entry">Удалено: %1$s</string>
+    <string name="copied_entry">Скопировано на %2$s: %1$s</string>
     <string name="deleted_weight">Взвешивание удалено</string>
     <string name="deleted_water">Запись о воде удалена</string>
     <string name="add_food">Добавить еду</string>

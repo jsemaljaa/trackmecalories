@@ -226,8 +226,9 @@
     <string name="portion_glass">Glass</string>
     <string name="portion_cup">Cup</string>
     <string name="edit_entry_title">Edit entry: %1$s</string>
-    <string name="quick_copy">Quick copy</string>
+    <string name="quick_copy">Copy to</string>
     <string name="copy_yesterday">Yesterday</string>
+    <string name="copy_today">Today</string>
     <string name="copy_tomorrow">Tomorrow</string>
     <string name="delete_from_log">Delete from log</string>
     <string name="update">Update</string>
@@ -260,6 +261,7 @@
 
     <!-- Home -->
     <string name="deleted_entry">Deleted %1$s</string>
+    <string name="copied_entry">Copied %1$s to %2$s</string>
     <string name="deleted_weight">Weigh-in deleted</string>
     <string name="deleted_water">Water entry removed</string>
     <string name="add_food">Add food</string>

@@ -942,11 +942,13 @@ class MainViewModel(
     }
 
     /**
-     * Copies an entry to a target date.
+     * Copies an entry to [targetDate]; [onCopied] gets the new entry (for its Undo). The meal
+     * rating stays behind: it was about the original meal.
      */
-    fun copyEntryToDate(entry: FoodEntry, targetDate: LocalDate) {
+    fun copyEntryToDate(entry: FoodEntry, targetDate: LocalDate, onCopied: (FoodEntry) -> Unit = {}) {
         viewModelScope.launch {
-            dao.insertEntry(entry.copy(id = 0, date = targetDate.toString(), time = System.currentTimeMillis()))
+            val copy = entry.copy(id = 0, date = targetDate.toString(), time = System.currentTimeMillis(), satiety = null, energyLevel = null)
+            onCopied(copy.copy(id = dao.insertEntry(copy).toInt()))
         }
     }
 
